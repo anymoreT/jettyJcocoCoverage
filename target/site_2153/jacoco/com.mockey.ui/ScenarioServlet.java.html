@@ -1,0 +1,293 @@
+<?xml version="1.0" encoding="UTF-8"?><!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Strict//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-strict.dtd"><html xmlns="http://www.w3.org/1999/xhtml" lang="zh"><head><meta http-equiv="Content-Type" content="text/html;charset=UTF-8"/><link rel="stylesheet" href="../jacoco-resources/report.css" type="text/css"/><link rel="shortcut icon" href="../jacoco-resources/report.gif" type="image/gif"/><title>ScenarioServlet.java</title><link rel="stylesheet" href="../jacoco-resources/prettify.css" type="text/css"/><script type="text/javascript" src="../jacoco-resources/prettify.js"></script></head><body onload="window['PR_TAB_WIDTH']=4;prettyPrint()"><div class="breadcrumb" id="breadcrumb"><span class="info"><a href="../jacoco-sessions.html" class="el_session">Sessions</a></span><a href="../index.html" class="el_report">JaCoCo Ant Example</a> &gt; <a href="index.source.html" class="el_package">com.mockey.ui</a> &gt; <span class="el_source">ScenarioServlet.java</span></div><h1>ScenarioServlet.java</h1><pre class="source lang-java linenums">/*
+ * This file is part of Mockey, a tool for testing application 
+ * interactions over HTTP, with a focus on testing web services, 
+ * specifically web applications that consume XML, JSON, and HTML.
+ *  
+ * Copyright (C) 2009-2010  Authors:
+ * 
+ * chad.lafontaine (chad.lafontaine AT gmail DOT com)
+ * neil.cronin (neil AT rackle DOT com) 
+ * lorin.kobashigawa (lkb AT kgawa DOT com)
+ * rob.meyer (rob AT bigdis DOT com)
+ * 
+ * This program is free software; you can redistribute it and/or
+ * modify it under the terms of the GNU General Public License
+ * as published by the Free Software Foundation; either version 2
+ * of the License, or (at your option) any later version.
+ * 
+ * This program is distributed in the hope that it will be useful,
+ * but WITHOUT ANY WARRANTY; without even the implied warranty of
+ * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+ * GNU General Public License for more details.
+ * 
+ * You should have received a copy of the GNU General Public License
+ * along with this program; if not, write to the Free Software
+ * Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301, USA.
+ *
+ */
+package com.mockey.ui;
+
+import java.io.IOException;
+import java.io.PrintWriter;
+import java.util.Map;
+
+import javax.servlet.ServletException;
+import javax.servlet.http.HttpServlet;
+import javax.servlet.http.HttpServletRequest;
+import javax.servlet.http.HttpServletResponse;
+
+import org.apache.http.protocol.HTTP;
+import org.apache.log4j.Logger;
+import org.json.JSONException;
+import org.json.JSONObject;
+
+import com.mockey.ScenarioValidator;
+import com.mockey.model.Scenario;
+import com.mockey.model.ScenarioRef;
+import com.mockey.model.Service;
+import com.mockey.storage.IMockeyStorage;
+import com.mockey.storage.StorageRegistry;
+
+<span class="nc" id="L51">public class ScenarioServlet extends HttpServlet {</span>
+
+	private static final long serialVersionUID = -5920793024759540668L;
+<span class="nc" id="L54">	private static IMockeyStorage store = StorageRegistry.MockeyStorage;</span>
+<span class="nc" id="L55">	private Logger logger = Logger.getLogger(ScenarioServlet.class);</span>
+
+	public void service(HttpServletRequest req, HttpServletResponse resp)
+			throws ServletException, IOException {
+
+		// Ensure ENCODING is set. This is important. 
+		// The request body will be fully processed only whenever the first call on a getParameterXXX() method is made.
+		// We set encoding to ensure we handle special characters. 
+<span class="nc" id="L63">		req.setCharacterEncoding(HTTP.UTF_8);</span>
+		
+		// A Service is needed to associate the
+		// scenario to.
+<span class="nc" id="L67">		Long serviceId = new Long(req.getParameter(&quot;serviceId&quot;));</span>
+<span class="nc" id="L68">		Long scenarioId = null;</span>
+		try {
+<span class="nc" id="L70">			scenarioId = new Long(req.getParameter(&quot;scenarioId&quot;));</span>
+<span class="nc" id="L71">		} catch (Exception e) {</span>
+			// Do nothing. If the value doesn't exist,
+			// then we'll create a new Scenario
+			// for this service.
+<span class="nc" id="L75">		}</span>
+
+		// Get the service.
+<span class="nc" id="L78">		Service service = store.getServiceById(serviceId);</span>
+
+		// DELETE scenario logic
+<span class="nc bnc" id="L81" title="All 6 branches missed.">		if (req.getParameter(&quot;deleteScenario&quot;) != null &amp;&amp; serviceId != null</span>
+				&amp;&amp; scenarioId != null) {
+			try {
+
+<span class="nc" id="L85">				service.deleteScenario(scenarioId);</span>
+<span class="nc" id="L86">				store.saveOrUpdateService(service);</span>
+<span class="nc" id="L87">			} catch (Exception e) {</span>
+				// Just in case an invalid service ID
+				// or scenario ID were past in.
+<span class="nc" id="L90">			}</span>
+<span class="nc" id="L91">			resp.setContentType(&quot;application/json&quot;);</span>
+<span class="nc" id="L92">			PrintWriter out = resp.getWriter();</span>
+<span class="nc" id="L93">			JSONObject result = new JSONObject();</span>
+<span class="nc" id="L94">			JSONObject message = new JSONObject();</span>
+			try {
+<span class="nc" id="L96">				result.put(&quot;result&quot;, message);</span>
+<span class="nc" id="L97">			} catch (JSONException e) {</span>
+				// TODO Auto-generated catch block
+<span class="nc" id="L99">				e.printStackTrace();</span>
+<span class="nc" id="L100">			}</span>
+
+<span class="nc" id="L102">			out.println(result.toString());</span>
+<span class="nc" id="L103">			out.flush();</span>
+<span class="nc" id="L104">			out.close();</span>
+<span class="nc" id="L105">			return;</span>
+		}
+
+<span class="nc" id="L108">		Scenario scenario = null;</span>
+
+		// ************************************************
+		// HACK A: if renaming an existing Scenario Name, then
+		// we need to update this Service's Scenario Name in a
+		// Service Plan. NOTE:
+		// * we can't ask the Service to update the Plan because it doesn't
+		// know about it.
+		// * we can't ask the Store to update the Plan because it doesn't
+		// know about the Scenario's 'old' name, only this Servlet does!
+		// Hence, we do it here via 'newName' and 'oldName'.
+		// ************************************************
+<span class="nc" id="L120">		String oldName = null;</span>
+<span class="nc" id="L121">		String newName = null;</span>
+		try {
+<span class="nc" id="L123">			scenario = service.getScenario(new Long(req</span>
+<span class="nc" id="L124">					.getParameter(&quot;scenarioId&quot;)));</span>
+			// ***************** HACK A ****************
+<span class="nc" id="L126">			oldName = scenario.getScenarioName();</span>
+			// *****************************************
+<span class="nc" id="L128">		} catch (Exception e) {</span>
+			//
+<span class="nc" id="L130">		}</span>
+
+		// CREATE OR UPDATE OF SCENARIO
+		// If scenario is null, that means we're creating,
+		// not updating
+<span class="nc bnc" id="L135" title="All 2 branches missed.">		if (scenario == null) {</span>
+<span class="nc" id="L136">			scenario = new Scenario();</span>
+		}
+
+<span class="nc" id="L139">		String scenarioName = req.getParameter(&quot;scenarioName&quot;);</span>
+<span class="nc bnc" id="L140" title="All 4 branches missed.">		if (scenarioName == null || scenarioName.trim().length() == 0) {</span>
+			// Let's be nice and make up a name.
+<span class="nc" id="L142">			scenarioName = &quot;Scenario for &quot; + service.getServiceName()</span>
+					+ &quot;(name auto-generated)&quot;;
+		}
+		// ***************** HACK A ****************
+<span class="nc" id="L146">		newName = scenarioName;</span>
+		// *****************************************
+
+<span class="nc" id="L149">		scenario.setScenarioName(scenarioName);</span>
+
+<span class="nc bnc" id="L151" title="All 2 branches missed.">		if (req.getParameter(&quot;tag&quot;) != null) {</span>
+<span class="nc" id="L152">			scenario.setTag(req.getParameter(&quot;tag&quot;));</span>
+		}
+		
+<span class="nc bnc" id="L155" title="All 2 branches missed.">		if (req.getParameter(&quot;hangTime&quot;) != null) {</span>
+			try{
+<span class="nc" id="L157">				String v = req.getParameter(&quot;hangTime&quot;);</span>
+<span class="nc" id="L158">				int hangtime = Integer.parseInt(v);</span>
+<span class="nc" id="L159">				scenario.setHangTime(hangtime);</span>
+<span class="nc" id="L160">			}catch(Exception e)</span>
+			{
+<span class="nc" id="L162">				scenario.setHangTime(0);</span>
+<span class="nc" id="L163">			}</span>
+			
+		}
+
+<span class="nc bnc" id="L167" title="All 2 branches missed.">		if (req.getParameter(&quot;httpResponseStatusCode&quot;) != null) {</span>
+			try {
+<span class="nc" id="L169">				String v = req.getParameter(&quot;httpResponseStatusCode&quot;);</span>
+<span class="nc" id="L170">				int statusCodeVal = Integer.parseInt(v);</span>
+<span class="nc" id="L171">				scenario.setHttpResponseStatusCode(statusCodeVal);</span>
+<span class="nc" id="L172">			} catch (Exception e) {</span>
+
+<span class="nc" id="L174">			}</span>
+		}
+		
+<span class="nc bnc" id="L177" title="All 2 branches missed.">		if (req.getParameter(&quot;httpMethodType&quot;) != null) {</span>
+			try {
+<span class="nc" id="L179">				String v = req.getParameter(&quot;httpMethodType&quot;);</span>
+<span class="nc" id="L180">				scenario.setHttpMethodType(v);</span>
+<span class="nc" id="L181">			} catch (Exception e) {</span>
+
+<span class="nc" id="L183">			}</span>
+		}
+
+<span class="nc bnc" id="L186" title="All 2 branches missed.">		if (req.getParameter(&quot;responseHeader&quot;) != null) {</span>
+<span class="nc" id="L187">			String responseHeader = req.getParameter(&quot;responseHeader&quot;);</span>
+<span class="nc bnc" id="L188" title="All 2 branches missed.">			if (responseHeader != null) {</span>
+<span class="nc" id="L189">				scenario.setResponseHeader(responseHeader);</span>
+			}
+
+		}
+		
+		
+<span class="nc" id="L195">		String respMessage = req.getParameter(&quot;responseMessage&quot;);</span>
+<span class="nc bnc" id="L196" title="All 2 branches missed.">		if (respMessage != null) {</span>
+<span class="nc" id="L197">			scenario.setResponseMessage(respMessage);</span>
+		}
+<span class="nc bnc" id="L199" title="All 2 branches missed.">		if (req.getParameter(&quot;matchStringArg&quot;) != null) {</span>
+<span class="nc" id="L200">			scenario.setMatchStringArg(req.getParameter(&quot;matchStringArg&quot;));</span>
+		}
+
+<span class="nc" id="L203">		String matchArgAsRegexBoolVal = req</span>
+<span class="nc" id="L204">				.getParameter(&quot;matchStringArgEvaluationRulesFlag&quot;);</span>
+<span class="nc bnc" id="L205" title="All 2 branches missed.">		if (matchArgAsRegexBoolVal != null) {</span>
+			try {
+<span class="nc" id="L207">				scenario.setMatchStringArgEvaluationRulesFlag(Boolean</span>
+<span class="nc" id="L208">						.parseBoolean(matchArgAsRegexBoolVal));</span>
+<span class="nc" id="L209">			} catch (Exception t) {</span>
+<span class="nc" id="L210">				logger.error(</span>
+						&quot;Unable to parse the Scenario match-to-be-used-as-a-regex flag, which should be 'true' or 'false' but was  &quot;
+								+ matchArgAsRegexBoolVal, t);
+<span class="nc" id="L213">			}</span>
+		}
+
+		// VALIDATION
+<span class="nc" id="L217">		Map&lt;String, String&gt; errorMap = ScenarioValidator.validate(scenario);</span>
+
+<span class="nc bnc" id="L219" title="All 4 branches missed.">		if ((errorMap != null) &amp;&amp; (errorMap.size() == 0)) {</span>
+
+			// If creating a Scenario, then the returned scenario
+			// will now have an id. If updating scenario, then
+			// scenario ID remains the same.
+<span class="nc" id="L224">			scenario = service.saveOrUpdateScenario(scenario);</span>
+
+			// Make this the default 'error response' scenario
+			// for the service
+<span class="nc" id="L228">			String v = req.getParameter(&quot;errorScenario&quot;);</span>
+<span class="nc bnc" id="L229" title="All 4 branches missed.">			if (v != null &amp;&amp; &quot;true&quot;.equalsIgnoreCase(v.trim())) {</span>
+<span class="nc" id="L230">				service.setErrorScenarioId(scenario.getId());</span>
+<span class="nc bnc" id="L231" title="All 2 branches missed.">			} else if (service.getErrorScenarioId() == scenario.getId()) {</span>
+<span class="nc" id="L232">				service.setErrorScenarioId(null);</span>
+			}
+
+			// Make this the default universal 'error response',
+			// for all services defined in Mockey.
+<span class="nc" id="L237">			v = req.getParameter(&quot;universalErrorScenario&quot;);</span>
+<span class="nc bnc" id="L238" title="All 4 branches missed.">			if (v != null &amp;&amp; &quot;true&quot;.equalsIgnoreCase(v.trim())) {</span>
+<span class="nc" id="L239">				ScenarioRef scenarioRef = new ScenarioRef(scenario.getId(),</span>
+<span class="nc" id="L240">						scenario.getServiceId());</span>
+<span class="nc" id="L241">				store.setUniversalErrorScenarioRef(scenarioRef);</span>
+
+<span class="nc bnc" id="L243" title="All 2 branches missed.">			} else if (store.getUniversalErrorScenario() != null) {</span>
+<span class="nc" id="L244">				store.setUniversalErrorScenarioRef(null);</span>
+			}
+
+<span class="nc" id="L247">			store.saveOrUpdateService(service);</span>
+
+			// ***************** HACK A ****************
+<span class="nc bnc" id="L250" title="All 4 branches missed.">			if (newName != null &amp;&amp; oldName != null</span>
+<span class="nc bnc" id="L251" title="All 2 branches missed.">					&amp;&amp; !oldName.trim().equals(newName.trim())) {</span>
+				// OK, we had an existing Service Scenario with a name change.
+				// Let's update the appropriate Service Plan.
+<span class="nc" id="L254">				store.updateServicePlansWithNewScenarioName(serviceId, oldName, newName);</span>
+				
+			}
+			// *****************************************
+<span class="nc" id="L258">			resp.setContentType(&quot;application/json&quot;);</span>
+<span class="nc" id="L259">			PrintWriter out = resp.getWriter();</span>
+
+<span class="nc" id="L261">			JSONObject object = new JSONObject();</span>
+<span class="nc" id="L262">			JSONObject resultObject = new JSONObject();</span>
+			try {
+
+<span class="nc" id="L265">				object.put(&quot;success&quot;, &quot;Scenario updated&quot;);</span>
+<span class="nc" id="L266">				object.put(&quot;scenarioId&quot;, scenario.getId().toString());</span>
+<span class="nc" id="L267">				object.put(&quot;serviceId&quot;, service.getId().toString());</span>
+<span class="nc" id="L268">				resultObject.put(&quot;result&quot;, object);</span>
+<span class="nc" id="L269">			} catch (JSONException e1) {</span>
+<span class="nc" id="L270">				e1.printStackTrace();</span>
+<span class="nc" id="L271">			}</span>
+<span class="nc" id="L272">			out.println(resultObject);</span>
+<span class="nc" id="L273">			out.flush();</span>
+<span class="nc" id="L274">			out.close();</span>
+<span class="nc" id="L275">			return;</span>
+
+		} else {
+			// ERROR STATE
+			// Something is wrong with the input values.
+			// Scenario is not created or updated.
+			// Coaching messages are available in the
+			// error dictionary/map.
+<span class="nc" id="L283">			resp.setContentType(&quot;application/json&quot;);</span>
+<span class="nc" id="L284">			PrintWriter out = resp.getWriter();</span>
+<span class="nc" id="L285">			String resultingJSON = Util.getJSON(errorMap);</span>
+<span class="nc" id="L286">			out.println(resultingJSON);</span>
+<span class="nc" id="L287">			out.flush();</span>
+<span class="nc" id="L288">			out.close();</span>
+<span class="nc" id="L289">			return;</span>
+		}
+	}
+}
+</pre><div class="footer"><span class="right">Created with <a href="http://www.jacoco.org/jacoco">JaCoCo</a> 0.8.1.201803210924</span></div></body></html>

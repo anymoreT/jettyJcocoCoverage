@@ -1,0 +1,8 @@
+.cvsignore
+.tomcatplugin
+*.class
+.classpath
+.project
+out/*
+bin/*
+/bin/

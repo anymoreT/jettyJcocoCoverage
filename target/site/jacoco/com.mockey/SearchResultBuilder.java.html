@@ -1,0 +1,172 @@
+<?xml version="1.0" encoding="UTF-8"?><!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Strict//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-strict.dtd"><html xmlns="http://www.w3.org/1999/xhtml" lang="zh"><head><meta http-equiv="Content-Type" content="text/html;charset=UTF-8"/><link rel="stylesheet" href="../jacoco-resources/report.css" type="text/css"/><link rel="shortcut icon" href="../jacoco-resources/report.gif" type="image/gif"/><title>SearchResultBuilder.java</title><link rel="stylesheet" href="../jacoco-resources/prettify.css" type="text/css"/><script type="text/javascript" src="../jacoco-resources/prettify.js"></script></head><body onload="window['PR_TAB_WIDTH']=4;prettyPrint()"><div class="breadcrumb" id="breadcrumb"><span class="info"><a href="../jacoco-sessions.html" class="el_session">Sessions</a></span><a href="../index.html" class="el_report">JaCoCo Ant Example</a> &gt; <a href="index.source.html" class="el_package">com.mockey</a> &gt; <span class="el_source">SearchResultBuilder.java</span></div><h1>SearchResultBuilder.java</h1><pre class="source lang-java linenums">/*
+ * This file is part of Mockey, a tool for testing application 
+ * interactions over HTTP, with a focus on testing web services, 
+ * specifically web applications that consume XML, JSON, and HTML.
+ *  
+ * Copyright (C) 2009-2010  Authors:
+ * 
+ * chad.lafontaine (chad.lafontaine AT gmail DOT com)
+ * 
+ * This program is free software; you can redistribute it and/or
+ * modify it under the terms of the GNU General Public License
+ * as published by the Free Software Foundation; either version 2
+ * of the License, or (at your option) any later version.
+ * 
+ * This program is distributed in the hope that it will be useful,
+ * but WITHOUT ANY WARRANTY; without even the implied warranty of
+ * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+ * GNU General Public License for more details.
+ * 
+ * You should have received a copy of the GNU General Public License
+ * along with this program; if not, write to the Free Software
+ * Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301, USA.
+ *
+ */
+package com.mockey;
+
+import java.util.ArrayList;
+import java.util.List;
+
+import com.mockey.model.Scenario;
+import com.mockey.model.SearchResult;
+import com.mockey.model.SearchResultType;
+import com.mockey.model.Service;
+import com.mockey.model.ServicePlan;
+import com.mockey.model.Url;
+import com.mockey.storage.IMockeyStorage;
+
+/**
+ * 
+ * @author clafonta
+ * 
+ */
+public class SearchResultBuilder {
+
+<span class="nc" id="L45">	private String baseAppContextPath = null;</span>
+
+	/**
+	 * 
+	 * @param _baseAppContextPath
+	 *            the application context path, which is needed to combine with
+	 *            the mock URL for proper matching, since each service only
+	 *            contains a portion of the full mock url (missing scheme,
+	 *            hostname, port, etc.)
+	 */
+<span class="nc" id="L55">	public SearchResultBuilder(String _baseAppContextPath) {</span>
+<span class="nc" id="L56">		this.baseAppContextPath = _baseAppContextPath;</span>
+<span class="nc" id="L57">	}</span>
+
+	/**
+	 * 
+	 * @param term
+	 * @param store
+	 */
+	public List&lt;SearchResult&gt; buildSearchResults(String term, IMockeyStorage store) {
+<span class="nc" id="L65">		List&lt;SearchResult&gt; searchResultList = new ArrayList&lt;SearchResult&gt;();</span>
+
+<span class="nc bnc" id="L67" title="All 4 branches missed.">		if (term != null &amp;&amp; term.trim().length() &gt; 0) {</span>
+<span class="nc" id="L68">			term = term.trim();</span>
+
+			// ******************************
+			// SERVICE PLAN LIST
+			// ******************************
+<span class="nc bnc" id="L73" title="All 2 branches missed.">			for (ServicePlan servicePlan : store.getServicePlans()) {</span>
+<span class="nc" id="L74">				SearchResult sr = buildSearchResult(term, servicePlan.getName() + &quot; &quot; + servicePlan.getTag());</span>
+<span class="nc bnc" id="L75" title="All 2 branches missed.">				if (sr != null) {</span>
+<span class="nc" id="L76">					sr.setType(SearchResultType.SERVICE_PLAN);</span>
+<span class="nc" id="L77">					sr.setServicePlanId(&quot;&quot; + servicePlan.getId());</span>
+<span class="nc" id="L78">					sr.setServicePlanName(servicePlan.getName());</span>
+<span class="nc" id="L79">					searchResultList.add(sr);</span>
+				}
+<span class="nc" id="L81">			}</span>
+
+			// ******************************
+			// SERVICE LIST
+			// ******************************
+<span class="nc bnc" id="L86" title="All 2 branches missed.">			for (Service service : store.getServices()) {</span>
+
+<span class="nc" id="L88">				boolean serviceAdded = false;</span>
+<span class="nc" id="L89">				SearchResult sr = buildSearchResult(term, service.getServiceName() + &quot; &quot; + service.getTag() + &quot; &quot;);</span>
+<span class="nc bnc" id="L90" title="All 2 branches missed.">				if (sr != null) {</span>
+<span class="nc" id="L91">					sr.setType(SearchResultType.SERVICE);</span>
+<span class="nc" id="L92">					sr.setServiceId(&quot;&quot; + service.getId());</span>
+<span class="nc" id="L93">					searchResultList.add(sr);</span>
+<span class="nc" id="L94">					serviceAdded = true;</span>
+				}
+
+<span class="nc bnc" id="L97" title="All 2 branches missed.">				if (!serviceAdded) {</span>
+					// No match; lets check RealServiceUrls
+<span class="nc bnc" id="L99" title="All 2 branches missed.">					for (Url url : service.getRealServiceUrls()) {</span>
+<span class="nc" id="L100">						SearchResult subresult = buildSearchResult(term, url.toString());</span>
+<span class="nc bnc" id="L101" title="All 2 branches missed.">						if (subresult != null) {</span>
+<span class="nc" id="L102">							subresult.setType(SearchResultType.SERVICE);</span>
+<span class="nc" id="L103">							subresult.setServiceId(&quot;&quot; + service.getId());</span>
+<span class="nc" id="L104">							searchResultList.add(subresult);</span>
+<span class="nc" id="L105">							serviceAdded = true;</span>
+<span class="nc" id="L106">							break;</span>
+						}
+<span class="nc" id="L108">					}</span>
+				}
+
+<span class="nc bnc" id="L111" title="All 2 branches missed.">				if (!serviceAdded) {</span>
+					// No match; lets check mock urls
+<span class="nc" id="L113">					String mockurl = service.getUrl();</span>
+<span class="nc" id="L114">					SearchResult subresult = buildSearchResult(term, (this.baseAppContextPath + mockurl));</span>
+<span class="nc bnc" id="L115" title="All 2 branches missed.">					if (subresult != null) {</span>
+<span class="nc" id="L116">						subresult.setType(SearchResultType.SERVICE);</span>
+<span class="nc" id="L117">						subresult.setServiceId(&quot;&quot; + service.getId());</span>
+<span class="nc" id="L118">						searchResultList.add(subresult);</span>
+<span class="nc" id="L119">						serviceAdded = true;</span>
+
+					}
+
+				}
+
+				// *****************************
+				// SERVICE SCENARIO
+				// ****************************
+				// REGARDLESS of Service being added, let's see if there is a
+				// matching scenario by Scenario RESPONSE
+<span class="nc bnc" id="L130" title="All 2 branches missed.">				for (Scenario scenario : service.getScenarios()) {</span>
+					// Append tags, name, and response...
+					// Why not? It's a hack to jumble all things together
+<span class="nc" id="L133">					SearchResult subresult = buildSearchResult(term,</span>
+<span class="nc" id="L134">							scenario.getResponseMessage() + &quot; &quot; + scenario.getScenarioName() + &quot; &quot; + scenario.getTag());</span>
+
+<span class="nc bnc" id="L136" title="All 2 branches missed.">					if (subresult != null) {</span>
+<span class="nc" id="L137">						subresult.setType(SearchResultType.SERVICE_SCENARIO);</span>
+<span class="nc" id="L138">						subresult.setServiceId(&quot;&quot; + service.getId());</span>
+<span class="nc" id="L139">						subresult.setScenarioId(&quot;&quot; + scenario.getId());</span>
+<span class="nc" id="L140">						subresult.setScenarioName(scenario.getScenarioName());</span>
+<span class="nc" id="L141">						searchResultList.add(subresult);</span>
+					}
+<span class="nc" id="L143">				}</span>
+
+<span class="nc" id="L145">			}</span>
+		}
+<span class="nc" id="L147">		return searchResultList;</span>
+	}
+
+	private SearchResult buildSearchResult(String term, String content) {
+
+<span class="nc" id="L152">		SearchResult result = null;</span>
+<span class="nc bnc" id="L153" title="All 4 branches missed.">		if (term != null &amp;&amp; content != null) {</span>
+<span class="nc" id="L154">			int index = content.trim().toLowerCase().indexOf(term.trim().toLowerCase());</span>
+<span class="nc bnc" id="L155" title="All 2 branches missed.">			if (index &gt; -1) {</span>
+<span class="nc" id="L156">				result = new SearchResult();</span>
+
+<span class="nc" id="L158">				String teaserContent = content.substring(index);</span>
+
+<span class="nc bnc" id="L160" title="All 2 branches missed.">				if (teaserContent.length() &gt; 150) {</span>
+<span class="nc" id="L161">					teaserContent.substring(0, 148);</span>
+
+				}
+<span class="nc" id="L164">				result.setContent(teaserContent);</span>
+
+			}
+
+		}
+<span class="nc" id="L169">		return result;</span>
+	}
+}
+</pre><div class="footer"><span class="right">Created with <a href="http://www.jacoco.org/jacoco">JaCoCo</a> 0.8.1.201803210924</span></div></body></html>

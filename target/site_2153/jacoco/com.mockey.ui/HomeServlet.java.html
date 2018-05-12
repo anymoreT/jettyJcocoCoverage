@@ -1,0 +1,322 @@
+<?xml version="1.0" encoding="UTF-8"?><!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Strict//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-strict.dtd"><html xmlns="http://www.w3.org/1999/xhtml" lang="zh"><head><meta http-equiv="Content-Type" content="text/html;charset=UTF-8"/><link rel="stylesheet" href="../jacoco-resources/report.css" type="text/css"/><link rel="shortcut icon" href="../jacoco-resources/report.gif" type="image/gif"/><title>HomeServlet.java</title><link rel="stylesheet" href="../jacoco-resources/prettify.css" type="text/css"/><script type="text/javascript" src="../jacoco-resources/prettify.js"></script></head><body onload="window['PR_TAB_WIDTH']=4;prettyPrint()"><div class="breadcrumb" id="breadcrumb"><span class="info"><a href="../jacoco-sessions.html" class="el_session">Sessions</a></span><a href="../index.html" class="el_report">JaCoCo Ant Example</a> &gt; <a href="index.source.html" class="el_package">com.mockey.ui</a> &gt; <span class="el_source">HomeServlet.java</span></div><h1>HomeServlet.java</h1><pre class="source lang-java linenums">/*
+ * This file is part of Mockey, a tool for testing application 
+ * interactions over HTTP, with a focus on testing web services, 
+ * specifically web applications that consume XML, JSON, and HTML.
+ *  
+ * Copyright (C) 2009-2010  Authors:
+ * 
+ * chad.lafontaine (chad.lafontaine AT gmail DOT com)
+ * neil.cronin (neil AT rackle DOT com) 
+ * lorin.kobashigawa (lkb AT kgawa DOT com)
+ * rob.meyer (rob AT bigdis DOT com)
+ * 
+ * This program is free software; you can redistribute it and/or
+ * modify it under the terms of the GNU General Public License
+ * as published by the Free Software Foundation; either version 2
+ * of the License, or (at your option) any later version.
+ * 
+ * This program is distributed in the hope that it will be useful,
+ * but WITHOUT ANY WARRANTY; without even the implied warranty of
+ * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+ * GNU General Public License for more details.
+ * 
+ * You should have received a copy of the GNU General Public License
+ * along with this program; if not, write to the Free Software
+ * Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301, USA.
+ *
+ */
+package com.mockey.ui;
+
+import java.io.File;
+import java.io.FileInputStream;
+import java.io.IOException;
+import java.io.InputStream;
+import java.io.PrintWriter;
+import java.net.URL;
+import java.util.List;
+
+import javax.servlet.RequestDispatcher;
+import javax.servlet.ServletException;
+import javax.servlet.http.HttpServlet;
+import javax.servlet.http.HttpServletRequest;
+import javax.servlet.http.HttpServletResponse;
+
+import org.apache.log4j.Logger;
+import org.json.JSONException;
+import org.json.JSONObject;
+
+import com.mockey.model.ApiDocAttribute;
+import com.mockey.model.ApiDocFieldValue;
+import com.mockey.model.ApiDocRequest;
+import com.mockey.model.ApiDocResponse;
+import com.mockey.model.ApiDocService;
+import com.mockey.model.ConflictInfo;
+import com.mockey.model.HttpStatusCodeStore;
+import com.mockey.model.Service;
+import com.mockey.model.ServicePlan;
+import com.mockey.model.Url;
+import com.mockey.plugin.PluginStore;
+import com.mockey.runner.BSC;
+import com.mockey.storage.IApiStorage;
+import com.mockey.storage.IApiStorageInMemory;
+import com.mockey.storage.IMockeyStorage;
+import com.mockey.storage.StorageRegistry;
+import com.mockey.storage.xml.MockeyXmlFileManager;
+
+<span class="fc" id="L66">public class HomeServlet extends HttpServlet {</span>
+
+	private static final long serialVersionUID = -5485332140449853235L;
+<span class="fc" id="L69">	private static IMockeyStorage store = StorageRegistry.MockeyStorage;</span>
+<span class="fc" id="L70">	private static Logger logger = Logger.getLogger(HomeServlet.class);</span>
+<span class="fc" id="L71">	private IApiStorage apiStore = IApiStorageInMemory.getInstance();</span>
+	private static final String API_CONFIGURATION_PARAMETER_ACTION_VALUE_DELETE = &quot;deleteAllServices&quot;;
+	private static final String SUCCESS = &quot;success&quot;;
+	private static final String FAIL = &quot;fail&quot;;
+
+	/**
+	 * Loads up the HTTP API Documentation in memory for this service. The HTTP
+	 * API information to describe this servlet's REQUEST and RESPONSE messaging
+	 * is displayed to the end user via the Service API help page.
+	 */
+	public void init() throws ServletException {
+
+		// Load up plugin store with at least one Sample inspectors
+<span class="fc" id="L84">		PluginStore pluginStore = PluginStore.getInstance();</span>
+<span class="fc" id="L85">		pluginStore.initializeOrUpdateStore();</span>
+
+		// *****************************
+		// THIS SERVICE API DESCRIPTION CONTRACT
+		// *****************************
+		// This information is used in the API JSP document, used to describe
+		// how to make setting changes from a head-less client.
+
+<span class="pc bpc" id="L93" title="1 of 2 branches missed.">		if (apiStore.getApiDocServiceByName(&quot;Initialization&quot;) == null) {</span>
+<span class="fc" id="L94">			ApiDocService apiDocService = new ApiDocService();</span>
+<span class="fc" id="L95">			apiDocService.setName(&quot;Initialization&quot;);</span>
+<span class="fc" id="L96">			apiDocService.setServicePath(&quot;/home&quot;);</span>
+<span class="fc" id="L97">			apiDocService.setDescription(</span>
+					&quot;If you need to initialize Mockey with a definitions file, then this API may serve your needs. &quot;);
+			// *****************************
+			// REQUEST DEFINITION
+			// *****************************
+
+<span class="fc" id="L103">			ApiDocRequest apiDocRequest = new ApiDocRequest();</span>
+
+			// Parameter - 'action'
+<span class="fc" id="L106">			ApiDocAttribute reqAttributeAction = new ApiDocAttribute();</span>
+<span class="fc" id="L107">			reqAttributeAction.setFieldName(BSC.ACTION);</span>
+<span class="fc" id="L108">			reqAttributeAction.addFieldValues(new ApiDocFieldValue(API_CONFIGURATION_PARAMETER_ACTION_VALUE_DELETE,</span>
+					&quot;Delete all configurations, history, settings, etc., and start with a clean Mockey. &quot;));
+<span class="fc" id="L110">			reqAttributeAction.addFieldValues(new ApiDocFieldValue(BSC.INIT,</span>
+					&quot;Will delete everything and configure Mockey with the defined file. &quot;));
+<span class="fc" id="L112">			apiDocRequest.addAttribute(reqAttributeAction);</span>
+
+			// Parameter - 'type'
+<span class="fc" id="L115">			ApiDocAttribute reqAttributeType = new ApiDocAttribute();</span>
+<span class="fc" id="L116">			reqAttributeType.setFieldName(BSC.TYPE);</span>
+<span class="fc" id="L117">			reqAttributeType.addFieldValues(new ApiDocFieldValue(&quot;json&quot;,</span>
+					&quot;Response will be in JSON. Any other value for 'type' is undefined and you may experience a 302 or get HTML back.&quot;));
+<span class="fc" id="L119">			apiDocRequest.addAttribute(reqAttributeType);</span>
+<span class="fc" id="L120">			apiDocService.setApiRequest(apiDocRequest);</span>
+
+			// Parameter - 'transientState'
+<span class="fc" id="L123">			ApiDocAttribute reqAttributeState = new ApiDocAttribute();</span>
+<span class="fc" id="L124">			reqAttributeState.setFieldName(BSC.TRANSIENT);</span>
+<span class="fc" id="L125">			reqAttributeState</span>
+<span class="fc" id="L126">					.addFieldValues(new ApiDocFieldValue(&quot;boolean&quot;, &quot;Read only mode? Also known as transient.&quot;));</span>
+<span class="fc" id="L127">			apiDocRequest.addAttribute(reqAttributeState);</span>
+<span class="fc" id="L128">			apiDocService.setApiRequest(apiDocRequest);</span>
+
+			// *****************************
+			// RESPONSE DEFINITION
+			// *****************************
+
+<span class="fc" id="L134">			ApiDocResponse apiResponse = new ApiDocResponse();</span>
+			// Building a JSON RESPONSE example
+			try {
+<span class="fc" id="L137">				JSONObject jsonResponseObject = new JSONObject();</span>
+<span class="fc" id="L138">				JSONObject jsonResultObject = new JSONObject();</span>
+<span class="fc" id="L139">				jsonResultObject.put(SUCCESS,</span>
+						&quot;Some informative coaching message. If success isn't a value, then maybe you have a 'fail' message.&quot;);
+<span class="fc" id="L141">				jsonResultObject.put(&quot;file&quot;, &quot;Some file name&quot;);</span>
+<span class="fc" id="L142">				jsonResponseObject.put(&quot;result&quot;, jsonResultObject);</span>
+<span class="fc" id="L143">				apiResponse.setExample(jsonResponseObject.toString());</span>
+<span class="nc" id="L144">			} catch (Exception e) {</span>
+<span class="nc" id="L145">				logger.error(&quot;Unabel to build a sample JSON message. &quot;, e);</span>
+<span class="fc" id="L146">			}</span>
+
+			// Response attribute 'success'
+<span class="fc" id="L149">			ApiDocAttribute resAttributeSuccess = new ApiDocAttribute();</span>
+<span class="fc" id="L150">			resAttributeSuccess.setFieldName(SUCCESS);</span>
+<span class="fc" id="L151">			resAttributeSuccess.setFieldDescription(</span>
+					&quot;Successfully initialized or deleted service definitions.  You get 'fail' or 'success', not both.&quot;);
+<span class="fc" id="L153">			apiResponse.addAttribute(resAttributeSuccess);</span>
+
+<span class="fc" id="L155">			ApiDocAttribute resAttributeFail = new ApiDocAttribute();</span>
+<span class="fc" id="L156">			resAttributeFail.setFieldName(FAIL);</span>
+<span class="fc" id="L157">			resAttributeFail.setFieldDescription(</span>
+					&quot;Failed to initialize or delete service definitions. You get 'fail' or 'success', not both.&quot;);
+<span class="fc" id="L159">			apiResponse.addAttribute(resAttributeFail);</span>
+
+<span class="fc" id="L161">			apiDocService.setApiResponse(apiResponse);</span>
+<span class="fc" id="L162">			apiStore.saveOrUpdateService(apiDocService);</span>
+		}
+<span class="fc" id="L164">	}</span>
+
+	public void service(HttpServletRequest req, HttpServletResponse resp) throws ServletException, IOException {
+
+<span class="fc" id="L168">		String action = req.getParameter(BSC.ACTION);</span>
+<span class="fc" id="L169">		String type = req.getParameter(BSC.TYPE);</span>
+
+		// FILTER
+		// ***********
+<span class="fc" id="L173">		String filterTagParameter = req.getParameter(BSC.FILTERTAG);</span>
+<span class="fc bfc" id="L174" title="All 2 branches covered.">		if (filterTagParameter != null) {</span>
+<span class="fc" id="L175">			store.setGlobalStateSystemFilterTag(filterTagParameter);</span>
+		}
+
+<span class="fc bfc" id="L178" title="All 4 branches covered.">		if (action != null &amp;&amp; &quot;init&quot;.equals(action)) {</span>
+
+<span class="fc" id="L180">			JSONObject jsonResultObject = new JSONObject();</span>
+
+			// Load with a definitions file.
+<span class="fc" id="L183">			String fileName = req.getParameter(&quot;file&quot;);</span>
+			// Or with a URL
+<span class="fc" id="L185">			String fileUrl = req.getParameter(BSC.URL);</span>
+
+<span class="fc" id="L187">			Boolean transientState = new Boolean(true);</span>
+			try {
+<span class="fc" id="L189">				transientState = new Boolean(req.getParameter(BSC.TRANSIENT));</span>
+<span class="fc" id="L190">				store.setReadOnlyMode(transientState);</span>
+<span class="fc" id="L191">				logger.debug(&quot;In memory-mode (i.e. do not write to file system)? &quot; + transientState);</span>
+<span class="nc" id="L192">			} catch (Exception e) {</span>
+
+<span class="fc" id="L194">			}</span>
+<span class="fc" id="L195">			InputStream fstream = null;</span>
+			try {
+
+<span class="pc bpc" id="L198" title="1 of 2 branches missed.">				if (fileUrl != null) {</span>
+					// or, from a URL, then retrieve an InputStream from a URL
+<span class="nc" id="L200">					fstream = new URL(fileUrl).openStream();</span>
+<span class="pc bpc" id="L201" title="1 of 2 branches missed.">				} else if (fileName != null) {</span>
+<span class="fc" id="L202">					File f = new File(fileName);</span>
+<span class="pc bpc" id="L203" title="1 of 2 branches missed.">					if (f.exists()) {</span>
+<span class="fc" id="L204">						fstream = new FileInputStream(f);</span>
+					} else {
+<span class="nc" id="L206">						logger.info(&quot;Filename '&quot; + fileName + &quot;' does not exist. doing nothing.&quot;);</span>
+<span class="nc" id="L207">						jsonResultObject.put(FAIL, fileName + &quot; does not exist. doing nothing.&quot;);</span>
+					}
+				}
+
+<span class="pc bpc" id="L211" title="1 of 2 branches missed.">				if (fstream != null) {</span>
+
+					// DELETE SECOND
+<span class="fc" id="L214">					MockeyXmlFileManager reader = MockeyXmlFileManager.getInstance();</span>
+<span class="fc" id="L215">					String inputAsString = reader.getFileContentAsString(fstream);</span>
+<span class="fc" id="L216">					store.deleteEverything();</span>
+<span class="fc" id="L217">					reader.loadConfigurationWithXmlDef(inputAsString, null);</span>
+<span class="fc" id="L218">					logger.info(&quot;Loaded definitions from &quot; + fileName);</span>
+<span class="fc" id="L219">					jsonResultObject.put(SUCCESS, &quot;Loaded definitions from &quot; + fileName);</span>
+
+				}
+<span class="nc" id="L222">			} catch (Exception e) {</span>
+
+<span class="nc" id="L224">				logger.debug(&quot;Unable to load service definitions with name: '&quot; + fileName + &quot;' or URL: &quot; + fileUrl, e);</span>
+				try {
+<span class="nc" id="L226">					jsonResultObject.put(FAIL,</span>
+							&quot;Unable to load service definitions with filename: '&quot; + fileName + &quot;' or URL: &quot; + fileUrl);
+<span class="nc" id="L228">				} catch (Exception ef) {</span>
+<span class="nc" id="L229">					logger.error(&quot;Unable to produce a JSON response.&quot;, e);</span>
+<span class="nc" id="L230">				}</span>
+			} finally {
+<span class="pc bpc" id="L232" title="1 of 2 branches missed.">				if (fstream != null) {</span>
+					try {
+<span class="fc" id="L234">						fstream.close();</span>
+<span class="nc" id="L235">					} catch (Exception e) {</span>
+
+<span class="fc" id="L237">					}</span>
+				}
+			}
+
+			// OK, return JSON or HTML?
+
+<span class="pc bpc" id="L243" title="3 of 4 branches missed.">			if (type != null &amp;&amp; type.trim().equalsIgnoreCase(&quot;json&quot;)) {</span>
+<span class="nc" id="L244">				resp.setContentType(&quot;application/json;&quot;);</span>
+<span class="nc" id="L245">				PrintWriter out = resp.getWriter();</span>
+<span class="nc" id="L246">				JSONObject jsonResponseObject = new JSONObject();</span>
+
+				try {
+<span class="nc" id="L249">					jsonResponseObject.put(&quot;result&quot;, jsonResultObject);</span>
+<span class="nc" id="L250">				} catch (JSONException e) {</span>
+<span class="nc" id="L251">					logger.error(&quot;Unable to produce a JSON result.&quot;, e);</span>
+<span class="nc" id="L252">				}</span>
+<span class="nc" id="L253">				out.println(jsonResponseObject.toString());</span>
+<span class="nc" id="L254">				return;</span>
+			} else {
+<span class="fc" id="L256">				String absolutePath = Url.getAbsoluteURL(req, &quot;/home&quot;);</span>
+<span class="fc" id="L257">				resp.sendRedirect(absolutePath);</span>
+<span class="fc" id="L258">				return;</span>
+			}
+
+<span class="pc bpc" id="L261" title="1 of 4 branches missed.">		} else if (action != null &amp;&amp; &quot;deleteAllServices&quot;.equals(action)) {</span>
+			// Flush - clean slate.
+
+<span class="fc" id="L264">			store.deleteEverything();</span>
+
+<span class="pc bpc" id="L266" title="3 of 4 branches missed.">			if (type != null &amp;&amp; type.trim().equalsIgnoreCase(&quot;json&quot;)) {</span>
+<span class="nc" id="L267">				resp.setContentType(&quot;application/json;&quot;);</span>
+<span class="nc" id="L268">				PrintWriter out = resp.getWriter();</span>
+<span class="nc" id="L269">				JSONObject jsonResponseObject = new JSONObject();</span>
+<span class="nc" id="L270">				JSONObject jsonObject = new JSONObject();</span>
+				try {
+<span class="nc" id="L272">					jsonObject.put(SUCCESS, &quot;All is deleted. You have a clean slate. Enjoy.&quot;);</span>
+<span class="nc" id="L273">					jsonResponseObject.put(&quot;result&quot;, jsonObject);</span>
+<span class="nc" id="L274">				} catch (JSONException e) {</span>
+<span class="nc" id="L275">					logger.error(&quot;Unable to produce a JSON result.&quot;, e);</span>
+<span class="nc" id="L276">				}</span>
+<span class="nc" id="L277">				out.println(jsonResponseObject.toString());</span>
+<span class="nc" id="L278">				return;</span>
+			} else {
+<span class="fc" id="L280">				resp.sendRedirect(Url.getAbsoluteURL(req, &quot;/home&quot;));</span>
+<span class="fc" id="L281">				return;</span>
+			}
+		}
+		// If a Service Plan ID was passed in, then we need to
+		// highlight the Services (provide a visual cue) to the
+		// user for which Services are included in the plan.
+<span class="fc" id="L287">		String servicePlanId = req.getParameter(&quot;plan_id&quot;);</span>
+<span class="pc bpc" id="L288" title="1 of 2 branches missed.">		if (servicePlanId != null) {</span>
+			try {
+<span class="nc" id="L290">				ServicePlan sp = store.getServicePlanById(new Long(servicePlanId));</span>
+<span class="nc" id="L291">				req.setAttribute(&quot;servicePlan&quot;, sp);</span>
+
+<span class="nc" id="L293">			} catch (Exception e) {</span>
+<span class="nc" id="L294">				logger.debug(&quot;Service Plan with ID '&quot; + servicePlanId + &quot;' does not exist.&quot;, e);</span>
+<span class="nc" id="L295">			}</span>
+		}
+
+<span class="fc" id="L298">		String filterTagArg = store.getGlobalStateSystemFilterTag();</span>
+
+<span class="fc" id="L300">		FilterHelper filterHelper = new FilterHelper();</span>
+<span class="fc" id="L301">		List&lt;Service&gt; filteredServiceList = filterHelper.getFilteredServices(filterTagArg, store);</span>
+
+<span class="fc" id="L303">		ConflictHelper conflictHelper = new ConflictHelper();</span>
+<span class="fc" id="L304">		ConflictInfo conflictInfo = conflictHelper.getConflictInfo(filteredServiceList);</span>
+<span class="fc" id="L305">		req.setAttribute(&quot;services&quot;, filteredServiceList);</span>
+<span class="fc" id="L306">		req.setAttribute(&quot;conflictInfo&quot;, conflictInfo);</span>
+<span class="fc" id="L307">		req.setAttribute(&quot;plans&quot;, filterHelper.getFilteredServicePlans(filterTagArg, store));</span>
+<span class="fc" id="L308">		req.setAttribute(&quot;filterTag&quot;, filterTagArg);</span>
+<span class="fc" id="L309">		req.setAttribute(&quot;filterTagList&quot;, store.getAllTagsFromStore());</span>
+		
+<span class="pc bpc" id="L311" title="1 of 2 branches missed.">		if (store.getDefaultServicePlanIdAsLong() != null) {</span>
+<span class="nc" id="L312">			req.setAttribute(&quot;defaultServicePlanId&quot;, store.getDefaultServicePlanId());</span>
+		} else {
+<span class="fc" id="L314">			req.setAttribute(&quot;defaultServicePlanId&quot;, &quot;&quot;);</span>
+		}
+<span class="fc" id="L316">		req.setAttribute(&quot;httpRespCodeList&quot;, HttpStatusCodeStore.getInstance().getCodeEntryList());</span>
+<span class="fc" id="L317">		RequestDispatcher dispatch = req.getRequestDispatcher(&quot;home.jsp&quot;);</span>
+<span class="fc" id="L318">		dispatch.forward(req, resp);</span>
+<span class="fc" id="L319">	}</span>
+
+}
+</pre><div class="footer"><span class="right">Created with <a href="http://www.jacoco.org/jacoco">JaCoCo</a> 0.8.1.201803210924</span></div></body></html>

@@ -1,0 +1,56 @@
+<?xml version="1.0" encoding="UTF-8"?><!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Strict//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-strict.dtd"><html xmlns="http://www.w3.org/1999/xhtml" lang="zh"><head><meta http-equiv="Content-Type" content="text/html;charset=UTF-8"/><link rel="stylesheet" href="../jacoco-resources/report.css" type="text/css"/><link rel="shortcut icon" href="../jacoco-resources/report.gif" type="image/gif"/><title>IApiStorageInMemory.java</title><link rel="stylesheet" href="../jacoco-resources/prettify.css" type="text/css"/><script type="text/javascript" src="../jacoco-resources/prettify.js"></script></head><body onload="window['PR_TAB_WIDTH']=4;prettyPrint()"><div class="breadcrumb" id="breadcrumb"><span class="info"><a href="../jacoco-sessions.html" class="el_session">Sessions</a></span><a href="../index.html" class="el_report">JaCoCo Ant Example</a> &gt; <a href="index.source.html" class="el_package">com.mockey.storage</a> &gt; <span class="el_source">IApiStorageInMemory.java</span></div><h1>IApiStorageInMemory.java</h1><pre class="source lang-java linenums">package com.mockey.storage;
+
+import java.util.List;
+
+import com.mockey.OrderedMap;
+import com.mockey.model.ApiDocService;
+import com.mockey.model.PersistableItem;
+
+<span class="fc" id="L9">public class IApiStorageInMemory implements IApiStorage {</span>
+
+<span class="fc" id="L11">	private OrderedMap&lt;ApiDocService&gt; apiStore = new OrderedMap&lt;ApiDocService&gt;();</span>
+<span class="fc" id="L12">	private static IApiStorageInMemory store = new IApiStorageInMemory();</span>
+
+	/**
+	 * 
+	 * @return
+	 */
+	public static IApiStorageInMemory getInstance() {
+<span class="fc" id="L19">		return store;</span>
+	}
+
+
+	@Override
+	public ApiDocService getApiDocServiceById(Long serviceId) {
+<span class="nc" id="L25">		return apiStore.get(serviceId);</span>
+	}
+
+	@Override
+	public List&lt;ApiDocService&gt; getApiDocServices() {
+<span class="fc" id="L30">		return this.apiStore.getOrderedList();</span>
+
+	}
+
+	@Override
+	public ApiDocService saveOrUpdateService(ApiDocService apiDocService) {
+<span class="fc" id="L36">		PersistableItem item = apiStore.save(apiDocService);</span>
+<span class="fc" id="L37">		return (ApiDocService) item;</span>
+	}
+
+
+	@Override
+	public ApiDocService getApiDocServiceByName(String name) {
+<span class="fc" id="L43">		ApiDocService service = null;</span>
+<span class="fc bfc" id="L44" title="All 2 branches covered.">		for(ApiDocService s : getApiDocServices()){</span>
+<span class="pc bpc" id="L45" title="2 of 4 branches missed.">			if(name!=null &amp;&amp; name.trim().equalsIgnoreCase(s.getName()) ){</span>
+<span class="nc" id="L46">				service = s;</span>
+<span class="nc" id="L47">				break;</span>
+			}
+			
+<span class="fc" id="L50">		}</span>
+		
+<span class="fc" id="L52">		return service;</span>
+	}
+
+}
+</pre><div class="footer"><span class="right">Created with <a href="http://www.jacoco.org/jacoco">JaCoCo</a> 0.8.1.201803210924</span></div></body></html>

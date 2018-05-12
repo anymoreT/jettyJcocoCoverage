@@ -1,0 +1,133 @@
+<?xml version="1.0" encoding="UTF-8"?><!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Strict//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-strict.dtd"><html xmlns="http://www.w3.org/1999/xhtml" lang="zh"><head><meta http-equiv="Content-Type" content="text/html;charset=UTF-8"/><link rel="stylesheet" href="../jacoco-resources/report.css" type="text/css"/><link rel="shortcut icon" href="../jacoco-resources/report.gif" type="image/gif"/><title>ServiceUrlTag.java</title><link rel="stylesheet" href="../jacoco-resources/prettify.css" type="text/css"/><script type="text/javascript" src="../jacoco-resources/prettify.js"></script></head><body onload="window['PR_TAB_WIDTH']=4;prettyPrint()"><div class="breadcrumb" id="breadcrumb"><span class="info"><a href="../jacoco-sessions.html" class="el_session">Sessions</a></span><a href="../index.html" class="el_report">JaCoCo Ant Example</a> &gt; <a href="index.source.html" class="el_package">com.mockey.ui.tags</a> &gt; <span class="el_source">ServiceUrlTag.java</span></div><h1>ServiceUrlTag.java</h1><pre class="source lang-java linenums">/*
+ * This file is part of Mockey, a tool for testing application 
+ * interactions over HTTP, with a focus on testing web services, 
+ * specifically web applications that consume XML, JSON, and HTML.
+ *  
+ * Copyright (C) 2009-2010  Authors:
+ * 
+ * chad.lafontaine (chad.lafontaine AT gmail DOT com)
+ * neil.cronin (neil AT rackle DOT com) 
+ * lorin.kobashigawa (lkb AT kgawa DOT com)
+ * rob.meyer (rob AT bigdis DOT com)
+ * 
+ * This program is free software; you can redistribute it and/or
+ * modify it under the terms of the GNU General Public License
+ * as published by the Free Software Foundation; either version 2
+ * of the License, or (at your option) any later version.
+ * 
+ * This program is distributed in the hope that it will be useful,
+ * but WITHOUT ANY WARRANTY; without even the implied warranty of
+ * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+ * GNU General Public License for more details.
+ * 
+ * You should have received a copy of the GNU General Public License
+ * along with this program; if not, write to the Free Software
+ * Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301, USA.
+ *
+ */
+package com.mockey.ui.tags;
+
+import javax.servlet.http.HttpServletRequest;
+import javax.servlet.jsp.JspWriter;
+import javax.servlet.jsp.tagext.TagSupport;
+
+import org.apache.taglibs.standard.lang.support.ExpressionEvaluatorManager;
+
+import com.mockey.model.Url;
+
+<span class="nc" id="L38">public class ServiceUrlTag extends TagSupport {</span>
+
+	private static final long serialVersionUID = -8902512566431524818L;
+	private String value;
+<span class="nc" id="L42">	private int breakpoint = -1;</span>
+
+	/**
+	 * @return the value
+	 */
+	public String getValue() {
+<span class="nc" id="L48">		return value;</span>
+	}
+
+	/**
+	 * @param value
+	 *            the value to set
+	 */
+	public void setValue(String value) {
+<span class="nc" id="L56">		this.value = value;</span>
+<span class="nc" id="L57">	}</span>
+
+	public int doStartTag() {
+		try {
+<span class="nc" id="L61">			value = (String) ExpressionEvaluatorManager.evaluate(&quot;value&quot;,</span>
+					value, String.class, pageContext);
+<span class="nc" id="L63">			StringBuffer url = new StringBuffer();</span>
+<span class="nc" id="L64">			HttpServletRequest request = (HttpServletRequest) pageContext</span>
+<span class="nc" id="L65">					.getRequest();</span>
+			
+<span class="nc" id="L67">			String protocol = &quot;http://&quot;;</span>
+<span class="nc bnc" id="L68" title="All 2 branches missed.">			if(request.isSecure()){</span>
+<span class="nc" id="L69">				protocol = &quot;https://&quot;;</span>
+			}
+
+<span class="nc" id="L72">			url.append(protocol + request.getServerName() + &quot;:&quot;</span>
+<span class="nc" id="L73">					+ request.getServerPort() + request.getContextPath());</span>
+<span class="nc bnc" id="L74" title="All 2 branches missed.">			if (!value.startsWith(Url.MOCK_SERVICE_PATH)) {</span>
+<span class="nc" id="L75">				url.append(Url.MOCK_SERVICE_PATH);</span>
+			}
+<span class="nc" id="L77">			url.append(value);</span>
+<span class="nc" id="L78">			JspWriter out = pageContext.getOut();</span>
+<span class="nc bnc" id="L79" title="All 2 branches missed.">			if (this.breakpoint &gt; -1) {</span>
+<span class="nc" id="L80">				out.println(insertPeriodically(url.toString(), &quot;&amp;#8203;&quot;,breakpoint) );</span>
+			} else {
+<span class="nc" id="L82">				out.println(url.toString());</span>
+			}
+
+<span class="nc" id="L85">		} catch (Exception ex) {</span>
+<span class="nc" id="L86">			ex.printStackTrace();</span>
+<span class="nc" id="L87">			throw new Error(&quot;All is not well in the world.&quot;, ex);</span>
+<span class="nc" id="L88">		}</span>
+		// Must return SKIP_BODY because we are not supporting a body for this
+		// tag.
+<span class="nc" id="L91">		return SKIP_BODY;</span>
+	}
+
+	/**
+	 * Inserts
+	 * 
+	 * &lt;pre&gt;
+	 * &amp;#8203;
+	 * &lt;/pre&gt;
+	 * 
+	 * (zero-width space) into _value_ at every 'breakPoint' position.
+	 * 
+	 * @param breakPoint
+	 */
+	public void setBreakpoint(int breakPoint) {
+<span class="nc" id="L106">		this.breakpoint = breakPoint;</span>
+<span class="nc" id="L107">	}</span>
+
+	public int getBreakPoint() {
+<span class="nc" id="L110">		return breakpoint;</span>
+	}
+
+	// From Stackoverflow
+	private String insertPeriodically(String text, String insert, int period) {
+<span class="nc" id="L115">		StringBuilder builder = new StringBuilder(text.length()</span>
+<span class="nc" id="L116">				+ insert.length() * (text.length() / period) + 1);</span>
+
+<span class="nc" id="L118">		int index = 0;</span>
+<span class="nc" id="L119">		String prefix = &quot;&quot;;</span>
+<span class="nc bnc" id="L120" title="All 2 branches missed.">		while (index &lt; text.length()) {</span>
+			// Don't put the insert in the very first iteration.
+			// This is easier than appending it *after* each substring
+<span class="nc" id="L123">			builder.append(prefix);</span>
+<span class="nc" id="L124">			prefix = insert;</span>
+<span class="nc" id="L125">			builder.append(text.substring(index, Math.min(index + period, text</span>
+<span class="nc" id="L126">					.length())));</span>
+<span class="nc" id="L127">			index += period;</span>
+		}
+<span class="nc" id="L129">		return builder.toString();</span>
+	}
+
+}
+</pre><div class="footer"><span class="right">Created with <a href="http://www.jacoco.org/jacoco">JaCoCo</a> 0.8.1.201803210924</span></div></body></html>

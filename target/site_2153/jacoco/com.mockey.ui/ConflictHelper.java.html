@@ -1,0 +1,105 @@
+<?xml version="1.0" encoding="UTF-8"?><!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Strict//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-strict.dtd"><html xmlns="http://www.w3.org/1999/xhtml" lang="zh"><head><meta http-equiv="Content-Type" content="text/html;charset=UTF-8"/><link rel="stylesheet" href="../jacoco-resources/report.css" type="text/css"/><link rel="shortcut icon" href="../jacoco-resources/report.gif" type="image/gif"/><title>ConflictHelper.java</title><link rel="stylesheet" href="../jacoco-resources/prettify.css" type="text/css"/><script type="text/javascript" src="../jacoco-resources/prettify.js"></script></head><body onload="window['PR_TAB_WIDTH']=4;prettyPrint()"><div class="breadcrumb" id="breadcrumb"><span class="info"><a href="../jacoco-sessions.html" class="el_session">Sessions</a></span><a href="../index.html" class="el_report">JaCoCo Ant Example</a> &gt; <a href="index.source.html" class="el_package">com.mockey.ui</a> &gt; <span class="el_source">ConflictHelper.java</span></div><h1>ConflictHelper.java</h1><pre class="source lang-java linenums">/*
+ * This file is part of Mockey, a tool for testing application 
+ * interactions over HTTP, with a focus on testing web services, 
+ * specifically web applications that consume XML, JSON, and HTML.
+ *  
+ * Copyright (C) 2009-2010  Authors:
+ * 
+ * chad.lafontaine (chad.lafontaine AT gmail DOT com)
+ * 
+ * This program is free software; you can redistribute it and/or
+ * modify it under the terms of the GNU General Public License
+ * as published by the Free Software Foundation; either version 2
+ * of the License, or (at your option) any later version.
+ * 
+ * This program is distributed in the hope that it will be useful,
+ * but WITHOUT ANY WARRANTY; without even the implied warranty of
+ * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+ * GNU General Public License for more details.
+ * 
+ * You should have received a copy of the GNU General Public License
+ * along with this program; if not, write to the Free Software
+ * Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301, USA.
+ *
+ */
+package com.mockey.ui;
+
+import java.util.List;
+
+import com.mockey.model.ConflictInfo;
+import com.mockey.model.Scenario;
+import com.mockey.model.Service;
+import com.mockey.model.Url;
+import com.mockey.storage.xml.MockeyXmlFileManager;
+
+/**
+ * Utility/helper class to help flag 'conflicts', possible problems in the
+ * setup.
+ * 
+ * @author clafonta
+ * 
+ */
+<span class="fc" id="L42">public class ConflictHelper {</span>
+
+	private static final String MATCH_NAME = &quot;Has matching Service name. Evaluation is based on comparing lowercase, alphanumberic values only. Example 'AAAA*' matches 'aaaa' &quot;;
+	private static final String MATCH_REAL_URL = &quot;Has a the same real URL.&quot;;
+	private static final String MATCH_SCENARIO = &quot;Has duplicate scenario(s).&quot;;
+	private static final String MATCH_MOCK_URL = &quot;Has a matching mock URL(s)&quot;;
+
+	/**
+	 * 
+	 * @param tagFilter
+	 * @param store
+	 * @return
+	 */
+	public ConflictInfo getConflictInfo(List&lt;Service&gt; serviceList) {
+<span class="fc" id="L56">		ConflictInfo conflictInfo = new ConflictInfo();</span>
+
+<span class="pc bpc" id="L58" title="1 of 2 branches missed.">		for (Service serviceA : serviceList) {</span>
+
+			// Check for conflicts with other services
+<span class="nc bnc" id="L61" title="All 2 branches missed.">			for (Service serviceB : serviceList) {</span>
+
+				// Don't compare Service to itself!
+<span class="nc bnc" id="L64" title="All 2 branches missed.">				if (!serviceA.getId().equals(serviceB.getId())) {</span>
+
+					// NAME
+<span class="nc bnc" id="L67" title="All 2 branches missed.">					if (MockeyXmlFileManager.getSafeForFileSystemName(serviceA.getServiceName()).equals(</span>
+<span class="nc" id="L68">							MockeyXmlFileManager.getSafeForFileSystemName(serviceB.getServiceName()))) {</span>
+<span class="nc" id="L69">						conflictInfo.addConflict(serviceA, serviceB, &quot;Service with name'&quot; + serviceA.getServiceName()</span>
+<span class="nc" id="L70">								+ &quot;' compared to service with name: '&quot; + serviceB.getServiceName() + &quot;'. Info: &quot; + MATCH_NAME);</span>
+					}
+
+					// REAL URLs
+<span class="nc bnc" id="L74" title="All 2 branches missed.">					for (Url urlA : serviceA.getRealServiceUrls()) {</span>
+<span class="nc bnc" id="L75" title="All 2 branches missed.">						for (Url urlB : serviceB.getRealServiceUrls()) {</span>
+<span class="nc bnc" id="L76" title="All 2 branches missed.">							if (urlA.equals(urlB)) {</span>
+<span class="nc" id="L77">								conflictInfo.addConflict(serviceA, serviceB, MATCH_REAL_URL);</span>
+							}
+<span class="nc" id="L79">						}</span>
+<span class="nc" id="L80">					}</span>
+
+					// SAME MOCK URL
+<span class="nc bnc" id="L83" title="All 4 branches missed.">					if (serviceA.getUrl() != null &amp;&amp; serviceA.getUrl().equals(serviceB.getUrl())) {</span>
+<span class="nc" id="L84">						conflictInfo.addConflict(serviceA, serviceB, MATCH_MOCK_URL);</span>
+					}
+
+				}
+<span class="nc" id="L88">			}</span>
+
+			// Check for conflicts with
+<span class="nc bnc" id="L91" title="All 2 branches missed.">			for (Scenario scenarioA : serviceA.getScenarios()) {</span>
+<span class="nc bnc" id="L92" title="All 2 branches missed.">				for (Scenario scenarioB : serviceA.getScenarios()) {</span>
+
+<span class="nc bnc" id="L94" title="All 4 branches missed.">					if (scenarioA.hasSameNameAndResponse(scenarioB) &amp;&amp; !scenarioA.getId().equals(scenarioB.getId())) {</span>
+<span class="nc" id="L95">						conflictInfo.addConflict(serviceA, serviceA, MATCH_SCENARIO);</span>
+					}
+<span class="nc" id="L97">				}</span>
+<span class="nc" id="L98">			}</span>
+
+<span class="nc" id="L100">		}</span>
+<span class="fc" id="L101">		return conflictInfo;</span>
+	}
+
+}
+</pre><div class="footer"><span class="right">Created with <a href="http://www.jacoco.org/jacoco">JaCoCo</a> 0.8.1.201803210924</span></div></body></html>

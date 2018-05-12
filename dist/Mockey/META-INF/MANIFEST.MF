@@ -1,0 +1,6 @@
+Manifest-Version: 1.0
+Ant-Version: Apache Ant 1.10.3
+Created-By: 1.8.0_131-b11 (Oracle Corporation)
+Main-Class: com.mockey.runner.JettyRunner
+Implementation-Version: 2.0.102
+

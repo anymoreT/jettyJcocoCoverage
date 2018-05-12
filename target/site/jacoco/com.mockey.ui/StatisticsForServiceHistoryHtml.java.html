@@ -1,0 +1,139 @@
+<?xml version="1.0" encoding="UTF-8"?><!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Strict//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-strict.dtd"><html xmlns="http://www.w3.org/1999/xhtml" lang="zh"><head><meta http-equiv="Content-Type" content="text/html;charset=UTF-8"/><link rel="stylesheet" href="../jacoco-resources/report.css" type="text/css"/><link rel="shortcut icon" href="../jacoco-resources/report.gif" type="image/gif"/><title>StatisticsForServiceHistoryHtml.java</title><link rel="stylesheet" href="../jacoco-resources/prettify.css" type="text/css"/><script type="text/javascript" src="../jacoco-resources/prettify.js"></script></head><body onload="window['PR_TAB_WIDTH']=4;prettyPrint()"><div class="breadcrumb" id="breadcrumb"><span class="info"><a href="../jacoco-sessions.html" class="el_session">Sessions</a></span><a href="../index.html" class="el_report">JaCoCo Ant Example</a> &gt; <a href="index.source.html" class="el_package">com.mockey.ui</a> &gt; <span class="el_source">StatisticsForServiceHistoryHtml.java</span></div><h1>StatisticsForServiceHistoryHtml.java</h1><pre class="source lang-java linenums">/*
+ * This file is part of Mockey, a tool for testing application 
+ * interactions over HTTP, with a focus on testing web services, 
+ * specifically web applications that consume XML, JSON, and HTML.
+ *  
+ * Copyright (C) 2009-2010  Authors:
+ * 
+ * chad.lafontaine (chad.lafontaine AT gmail DOT com)
+ * neil.cronin (neil AT rackle DOT com) 
+ * lorin.kobashigawa (lkb AT kgawa DOT com)
+ * rob.meyer (rob AT bigdis DOT com)
+ * 
+ * This program is free software; you can redistribute it and/or
+ * modify it under the terms of the GNU General Public License
+ * as published by the Free Software Foundation; either version 2
+ * of the License, or (at your option) any later version.
+ * 
+ * This program is distributed in the hope that it will be useful,
+ * but WITHOUT ANY WARRANTY; without even the implied warranty of
+ * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+ * GNU General Public License for more details.
+ * 
+ * You should have received a copy of the GNU General Public License
+ * along with this program; if not, write to the Free Software
+ * Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301, USA.
+ *
+ */
+package com.mockey.ui;
+
+import java.io.IOException;
+import java.util.ArrayList;
+import java.util.Date;
+import java.util.List;
+import java.util.Map;
+
+import javax.servlet.RequestDispatcher;
+import javax.servlet.ServletException;
+import javax.servlet.http.HttpServlet;
+import javax.servlet.http.HttpServletRequest;
+import javax.servlet.http.HttpServletResponse;
+
+import org.apache.log4j.Logger;
+
+import com.mockey.model.FulfilledClientRequest;
+import com.mockey.model.ServiceStat;
+import com.mockey.storage.IMockeyStorage;
+import com.mockey.storage.StorageRegistry;
+
+/**
+ * Returns JSON of the fulfilled request, designed to be consumed by an AJAX
+ * call.
+ * 
+ */
+<span class="nc" id="L54">public class StatisticsForServiceHistoryHtml extends HttpServlet {</span>
+
+	private static final long serialVersionUID = 3244374238073838813L;
+<span class="nc" id="L57">	private static IMockeyStorage store = StorageRegistry.MockeyStorage;</span>
+<span class="nc" id="L58">	private static Logger logger = Logger.getLogger(StatisticsForServiceHistoryHtml.class);</span>
+
+	/**
+	 * 
+	 */
+	public void service(HttpServletRequest req, HttpServletResponse resp) throws ServletException, IOException {
+
+		try {
+
+			// #1) Set default start/end
+			// End date/time is NOW + 1 minute.
+			// Start date/time is the earliest record of a Mockey response.
+<span class="nc" id="L70">			Date rangeEndDate = ServiceStatHelper.getNowPlusOneMinute();</span>
+<span class="nc" id="L71">			Date rangeStartDate = new Date();</span>
+
+			// #2) Go through history, and get the oldest known time from past
+			// fulfilled request, and make this the range start.
+<span class="nc" id="L75">			List&lt;FulfilledClientRequest&gt; historyOfServiceRequests = store.getFulfilledClientRequests();</span>
+<span class="nc bnc" id="L76" title="All 2 branches missed.">			if (historyOfServiceRequests.size() &gt; 0) {</span>
+<span class="nc bnc" id="L77" title="All 2 branches missed.">				for (FulfilledClientRequest requestInstance : historyOfServiceRequests) {</span>
+<span class="nc" id="L78">					rangeStartDate = ServiceStatHelper.getEarlierTime(rangeStartDate, requestInstance.getTime());</span>
+<span class="nc" id="L79">				}</span>
+<span class="nc" id="L80">				req.removeAttribute(&quot;statFlag&quot;);</span>
+			} else {
+				// Set flag that there are no request.
+<span class="nc" id="L83">				req.setAttribute(&quot;statFlag&quot;, &quot;nostats&quot;);</span>
+			}
+
+			// #3) Check if 'filter' dates are given. If not, then they default
+			// to range dates.
+<span class="nc" id="L88">			String filterStartAsDate = req.getParameter(&quot;filterStartDate&quot;);</span>
+<span class="nc" id="L89">			String filterEndAsDate = req.getParameter(&quot;filterEndDate&quot;);</span>
+<span class="nc" id="L90">			Date filterStartDate = ServiceStatHelper.getDateFromString(filterStartAsDate, rangeStartDate);</span>
+<span class="nc" id="L91">			Date filterEndDate = ServiceStatHelper.getDateFromString(filterEndAsDate, rangeEndDate);</span>
+
+			// #4) Increment the number of Service visit count.
+<span class="nc" id="L94">			Map&lt;String, ServiceStat&gt; statMap = buildFilteredServiceHitCountMap(filterStartDate, filterEndDate);</span>
+
+			// #5) Set sate.
+<span class="nc" id="L97">			req.setAttribute(&quot;statList&quot;, new ArrayList&lt;ServiceStat&gt;(statMap.values()));</span>
+<span class="nc" id="L98">			req.setAttribute(&quot;rangeStartDate&quot;, ServiceStatHelper.getStringFromDate(rangeStartDate));</span>
+<span class="nc" id="L99">			req.setAttribute(&quot;rangeEndDate&quot;, ServiceStatHelper.getStringFromDate(rangeEndDate));</span>
+<span class="nc" id="L100">			req.setAttribute(&quot;filterStartDate&quot;, ServiceStatHelper.getStringFromDate(filterStartDate));</span>
+<span class="nc" id="L101">			req.setAttribute(&quot;filterEndDate&quot;, ServiceStatHelper.getStringFromDate(filterEndDate));</span>
+
+<span class="nc" id="L103">		} catch (Exception e) {</span>
+			try {
+<span class="nc" id="L105">				Util.saveErrorMessage(&quot;Sorry, a problem occurred.&quot;, req);</span>
+
+<span class="nc" id="L107">			} catch (Exception e1) {</span>
+<span class="nc" id="L108">				logger.error(&quot;Unable to create JSON&quot;, e1);</span>
+<span class="nc" id="L109">			}</span>
+<span class="nc" id="L110">		}</span>
+
+<span class="nc" id="L112">		RequestDispatcher dispatch = req.getRequestDispatcher(&quot;historystats.jsp&quot;);</span>
+<span class="nc" id="L113">		dispatch.forward(req, resp);</span>
+
+<span class="nc" id="L115">	}</span>
+
+	/**
+	 * 
+	 * @param filterStartDate
+	 * @param filterEndDate
+	 * @return Map of ServiceStats, with count incremented if timestamp is
+	 *         between and inclusive of filter dates
+	 */
+	private Map&lt;String, ServiceStat&gt; buildFilteredServiceHitCountMap(Date filterStartDate, Date filterEndDate) {
+
+		// #1 - Build a list of all possible Service names
+<span class="nc" id="L127">		Map&lt;String, ServiceStat&gt; statMap = ServiceStatHelper.getMapListOfAllServices(store.getServices());</span>
+
+		// #2 - Only increment a service stat count to those Fulfilled Requests
+		// within the matching range time.
+<span class="nc" id="L131">		statMap = ServiceStatHelper.incrementServiceStatCount(statMap, store.getFulfilledClientRequests(),</span>
+				filterStartDate, filterEndDate);
+
+<span class="nc" id="L134">		return statMap;</span>
+
+	}
+
+}
+</pre><div class="footer"><span class="right">Created with <a href="http://www.jacoco.org/jacoco">JaCoCo</a> 0.8.1.201803210924</span></div></body></html>

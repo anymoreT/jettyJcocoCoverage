@@ -1,0 +1,131 @@
+<?xml version="1.0" encoding="UTF-8"?><!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Strict//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-strict.dtd"><html xmlns="http://www.w3.org/1999/xhtml" lang="zh"><head><meta http-equiv="Content-Type" content="text/html;charset=UTF-8"/><link rel="stylesheet" href="../jacoco-resources/report.css" type="text/css"/><link rel="shortcut icon" href="../jacoco-resources/report.gif" type="image/gif"/><title>ProxyServerModel.java</title><link rel="stylesheet" href="../jacoco-resources/prettify.css" type="text/css"/><script type="text/javascript" src="../jacoco-resources/prettify.js"></script></head><body onload="window['PR_TAB_WIDTH']=4;prettyPrint()"><div class="breadcrumb" id="breadcrumb"><span class="info"><a href="../jacoco-sessions.html" class="el_session">Sessions</a></span><a href="../index.html" class="el_report">JaCoCo Ant Example</a> &gt; <a href="index.source.html" class="el_package">com.mockey.model</a> &gt; <span class="el_source">ProxyServerModel.java</span></div><h1>ProxyServerModel.java</h1><pre class="source lang-java linenums">/*
+ * This file is part of Mockey, a tool for testing application 
+ * interactions over HTTP, with a focus on testing web services, 
+ * specifically web applications that consume XML, JSON, and HTML.
+ *  
+ * Copyright (C) 2009-2010  Authors:
+ * 
+ * chad.lafontaine (chad.lafontaine AT gmail DOT com)
+ * neil.cronin (neil AT rackle DOT com) 
+ * lorin.kobashigawa (lkb AT kgawa DOT com)
+ * rob.meyer (rob AT bigdis DOT com)
+ * 
+ * This program is free software; you can redistribute it and/or
+ * modify it under the terms of the GNU General Public License
+ * as published by the Free Software Foundation; either version 2
+ * of the License, or (at your option) any later version.
+ * 
+ * This program is distributed in the hope that it will be useful,
+ * but WITHOUT ANY WARRANTY; without even the implied warranty of
+ * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+ * GNU General Public License for more details.
+ * 
+ * You should have received a copy of the GNU General Public License
+ * along with this program; if not, write to the Free Software
+ * Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301, USA.
+ *
+ */
+package com.mockey.model;
+
+import org.apache.http.HttpHost;
+import org.apache.http.auth.AuthScope;
+import org.apache.http.auth.Credentials;
+import org.apache.http.auth.UsernamePasswordCredentials;
+
+/**
+ * Defines a proxy server to communicate with
+ */
+<span class="fc" id="L38">public class ProxyServerModel {</span>
+
+<span class="fc" id="L40">	private boolean proxyEnabled = false;</span>
+	private Url proxyUrl;
+	private String proxyUsername;
+	private String proxyPassword;
+
+	public boolean isProxyEnabled() {
+<span class="fc" id="L46">		return proxyEnabled;</span>
+	}
+
+	public void setProxyEnabled(boolean proxyEnabled) {
+<span class="fc" id="L50">		this.proxyEnabled = proxyEnabled;</span>
+<span class="fc" id="L51">	}</span>
+
+	public String getProxyHost() {
+<span class="nc" id="L54">		return proxyUrl.getHost();</span>
+	}
+
+	public void setProxyUrl(String proxyUrl) {
+<span class="fc" id="L58">		this.proxyUrl = new Url(proxyUrl);</span>
+<span class="fc" id="L59">	}</span>
+
+	public String getProxyUrl() {
+<span class="nc bnc" id="L62" title="All 2 branches missed.">		return proxyUrl != null ? proxyUrl.toString() : null;</span>
+	}
+
+	public int getProxyPort() {
+<span class="nc" id="L66">		return proxyUrl.getPort();</span>
+	}
+
+	public String getProxyUsername() {
+
+<span class="nc" id="L71">		return this.proxyUsername;</span>
+	}
+
+	public void setProxyUsername(String username) {
+<span class="nc" id="L75">		this.proxyUsername = username;</span>
+<span class="nc" id="L76">	}</span>
+
+	public void setProxyPassword(String password) {
+<span class="nc" id="L79">		this.proxyPassword = password;</span>
+<span class="nc" id="L80">	}</span>
+
+	public String getProxyPassword() {
+<span class="nc" id="L83">		return this.proxyPassword;</span>
+	}
+
+	public String getProxyScheme() {
+<span class="nc" id="L87">		return proxyUrl.getScheme();</span>
+	}
+
+	public HttpHost getHttpHost() {
+<span class="nc" id="L91">		return new HttpHost(getProxyHost(), getProxyPort(), getProxyScheme());</span>
+	}
+
+	public AuthScope getAuthScope() {
+<span class="nc" id="L95">		return new AuthScope(getProxyHost(), getProxyPort());</span>
+	}
+
+	public Credentials getCredentials() {
+<span class="nc" id="L99">		String username = getProxyUsername();</span>
+<span class="nc" id="L100">		String pass = getProxyPassword();</span>
+<span class="nc bnc" id="L101" title="All 2 branches missed.">		if (username == null) {</span>
+<span class="nc" id="L102">			username = &quot;&quot;;</span>
+		}
+<span class="nc bnc" id="L104" title="All 2 branches missed.">		if (pass == null) {</span>
+<span class="nc" id="L105">			username = &quot;&quot;;</span>
+		}
+		// Can't pass null
+<span class="nc" id="L108">		return new UsernamePasswordCredentials(username, pass);</span>
+	}
+
+	/**
+	 * Convenience method to see if there are any proxy model settings.
+	 * 
+	 * @return false if all attributes of this instance are null or empty, true
+	 *         otherwise
+	 */
+	public boolean hasSettings() {
+<span class="fc" id="L118">		boolean yesSomeSettingExists = false;</span>
+<span class="pc bpc" id="L119" title="3 of 4 branches missed.">		if(this.proxyUrl!=null &amp;&amp; this.proxyUrl.hasSettings()){</span>
+<span class="nc" id="L120">			yesSomeSettingExists = true;</span>
+<span class="pc bpc" id="L121" title="3 of 4 branches missed.">		}else if(this.proxyUsername!=null &amp;&amp; this.proxyUsername.trim().length() &gt; 0){</span>
+<span class="nc" id="L122">			yesSomeSettingExists = true;</span>
+<span class="pc bpc" id="L123" title="3 of 4 branches missed.">		}else if(this.proxyPassword!=null &amp;&amp; this.proxyPassword.trim().length() &gt; 0){</span>
+<span class="nc" id="L124">			yesSomeSettingExists = true;</span>
+		}else {
+<span class="fc" id="L126">			yesSomeSettingExists = false;</span>
+		}
+<span class="fc" id="L128">		return yesSomeSettingExists;</span>
+	}
+}
+</pre><div class="footer"><span class="right">Created with <a href="http://www.jacoco.org/jacoco">JaCoCo</a> 0.8.1.201803210924</span></div></body></html>

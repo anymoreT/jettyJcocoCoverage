@@ -1,0 +1,113 @@
+<?xml version="1.0" encoding="UTF-8"?><!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Strict//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-strict.dtd"><html xmlns="http://www.w3.org/1999/xhtml" lang="zh"><head><meta http-equiv="Content-Type" content="text/html;charset=UTF-8"/><link rel="stylesheet" href="../jacoco-resources/report.css" type="text/css"/><link rel="shortcut icon" href="../jacoco-resources/report.gif" type="image/gif"/><title>MobiServlet.java</title><link rel="stylesheet" href="../jacoco-resources/prettify.css" type="text/css"/><script type="text/javascript" src="../jacoco-resources/prettify.js"></script></head><body onload="window['PR_TAB_WIDTH']=4;prettyPrint()"><div class="breadcrumb" id="breadcrumb"><span class="info"><a href="../jacoco-sessions.html" class="el_session">Sessions</a></span><a href="../index.html" class="el_report">JaCoCo Ant Example</a> &gt; <a href="index.source.html" class="el_package">com.mockey.ui</a> &gt; <span class="el_source">MobiServlet.java</span></div><h1>MobiServlet.java</h1><pre class="source lang-java linenums">/*
+ * This file is part of Mockey, a tool for testing application 
+ * interactions over HTTP, with a focus on testing web services, 
+ * specifically web applications that consume XML, JSON, and HTML.
+ *  
+ * Copyright (C) 2009-2010  Authors:
+ * 
+ * chad.lafontaine (chad.lafontaine AT gmail DOT com)
+ * neil.cronin (neil AT rackle DOT com) 
+ * lorin.kobashigawa (lkb AT kgawa DOT com)
+ * rob.meyer (rob AT bigdis DOT com)
+ * 
+ * This program is free software; you can redistribute it and/or
+ * modify it under the terms of the GNU General Public License
+ * as published by the Free Software Foundation; either version 2
+ * of the License, or (at your option) any later version.
+ * 
+ * This program is distributed in the hope that it will be useful,
+ * but WITHOUT ANY WARRANTY; without even the implied warranty of
+ * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+ * GNU General Public License for more details.
+ * 
+ * You should have received a copy of the GNU General Public License
+ * along with this program; if not, write to the Free Software
+ * Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301, USA.
+ *
+ */
+package com.mockey.ui;
+
+import java.io.IOException;
+import java.util.ArrayList;
+import java.util.List;
+
+import javax.servlet.RequestDispatcher;
+import javax.servlet.ServletException;
+import javax.servlet.http.HttpServlet;
+import javax.servlet.http.HttpServletRequest;
+import javax.servlet.http.HttpServletResponse;
+
+import com.mockey.model.Service;
+import com.mockey.storage.IMockeyStorage;
+import com.mockey.storage.StorageRegistry;
+
+/**
+ * Yah, that's right, this Servlet is here so we can update a mock service from a
+ * crappy-ass browser, like a BlackBerry browser.
+ * 
+ * @author chad.lafontaine
+ * 
+ */
+<span class="nc" id="L51">public class MobiServlet extends HttpServlet {</span>
+
+    private static final long serialVersionUID = -4357829693367863051L;
+<span class="nc" id="L54">    private static IMockeyStorage store = StorageRegistry.MockeyStorage;</span>
+
+    /**
+     * Get all the services
+     */
+    public void doGet(HttpServletRequest req, HttpServletResponse resp) throws ServletException, IOException {
+
+<span class="nc" id="L61">        String serviceId = req.getParameter(&quot;serviceId&quot;);</span>
+<span class="nc bnc" id="L62" title="All 2 branches missed.">        if(serviceId!=null){</span>
+<span class="nc" id="L63">            Long id = new Long(serviceId);</span>
+<span class="nc" id="L64">            req.setAttribute(&quot;filter&quot;, &quot;yes&quot;);</span>
+<span class="nc" id="L65">            List&lt;Service&gt; list = new ArrayList&lt;Service&gt;();</span>
+<span class="nc" id="L66">            list.add(store.getServiceById(id));</span>
+<span class="nc" id="L67">            req.setAttribute(&quot;services&quot;, list);</span>
+<span class="nc" id="L68">        }else {</span>
+<span class="nc" id="L69">            req.setAttribute(&quot;services&quot;, Util.orderAlphabeticallyByServiceName(store.getServices()));</span>
+            
+        }
+<span class="nc" id="L72">        req.setAttribute(&quot;allservices&quot;, Util.orderAlphabeticallyByServiceName(store.getServices()));</span>
+<span class="nc" id="L73">        RequestDispatcher dispatch = req.getRequestDispatcher(&quot;mobi.jsp&quot;);</span>
+<span class="nc" id="L74">        dispatch.forward(req, resp);</span>
+<span class="nc" id="L75">    }</span>
+
+    /**
+     * Update a Service and return all the services. 
+     */
+    public void doPost(HttpServletRequest req, HttpServletResponse resp) throws ServletException, IOException {
+
+        try {
+<span class="nc" id="L83">            Long serviceId = new Long(req.getParameter(&quot;serviceId&quot;));</span>
+<span class="nc" id="L84">            int hangTime = Integer.parseInt(req.getParameter(&quot;hangTime&quot;));</span>
+<span class="nc" id="L85">            int serviceResponseType = Integer.parseInt(req.getParameter(&quot;serviceResponseType&quot;));</span>
+<span class="nc" id="L86">            Long defaultScenarioId = Long.parseLong(req.getParameter(&quot;scenario&quot;));</span>
+<span class="nc" id="L87">            Service service = store.getServiceById(serviceId);</span>
+<span class="nc" id="L88">            service.setServiceResponseType(serviceResponseType);</span>
+<span class="nc" id="L89">            service.setHangTime(hangTime);</span>
+<span class="nc" id="L90">            service.setDefaultScenarioId(defaultScenarioId);</span>
+<span class="nc" id="L91">            store.saveOrUpdateService(service);</span>
+<span class="nc" id="L92">            String filter = req.getParameter(&quot;filter&quot;);</span>
+<span class="nc bnc" id="L93" title="All 4 branches missed.">            if(filter!=null &amp;&amp; &quot;yes&quot;.equals(filter)){</span>
+<span class="nc" id="L94">                req.setAttribute(&quot;filter&quot;, &quot;yes&quot;);</span>
+<span class="nc" id="L95">                List&lt;Service&gt; list = new ArrayList&lt;Service&gt;();</span>
+<span class="nc" id="L96">                list.add(service);</span>
+<span class="nc" id="L97">                req.setAttribute(&quot;services&quot;, list);</span>
+<span class="nc" id="L98">            }else {</span>
+<span class="nc" id="L99">                req.setAttribute(&quot;services&quot;, store.getServices());</span>
+            }
+
+<span class="nc" id="L102">        } catch (Exception e) {</span>
+<span class="nc" id="L103">            req.setAttribute(&quot;services&quot;, Util.orderAlphabeticallyByServiceName(store.getServices()));</span>
+<span class="nc" id="L104">        }</span>
+        
+<span class="nc" id="L106">        req.setAttribute(&quot;allservices&quot;, Util.orderAlphabeticallyByServiceName(store.getServices()));</span>
+<span class="nc" id="L107">        RequestDispatcher dispatch = req.getRequestDispatcher(&quot;mobi.jsp&quot;);</span>
+<span class="nc" id="L108">        dispatch.forward(req, resp);</span>
+        
+<span class="nc" id="L110">    }</span>
+
+}
+</pre><div class="footer"><span class="right">Created with <a href="http://www.jacoco.org/jacoco">JaCoCo</a> 0.8.1.201803210924</span></div></body></html>

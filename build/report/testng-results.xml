@@ -1,0 +1,128 @@
+<testng-results>
+  <reporter-output>
+  </reporter-output>
+  <suite name="Ant suite">
+    <groups>
+    </groups>
+    <test name="Ant test">
+      <class name="com.mockey.model.ServiceTest">
+        <test-method status="PASS" signature="addRealUrlsToService()" name="addRealUrlsToService" duration-ms="0" started-at="2018-05-12T17:45:32Z" finished-at="2018-05-12T17:45:32Z">
+        </test-method>
+        <test-method status="PASS" signature="addTagListToService()" name="addTagListToService" duration-ms="1" started-at="2018-05-12T17:45:32Z" finished-at="2018-05-12T17:45:32Z">
+        </test-method>
+        <test-method status="PASS" signature="removeTagsFromService()" name="removeTagsFromService" duration-ms="0" started-at="2018-05-12T17:45:32Z" finished-at="2018-05-12T17:45:32Z">
+        </test-method>
+        <test-method status="PASS" signature="addTagsToService()" name="addTagsToService" duration-ms="0" started-at="2018-05-12T17:45:32Z" finished-at="2018-05-12T17:45:32Z">
+        </test-method>
+        <test-method status="PASS" signature="addSpaceTagListToService()" name="addSpaceTagListToService" duration-ms="0" started-at="2018-05-12T17:45:32Z" finished-at="2018-05-12T17:45:32Z">
+        </test-method>
+      </class>
+      <class name="com.mockey.model.ConflictInfoTest">
+        <test-method status="PASS" signature="checkDuplicateScenarioConflict()" name="checkDuplicateScenarioConflict" duration-ms="0" started-at="2018-05-12T17:45:32Z" finished-at="2018-05-12T17:45:32Z">
+        </test-method>
+        <test-method status="PASS" signature="checkServiceConflict()" name="checkServiceConflict" duration-ms="1" started-at="2018-05-12T17:45:32Z" finished-at="2018-05-12T17:45:32Z">
+        </test-method>
+      </class>
+      <class name="com.mockey.model.UriTemplateTest">
+        <test-method status="PASS" signature="validateMultipleVariablesInURL()" name="validateMultipleVariablesInURL" duration-ms="0" started-at="2018-05-12T17:45:32Z" finished-at="2018-05-12T17:45:32Z">
+        </test-method>
+        <test-method status="PASS" signature="validateOddMatchVariablesInURL()" name="validateOddMatchVariablesInURL" duration-ms="1" started-at="2018-05-12T17:45:32Z" finished-at="2018-05-12T17:45:32Z">
+        </test-method>
+        <test-method status="PASS" signature="validateSimpleURL()" name="validateSimpleURL" duration-ms="0" started-at="2018-05-12T17:45:32Z" finished-at="2018-05-12T17:45:32Z">
+        </test-method>
+        <test-method status="PASS" signature="validateParametizedUrl()" name="validateParametizedUrl" duration-ms="0" started-at="2018-05-12T17:45:32Z" finished-at="2018-05-12T17:45:32Z">
+        </test-method>
+        <test-method status="PASS" signature="validateCaseInsensitiveVariablesInURL()" name="validateCaseInsensitiveVariablesInURL" duration-ms="2" started-at="2018-05-12T17:45:32Z" finished-at="2018-05-12T17:45:32Z">
+        </test-method>
+      </class>
+      <class name="com.mockey.MockServiceBeanTest">
+        <test-method status="PASS" signature="parsesSchemeFromRealServiceUrl()" name="parsesSchemeFromRealServiceUrl" duration-ms="1" started-at="2018-05-12T17:45:32Z" finished-at="2018-05-12T17:45:32Z">
+        </test-method>
+        <test-method status="PASS" signature="parsesRealServiceUrlIntoHostAndPath()" name="parsesRealServiceUrlIntoHostAndPath" duration-ms="3" started-at="2018-05-12T17:45:32Z" finished-at="2018-05-12T17:45:32Z">
+        </test-method>
+      </class>
+      <class name="com.mockey.plugin.TestPluginStore">
+        <test-method status="PASS" signature="testInstanceCreator()" name="testInstanceCreator" duration-ms="0" started-at="2018-05-12T17:45:32Z" finished-at="2018-05-12T17:45:32Z">
+        </test-method>
+        <test-method status="PASS" signature="testForDuplicateRequestInspectorClassNames()" name="testForDuplicateRequestInspectorClassNames" duration-ms="0" started-at="2018-05-12T17:45:32Z" finished-at="2018-05-12T17:45:32Z">
+        </test-method>
+        <test-method status="PASS" signature="testRequestInspector()" name="testRequestInspector" duration-ms="1" started-at="2018-05-12T17:45:32Z" finished-at="2018-05-12T17:45:32Z">
+        </test-method>
+      </class>
+      <class name="com.mockey.model.ScenarioTest">
+        <test-method status="PASS" signature="addCheckNotSameScenario()" name="addCheckNotSameScenario" duration-ms="0" started-at="2018-05-12T17:45:32Z" finished-at="2018-05-12T17:45:32Z">
+        </test-method>
+        <test-method status="PASS" signature="addCheckSameScenario()" name="addCheckSameScenario" duration-ms="0" started-at="2018-05-12T17:45:32Z" finished-at="2018-05-12T17:45:32Z">
+        </test-method>
+        <test-method status="PASS" signature="addTagsToScenario()" name="addTagsToScenario" duration-ms="0" started-at="2018-05-12T17:45:32Z" finished-at="2018-05-12T17:45:32Z">
+        </test-method>
+        <test-method status="PASS" signature="testdHeaderValue()" name="testdHeaderValue" duration-ms="0" started-at="2018-05-12T17:45:32Z" finished-at="2018-05-12T17:45:32Z">
+        </test-method>
+        <test-method status="PASS" signature="checkAlphabeticOrderOfTags()" name="checkAlphabeticOrderOfTags" duration-ms="1" started-at="2018-05-12T17:45:32Z" finished-at="2018-05-12T17:45:32Z">
+        </test-method>
+      </class>
+      <class name="com.mockey.plugin.TestPackageInfoPeerClassFinder">
+        <test-method status="PASS" signature="testGetPackageNameFromPackageInfoClass()" name="testGetPackageNameFromPackageInfoClass" duration-ms="0" started-at="2018-05-12T17:45:32Z" finished-at="2018-05-12T17:45:32Z">
+        </test-method>
+        <test-method status="PASS" signature="testCleanClassName()" name="testCleanClassName" duration-ms="1" started-at="2018-05-12T17:45:32Z" finished-at="2018-05-12T17:45:32Z">
+        </test-method>
+      </class>
+      <class name="com.mockey.util.UrlTest">
+        <test-method status="PASS" signature="validateEmptySetings()" name="validateEmptySetings" duration-ms="0" started-at="2018-05-12T17:45:32Z" finished-at="2018-05-12T17:45:32Z">
+        </test-method>
+        <test-method status="PASS" signature="parsesFullUrl()" name="parsesFullUrl" duration-ms="0" started-at="2018-05-12T17:45:32Z" finished-at="2018-05-12T17:45:32Z">
+        </test-method>
+        <test-method status="PASS" signature="extractMockUrlFromFullUrl()" name="extractMockUrlFromFullUrl" duration-ms="1" started-at="2018-05-12T17:45:32Z" finished-at="2018-05-12T17:45:32Z">
+        </test-method>
+        <test-method status="PASS" signature="parsesPortFromUrl()" name="parsesPortFromUrl" duration-ms="0" started-at="2018-05-12T17:45:32Z" finished-at="2018-05-12T17:45:32Z">
+        </test-method>
+        <test-method status="PASS" signature="replacesEmptyPathWithSlash()" name="replacesEmptyPathWithSlash" duration-ms="0" started-at="2018-05-12T17:45:32Z" finished-at="2018-05-12T17:45:32Z">
+        </test-method>
+      </class>
+      <class name="com.mockey.model.ProxyServerModelTest">
+        <test-method status="PASS" signature="validateSettingChecker()" name="validateSettingChecker" duration-ms="1" started-at="2018-05-12T17:45:32Z" finished-at="2018-05-12T17:45:32Z">
+        </test-method>
+      </class>
+      <class name="com.mockey.storage.xml.MockeyXmlFileManagerTest">
+        <test-method status="PASS" signature="validateServiceScenarioFile()" name="validateServiceScenarioFile" duration-ms="1" started-at="2018-05-12T17:45:32Z" finished-at="2018-05-12T17:45:32Z">
+        </test-method>
+        <test-method status="PASS" signature="validateDefaultBasePath()" name="validateDefaultBasePath" duration-ms="0" started-at="2018-05-12T17:45:32Z" finished-at="2018-05-12T17:45:32Z">
+        </test-method>
+        <test-method status="PASS" signature="validateServiceAdd()" name="validateServiceAdd" duration-ms="0" started-at="2018-05-12T17:45:32Z" finished-at="2018-05-12T17:45:32Z">
+        </test-method>
+        <test-method status="PASS" signature="checkForConflictingServiceName()" name="checkForConflictingServiceName" duration-ms="137" started-at="2018-05-12T17:45:32Z" finished-at="2018-05-12T17:45:32Z">
+        </test-method>
+        <test-method status="PASS" signature="checkProxyAdditionMsg()" name="checkProxyAdditionMsg" duration-ms="12" started-at="2018-05-12T17:45:32Z" finished-at="2018-05-12T17:45:32Z">
+        </test-method>
+        <test-method status="PASS" signature="checkForRelativePath()" name="checkForRelativePath" duration-ms="1" started-at="2018-05-12T17:45:32Z" finished-at="2018-05-12T17:45:32Z">
+        </test-method>
+        <test-method status="PASS" signature="checkForMergedServiceTags()" name="checkForMergedServiceTags" duration-ms="7" started-at="2018-05-12T17:45:32Z" finished-at="2018-05-12T17:45:32Z">
+        </test-method>
+        <test-method status="PASS" signature="validateServiceFileWithNewBasePath()" name="validateServiceFileWithNewBasePath" duration-ms="3" started-at="2018-05-12T17:45:32Z" finished-at="2018-05-12T17:45:32Z">
+        </test-method>
+        <test-method status="PASS" signature="checkForMergedRealUrls()" name="checkForMergedRealUrls" duration-ms="13" started-at="2018-05-12T17:45:32Z" finished-at="2018-05-12T17:45:32Z">
+        </test-method>
+        <test-method status="PASS" signature="validateNewBasePath()" name="validateNewBasePath" duration-ms="1" started-at="2018-05-12T17:45:32Z" finished-at="2018-05-12T17:45:32Z">
+        </test-method>
+        <test-method status="PASS" signature="checkForMergedServiceScenarioTags()" name="checkForMergedServiceScenarioTags" duration-ms="13" started-at="2018-05-12T17:45:32Z" finished-at="2018-05-12T17:45:32Z">
+        </test-method>
+      </class>
+      <class name="com.mockey.util.ServiceStatHelperTest">
+        <test-method status="PASS" signature="testInBetween()" name="testInBetween" duration-ms="1" started-at="2018-05-12T17:45:32Z" finished-at="2018-05-12T17:45:32Z">
+        </test-method>
+        <test-method status="PASS" signature="testGetDateFromString()" name="testGetDateFromString" duration-ms="0" started-at="2018-05-12T17:45:32Z" finished-at="2018-05-12T17:45:32Z">
+        </test-method>
+      </class>
+      <class name="com.mockey.SearchResultBuilderTest">
+        <test-method status="PASS" signature="validateSearchResultScenarioContent()" name="validateSearchResultScenarioContent" duration-ms="2" started-at="2018-05-12T17:45:32Z" finished-at="2018-05-12T17:45:32Z">
+        </test-method>
+        <test-method status="PASS" signature="validateSearchResultByName()" name="validateSearchResultByName" duration-ms="28" started-at="2018-05-12T17:45:32Z" finished-at="2018-05-12T17:45:32Z">
+        </test-method>
+        <test-method status="PASS" signature="validateSearchResultByServicePlanTag()" name="validateSearchResultByServicePlanTag" duration-ms="1" started-at="2018-05-12T17:45:32Z" finished-at="2018-05-12T17:45:32Z">
+        </test-method>
+        <test-method status="PASS" signature="validateSearchResultByServiceTag()" name="validateSearchResultByServiceTag" duration-ms="1" started-at="2018-05-12T17:45:32Z" finished-at="2018-05-12T17:45:32Z">
+        </test-method>
+      </class>
+    </test>
+  </suite>
+</testng-results>

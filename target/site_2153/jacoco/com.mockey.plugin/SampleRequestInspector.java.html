@@ -1,0 +1,91 @@
+<?xml version="1.0" encoding="UTF-8"?><!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Strict//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-strict.dtd"><html xmlns="http://www.w3.org/1999/xhtml" lang="zh"><head><meta http-equiv="Content-Type" content="text/html;charset=UTF-8"/><link rel="stylesheet" href="../jacoco-resources/report.css" type="text/css"/><link rel="shortcut icon" href="../jacoco-resources/report.gif" type="image/gif"/><title>SampleRequestInspector.java</title><link rel="stylesheet" href="../jacoco-resources/prettify.css" type="text/css"/><script type="text/javascript" src="../jacoco-resources/prettify.js"></script></head><body onload="window['PR_TAB_WIDTH']=4;prettyPrint()"><div class="breadcrumb" id="breadcrumb"><span class="info"><a href="../jacoco-sessions.html" class="el_session">Sessions</a></span><a href="../index.html" class="el_report">JaCoCo Ant Example</a> &gt; <a href="index.source.html" class="el_package">com.mockey.plugin</a> &gt; <span class="el_source">SampleRequestInspector.java</span></div><h1>SampleRequestInspector.java</h1><pre class="source lang-java linenums">/*
+ * This file is part of Mockey, a tool for testing application 
+ * interactions over HTTP, with a focus on testing web services, 
+ * specifically web applications that consume XML, JSON, and HTML.
+ *  
+ * Copyright (C) 2012  Authors:
+ * 
+ * chad.lafontaine (chad.lafontaine AT gmail DOT com)
+ * 
+ * This program is free software; you can redistribute it and/or
+ * modify it under the terms of the GNU General Public License
+ * as published by the Free Software Foundation; either version 2
+ * of the License, or (at your option) any later version.
+ * 
+ * This program is distributed in the hope that it will be useful,
+ * but WITHOUT ANY WARRANTY; without even the implied warranty of
+ * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+ * GNU General Public License for more details.
+ * 
+ * You should have received a copy of the GNU General Public License
+ * along with this program; if not, write to the Free Software
+ * Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301, USA.
+ *
+ */
+package com.mockey.plugin;
+
+
+import java.util.Map;
+
+import org.apache.log4j.Logger;
+
+import com.mockey.model.RequestFromClient;
+
+/**
+ * This is a sample implementation of the &lt;code&gt;IRequestInspector&lt;/code&gt;
+ * 
+ * @author chadlafontaine
+ * 
+ */
+<span class="nc" id="L40">public class SampleRequestInspector implements IRequestInspector {</span>
+<span class="fc" id="L41">	private static Logger logger = Logger.getLogger(SampleRequestInspector.class);</span>
+
+<span class="nc" id="L43">	private final String FOOBAAR = &quot;foobarKey&quot;;</span>
+<span class="nc" id="L44">	private String errorMessage = null;</span>
+
+	/**
+	 * Any time someone passes in a 'foobarKey' as a parameter, then this
+	 * inspector will build a message.
+	 */
+	public void analyze(RequestFromClient request) {
+<span class="nc" id="L51">		Map&lt;String, String[]&gt; parametersAsMap = request.getParameters();</span>
+<span class="nc bnc" id="L52" title="All 2 branches missed.">		if (parametersAsMap.get(FOOBAAR) != null) {</span>
+<span class="nc" id="L53">			this.errorMessage = &quot;Howdy! This isn't a real error. &quot;</span>
+					+&quot;This is here to show you that you can use Request Inspectors to validate incoming requests. &quot;
+					+&quot;You are seeing this message because the request parameter '&quot;+FOOBAAR+&quot;' was in the request.&quot;;
+<span class="nc" id="L56">			logger.error(this.errorMessage);</span>
+		}
+
+<span class="nc" id="L59">	}</span>
+
+	/**
+	 * 
+	 * @return true if the message is not null or empty, otherwise false
+	 * @see #getPostAnalyzeResultMessage()
+	 */
+	public boolean hasPostAnalyzeMessage() {
+<span class="nc bnc" id="L67" title="All 2 branches missed.">		if (this.errorMessage != null) {</span>
+<span class="nc" id="L68">			return true;</span>
+		} else {
+<span class="nc" id="L70">			return false;</span>
+		}
+
+	}
+
+	/**
+	 * @return String if a message is available, otherwise null
+	 */
+	public String getPostAnalyzeResultMessage() {
+<span class="nc" id="L79">		return this.errorMessage;</span>
+	}
+
+	/**
+	 * Applicable to all incoming requests
+	 */
+	public boolean isGlobal() {
+<span class="nc" id="L86">		return true;</span>
+	}
+
+}
+
+</pre><div class="footer"><span class="right">Created with <a href="http://www.jacoco.org/jacoco">JaCoCo</a> 0.8.1.201803210924</span></div></body></html>

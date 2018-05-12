@@ -1,0 +1,212 @@
+<?xml version="1.0" encoding="UTF-8"?><!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Strict//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-strict.dtd"><html xmlns="http://www.w3.org/1999/xhtml" lang="zh"><head><meta http-equiv="Content-Type" content="text/html;charset=UTF-8"/><link rel="stylesheet" href="../jacoco-resources/report.css" type="text/css"/><link rel="shortcut icon" href="../jacoco-resources/report.gif" type="image/gif"/><title>HttpStatusCodeStore.java</title><link rel="stylesheet" href="../jacoco-resources/prettify.css" type="text/css"/><script type="text/javascript" src="../jacoco-resources/prettify.js"></script></head><body onload="window['PR_TAB_WIDTH']=4;prettyPrint()"><div class="breadcrumb" id="breadcrumb"><span class="info"><a href="../jacoco-sessions.html" class="el_session">Sessions</a></span><a href="../index.html" class="el_report">JaCoCo Ant Example</a> &gt; <a href="index.source.html" class="el_package">com.mockey.model</a> &gt; <span class="el_source">HttpStatusCodeStore.java</span></div><h1>HttpStatusCodeStore.java</h1><pre class="source lang-java linenums">/*
+ * This file is part of Mockey, a tool for testing application 
+ * interactions over HTTP, with a focus on testing web services, 
+ * specifically web applications that consume XML, JSON, and HTML.
+ *  
+ * Copyright (C) 2009-2010  Authors:
+ * 
+ * chad.lafontaine (chad.lafontaine AT gmail DOT com)
+ * neil.cronin (neil AT rackle DOT com) 
+ * lorin.kobashigawa (lkb AT kgawa DOT com)
+ * rob.meyer (rob AT bigdis DOT com)
+ * 
+ * This program is free software; you can redistribute it and/or
+ * modify it under the terms of the GNU General Public License
+ * as published by the Free Software Foundation; either version 2
+ * of the License, or (at your option) any later version.
+ * 
+ * This program is distributed in the hope that it will be useful,
+ * but WITHOUT ANY WARRANTY; without even the implied warranty of
+ * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+ * GNU General Public License for more details.
+ * 
+ * You should have received a copy of the GNU General Public License
+ * along with this program; if not, write to the Free Software
+ * Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301, USA.
+ *
+ */
+package com.mockey.model;
+
+import java.util.ArrayList;
+import java.util.Collections;
+import java.util.Comparator;
+import java.util.List;
+
+import javax.servlet.http.HttpServletResponse;
+
+/**
+ * Convenience class 
+ * @author chadlafontaine
+ *
+ */
+public class HttpStatusCodeStore {
+
+<span class="fc" id="L44">	private List&lt;StatusCodeEntry&gt; store = new ArrayList&lt;StatusCodeEntry&gt;();</span>
+<span class="fc" id="L45">	private static HttpStatusCodeStore instance = new HttpStatusCodeStore();</span>
+
+	public static HttpStatusCodeStore getInstance() {
+<span class="fc" id="L48">		return instance;</span>
+	}
+
+<span class="fc" id="L51">	private HttpStatusCodeStore() {</span>
+<span class="fc" id="L52">		this.add(HttpServletResponse.SC_ACCEPTED, &quot;202:  a request was accepted for processing, but was not completed.&quot;);</span>
+<span class="fc" id="L53">		this.add(HttpServletResponse.SC_BAD_GATEWAY </span>
+		, &quot;502:the HTTP server received an invalid response from a server it consulted when acting as a proxy or gateway.&quot;);
+<span class="fc" id="L55">		this.add(HttpServletResponse.SC_BAD_REQUEST </span>
+		, &quot;400:indicating the request sent by the client was syntactically incorrect.&quot;);
+<span class="fc" id="L57">		this.add(HttpServletResponse.SC_CONFLICT </span>
+		, &quot;409:the request could not be completed due to a conflict with the current state of the resource.&quot;);
+<span class="fc" id="L59">		this.add(HttpServletResponse.SC_CONTINUE </span>
+		, &quot;100:indicating the client can continue.&quot;);
+<span class="fc" id="L61">		this.add(HttpServletResponse.SC_CREATED </span>
+		, &quot;201:indicating the request succeeded and created a new resource on the server.&quot;);
+<span class="fc" id="L63">		this.add(HttpServletResponse.SC_EXPECTATION_FAILED </span>
+		, &quot;417:the server could not meet the expectation given in the Expect request header.&quot;);
+<span class="fc" id="L65">		this.add(HttpServletResponse.SC_FORBIDDEN </span>
+		, &quot;403:indicating the server understood the request but refused to fulfill it.&quot;);
+<span class="fc" id="L67">		this.add(HttpServletResponse.SC_FOUND </span>
+		, &quot;302:the resource reside temporarily under a different URI.&quot;);
+<span class="fc" id="L69">		this.add(HttpServletResponse.SC_GATEWAY_TIMEOUT </span>
+		, &quot;504:the server did not receive a timely response from the upstream server while acting as a gateway or proxy.&quot;);
+<span class="fc" id="L71">		this.add(HttpServletResponse.SC_GONE </span>
+		, &quot;410:the resource is no longer available at the server and no forwarding address is known.&quot;);
+<span class="fc" id="L73">		this.add(HttpServletResponse.SC_HTTP_VERSION_NOT_SUPPORTED </span>
+		, &quot;505:the server does not support or refuses to support the HTTP protocol version that was used in the request message.&quot;);
+<span class="fc" id="L75">		this.add(HttpServletResponse.SC_INTERNAL_SERVER_ERROR </span>
+		, &quot;500:indicating an error inside the HTTP server which prevented it from fulfilling the request.&quot;);
+<span class="fc" id="L77">		this.add(HttpServletResponse.SC_LENGTH_REQUIRED </span>
+		, &quot;411:the request cannot be handled without a defined Content-Length.&quot;);
+<span class="fc" id="L79">		this.add(HttpServletResponse.SC_METHOD_NOT_ALLOWED </span>
+		, &quot;405:the method specified in the Request-Line is not allowed for the resource identified by the Request-URI.&quot;);
+<span class="fc" id="L81">		this.add(HttpServletResponse.SC_MOVED_PERMANENTLY </span>
+		, &quot;301:the resource has permanently moved to a new location, and that future references should use a new URI with their requests.&quot;);
+<span class="fc" id="L83">		this.add(HttpServletResponse.SC_MOVED_TEMPORARILY </span>
+		, &quot;302:the resource has temporarily moved to another location, but that future references should still use the original URI to access the resource.&quot;);
+<span class="fc" id="L85">		this.add(HttpServletResponse.SC_MULTIPLE_CHOICES </span>
+		, &quot;300:the requested resource corresponds to any one of a set of representations, each with its own specific location.&quot;);
+<span class="fc" id="L87">		this.add(HttpServletResponse.SC_NO_CONTENT </span>
+		, &quot;204:the request succeeded but that there was no new information to return.&quot;);
+<span class="fc" id="L89">		this.add(HttpServletResponse.SC_NON_AUTHORITATIVE_INFORMATION </span>
+		, &quot;203:the meta information presented by the client did not originate from the server.&quot;);
+<span class="fc" id="L91">		this.add(HttpServletResponse.SC_NOT_ACCEPTABLE </span>
+		, &quot;406:the resource identified by the request is only capable of generating response entities which have content characteristics not acceptable according to the accept headers sent in the request.&quot;);
+<span class="fc" id="L93">		this.add(HttpServletResponse.SC_NOT_FOUND </span>
+		, &quot;404:the requested resource is not available.&quot;);
+<span class="fc" id="L95">		this.add(HttpServletResponse.SC_NOT_IMPLEMENTED </span>
+		, &quot;501:indicating the HTTP server does not support the functionality needed to fulfill the request.&quot;);
+<span class="fc" id="L97">		this.add(HttpServletResponse.SC_NOT_MODIFIED </span>
+		, &quot;304:a conditional GET operation found that the resource was available and not modified.&quot;);
+<span class="fc" id="L99">		this.add(HttpServletResponse.SC_OK </span>
+		, &quot;200:indicating the request succeeded normally.&quot;);
+<span class="fc" id="L101">		this.add(HttpServletResponse.SC_PARTIAL_CONTENT </span>
+		, &quot;206:the server has fulfilled the partial GET request for the resource.&quot;);
+<span class="fc" id="L103">		this.add(HttpServletResponse.SC_PAYMENT_REQUIRED </span>
+		, &quot;402:reserved for future use.&quot;);
+<span class="fc" id="L105">		this.add(HttpServletResponse.SC_PRECONDITION_FAILED </span>
+		, &quot;412:the precondition given in one or more of the request-header fields evaluated to false when it was tested on the server.&quot;);
+<span class="fc" id="L107">		this.add(HttpServletResponse.SC_PROXY_AUTHENTICATION_REQUIRED </span>
+		, &quot;407:the client MUST first authenticate itself with the proxy.&quot;);
+<span class="fc" id="L109">		this.add(HttpServletResponse.SC_REQUEST_ENTITY_TOO_LARGE </span>
+		, &quot;413:the server is refusing to process the request because the request entity is larger than the server is willing or able to process.&quot;);
+<span class="fc" id="L111">		this.add(HttpServletResponse.SC_REQUEST_TIMEOUT </span>
+		, &quot;408:the client did not produce a request within the time that the server was prepared to wait.&quot;);
+<span class="fc" id="L113">		this.add(HttpServletResponse.SC_REQUEST_URI_TOO_LONG </span>
+		, &quot;414:the server is refusing to service the request because the Request-URI is longer than the server is willing to interpret.&quot;);
+<span class="fc" id="L115">		this.add(HttpServletResponse.SC_REQUESTED_RANGE_NOT_SATISFIABLE </span>
+		, &quot;416:the server cannot serve the requested byte range.&quot;);
+<span class="fc" id="L117">		this.add(HttpServletResponse.SC_RESET_CONTENT </span>
+		, &quot;205:the agent SHOULD reset the document view which caused the request to be sent.&quot;);
+<span class="fc" id="L119">		this.add(HttpServletResponse.SC_SEE_OTHER </span>
+		, &quot;303:the response to the request can be found under a different URI.&quot;);
+<span class="fc" id="L121">		this.add(HttpServletResponse.SC_SERVICE_UNAVAILABLE </span>
+		, &quot;503:the HTTP server is temporarily overloaded, and unable to handle the request.&quot;);
+<span class="fc" id="L123">		this.add(HttpServletResponse.SC_SWITCHING_PROTOCOLS </span>
+		, &quot;101:indicating the server is switching protocols according to Upgrade header.&quot;);
+<span class="fc" id="L125">		this.add(HttpServletResponse.SC_TEMPORARY_REDIRECT </span>
+		, &quot;307:the requested resource resides temporarily under a different URI.&quot;);
+<span class="fc" id="L127">		this.add(HttpServletResponse.SC_UNAUTHORIZED </span>
+		, &quot;401:the request requires HTTP authentication.&quot;);
+<span class="fc" id="L129">		this.add(HttpServletResponse.SC_UNSUPPORTED_MEDIA_TYPE </span>
+		, &quot;415:the server is refusing to service the request because the entity of the request is in a format not supported by the requested resource for the requested method.&quot;);
+<span class="fc" id="L131">		this.add(HttpServletResponse.SC_USE_PROXY </span>
+		, &quot;305:the requested resource MUST be accessed through the proxy given by the Location field.&quot;);	
+<span class="fc" id="L133">	}</span>
+
+	private void add(int code, String text) {
+<span class="fc" id="L136">		store.add(new StatusCodeEntry(code, text));</span>
+<span class="fc" id="L137">	}</span>
+
+	public List&lt;StatusCodeEntry&gt; getCodeEntryList() {
+<span class="fc" id="L140">		return orderNumerically(store);</span>
+	}
+	
+	/**
+	 * Returns the services list ordered alphabetically.
+	 * 
+	 * @param services
+	 * @return
+	 */
+	@SuppressWarnings(&quot;unchecked&quot;)
+	private List&lt;StatusCodeEntry&gt; orderNumerically(
+			List&lt;StatusCodeEntry&gt; stringList) {
+
+<span class="fc" id="L153">		class IntComparator implements Comparator{</span>
+			   
+		    public int compare(Object emp1, Object emp2){
+		   
+		        /*
+		         * parameter are of type Object, so we have to downcast it
+		         * to Employee objects
+		         */
+		       
+<span class="fc" id="L162">		        int emp1Age = ((StatusCodeEntry)emp1).getCode();     </span>
+<span class="fc" id="L163">		        int emp2Age = ((StatusCodeEntry)emp2).getCode();</span>
+		       
+<span class="fc bfc" id="L165" title="All 2 branches covered.">		        if(emp1Age &gt; emp2Age)</span>
+<span class="fc" id="L166">		            return 1;</span>
+<span class="fc bfc" id="L167" title="All 2 branches covered.">		        else if(emp1Age &lt; emp2Age)</span>
+<span class="fc" id="L168">		            return -1;</span>
+		        else
+<span class="fc" id="L170">		            return 0;    </span>
+		    }
+		   
+		}
+		// Sort me.
+<span class="fc" id="L175">		Collections.sort(stringList, new IntComparator());</span>
+
+<span class="fc" id="L177">		return stringList;</span>
+	}
+
+	public class StatusCodeEntry {
+		private int code;
+		private String text;
+
+<span class="fc" id="L184">		StatusCodeEntry(int _code, String _text) {</span>
+<span class="fc" id="L185">			this.code = _code;</span>
+<span class="fc" id="L186">			this.text = _text;</span>
+<span class="fc" id="L187">		}</span>
+
+		public int getCode() {
+<span class="fc" id="L190">			return this.code;</span>
+		}
+
+		public String getText() {
+<span class="nc" id="L194">			return this.text;</span>
+		}
+
+	}
+
+	public StatusCodeEntry getStatusCodeEntry(int arg) {
+<span class="nc" id="L200">		StatusCodeEntry temp = null;</span>
+<span class="nc bnc" id="L201" title="All 2 branches missed.">		for (StatusCodeEntry sce : this.getCodeEntryList()) {</span>
+<span class="nc bnc" id="L202" title="All 2 branches missed.">			if (sce.getCode() == arg) {</span>
+<span class="nc" id="L203">				temp = sce;</span>
+<span class="nc" id="L204">				break;</span>
+			}
+<span class="nc" id="L206">		}</span>
+<span class="nc" id="L207">		return temp;</span>
+
+	}
+
+}
+</pre><div class="footer"><span class="right">Created with <a href="http://www.jacoco.org/jacoco">JaCoCo</a> 0.8.1.201803210924</span></div></body></html>

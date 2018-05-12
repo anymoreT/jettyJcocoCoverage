@@ -1,0 +1,391 @@
+<?xml version="1.0" encoding="UTF-8"?><!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Strict//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-strict.dtd"><html xmlns="http://www.w3.org/1999/xhtml" lang="zh"><head><meta http-equiv="Content-Type" content="text/html;charset=UTF-8"/><link rel="stylesheet" href="../jacoco-resources/report.css" type="text/css"/><link rel="shortcut icon" href="../jacoco-resources/report.gif" type="image/gif"/><title>ResponseFromService.java</title><link rel="stylesheet" href="../jacoco-resources/prettify.css" type="text/css"/><script type="text/javascript" src="../jacoco-resources/prettify.js"></script></head><body onload="window['PR_TAB_WIDTH']=4;prettyPrint()"><div class="breadcrumb" id="breadcrumb"><span class="info"><a href="../jacoco-sessions.html" class="el_session">Sessions</a></span><a href="../index.html" class="el_report">JaCoCo Ant Example</a> &gt; <a href="index.source.html" class="el_package">com.mockey.model</a> &gt; <span class="el_source">ResponseFromService.java</span></div><h1>ResponseFromService.java</h1><pre class="source lang-java linenums">/*
+ * This file is part of Mockey, a tool for testing application 
+ * interactions over HTTP, with a focus on testing web services, 
+ * specifically web applications that consume XML, JSON, and HTML.
+ *  
+ * Copyright (C) 2009-2010  Authors:
+ * 
+ * chad.lafontaine (chad.lafontaine AT gmail DOT com)
+ * neil.cronin (neil AT rackle DOT com) 
+ * lorin.kobashigawa (lkb AT kgawa DOT com)
+ * rob.meyer (rob AT bigdis DOT com)
+ * 
+ * This program is free software; you can redistribute it and/or
+ * modify it under the terms of the GNU General Public License
+ * as published by the Free Software Foundation; either version 2
+ * of the License, or (at your option) any later version.
+ * 
+ * This program is distributed in the hope that it will be useful,
+ * but WITHOUT ANY WARRANTY; without even the implied warranty of
+ * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+ * GNU General Public License for more details.
+ * 
+ * You should have received a copy of the GNU General Public License
+ * along with this program; if not, write to the Free Software
+ * Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301, USA.
+ *
+ */
+package com.mockey.model;
+
+import java.io.IOException;
+import java.io.PrintStream;
+import java.util.ArrayList;
+import java.util.List;
+
+import javax.servlet.http.Cookie;
+import javax.servlet.http.HttpServletResponse;
+
+import org.apache.commons.logging.Log;
+import org.apache.commons.logging.LogFactory;
+import org.apache.http.Header;
+import org.apache.http.HttpEntity;
+import org.apache.http.HttpResponse;
+
+import org.apache.http.protocol.HTTP;
+import org.apache.http.util.EntityUtils;
+
+import com.mockey.plugin.RequestInspectionResult;
+
+/**
+ * Wrapper with print and helper functions for a HTTP response message.
+ * 
+ * @author chad.lafontaine -
+ * 
+ */
+public class ResponseFromService {
+
+<span class="nc" id="L57">	private static final String[] IGNORE_HEADERS = { &quot;Transfer-Encoding&quot; };</span>
+
+<span class="nc" id="L59">	private Log log = LogFactory.getLog(ResponseFromService.class);</span>
+<span class="nc" id="L60">	private String scenarioName = null;</span>
+<span class="nc" id="L61">	private String scenarioTagsAsString = null;</span>
+	private String body;
+	private boolean valid;
+	private String errorMsg;
+	private Header[] headers;
+<span class="nc" id="L66">	private List&lt;Cookie&gt; cookieList = new ArrayList&lt;Cookie&gt;();</span>
+	private int httpResponseStatusCode;
+	private int serviceScenarioHangTime;
+	private Url originalRequestUrlBeforeTwisting;
+	private Url requestUrl;
+	private RequestInspectionResult requestInspectionResult;
+
+	/**
+	 * Empty constructor
+	 */
+<span class="nc" id="L76">	public ResponseFromService() {</span>
+<span class="nc" id="L77">	}</span>
+
+	/**
+	 * 
+	 * @param rsp
+	 *            - parses the response
+	 */
+<span class="nc" id="L84">	public ResponseFromService(HttpResponse rsp) {</span>
+<span class="nc" id="L85">		HttpEntity entity = rsp.getEntity();</span>
+
+<span class="nc" id="L87">		setHttpResponseStatusCode(rsp.getStatusLine().getStatusCode());</span>
+<span class="nc" id="L88">		headers = rsp.getAllHeaders();</span>
+<span class="nc" id="L89">		setHeaders(headers);</span>
+
+<span class="nc" id="L91">		setCookiesFromHeader(headers);</span>
+<span class="nc bnc" id="L92" title="All 2 branches missed.">		if (entity != null) {</span>
+			try {
+<span class="nc" id="L94">				setBody(EntityUtils.toString(entity));</span>
+<span class="nc" id="L95">			} catch (IOException e) {</span>
+<span class="nc" id="L96">				throw new IllegalStateException(&quot;Unable to parse response&quot;, e);</span>
+<span class="nc" id="L97">			}</span>
+<span class="nc" id="L98">			setValid(true);</span>
+		}
+
+<span class="nc" id="L101">	}</span>
+
+	/**
+	 * @return the responseMsg
+	 */
+	public String getBody() {
+<span class="nc" id="L107">		return body;</span>
+	}
+
+	/**
+	 * @param body
+	 *            the responseMsg to set
+	 */
+	public void setBody(String body) {
+<span class="nc" id="L115">		this.body = body;</span>
+<span class="nc" id="L116">	}</span>
+
+	/**
+	 * @return the valid
+	 */
+	public boolean isValid() {
+<span class="nc" id="L122">		return valid;</span>
+	}
+
+	/**
+	 * @param valid
+	 *            the valid to set
+	 */
+	public void setValid(boolean valid) {
+<span class="nc" id="L130">		this.valid = valid;</span>
+<span class="nc" id="L131">	}</span>
+
+	/**
+	 * @return the errorMsg
+	 */
+	public String getErrorMsg() {
+<span class="nc" id="L137">		return errorMsg;</span>
+	}
+
+	/**
+	 * @param errorMsg
+	 *            the errorMsg to set
+	 */
+	public void setErrorMsg(String errorMsg) {
+<span class="nc" id="L145">		this.errorMsg = errorMsg;</span>
+<span class="nc" id="L146">	}</span>
+
+	public void setHeaders(Header[] headers) {
+<span class="nc" id="L149">		this.headers = headers;</span>
+<span class="nc" id="L150">	}</span>
+
+	public Header[] getHeaders() {
+<span class="nc" id="L153">		return headers;</span>
+	}
+
+	/**
+	 * 
+	 * @return - pretty print header information.
+	 */
+	public String getHeaderInfo() {
+<span class="nc" id="L161">		StringBuffer sb = new StringBuffer();</span>
+<span class="nc bnc" id="L162" title="All 2 branches missed.">		if (headers != null) {</span>
+<span class="nc bnc" id="L163" title="All 2 branches missed.">			for (int i = 0; i &lt; headers.length; i++) {</span>
+<span class="nc" id="L164">				Header header = headers[i];</span>
+<span class="nc" id="L165">				sb.append(header.getName() + &quot;:&quot; + header.getValue());</span>
+<span class="nc bnc" id="L166" title="All 2 branches missed.">				if((i+1)&lt;headers.length){</span>
+<span class="nc" id="L167">					sb.append(&quot;|\n&quot;);</span>
+				}
+			}
+		}
+<span class="nc" id="L171">		return sb.toString();</span>
+	}
+
+	
+	public int getServiceScenarioHangTime() {
+<span class="nc" id="L176">		return serviceScenarioHangTime;</span>
+	}
+
+	public void setServiceScenarioHangTime(int serviceScenarioHangTime) {
+<span class="nc" id="L180">		this.serviceScenarioHangTime = serviceScenarioHangTime;</span>
+<span class="nc" id="L181">	}</span>
+
+	public void setHttpResponseStatusCode(int statusCode) {
+<span class="nc" id="L184">		this.httpResponseStatusCode = statusCode;</span>
+<span class="nc" id="L185">	}</span>
+
+	public int getHttpResponseStatusCode() {
+<span class="nc" id="L188">		return this.httpResponseStatusCode;</span>
+	}
+	
+	private void setCookiesFromHeader(Header[] headers){
+<span class="nc bnc" id="L192" title="All 2 branches missed.">		for (Header header : headers) {</span>
+			
+<span class="nc bnc" id="L194" title="All 2 branches missed.">			if (header.getName().equals(&quot;Set-Cookie&quot;)) {</span>
+<span class="nc" id="L195">				String headerValue = header.getValue();</span>
+	            // Parse cookie
+<span class="nc" id="L197">	            String[] fields = headerValue.split(&quot;;\\s*&quot;);</span>
+
+<span class="nc" id="L199">	            String expires = null;</span>
+<span class="nc" id="L200">	            String path = null;</span>
+<span class="nc" id="L201">	            String domain = null;</span>
+<span class="nc" id="L202">	            boolean secure = false;</span>
+<span class="nc" id="L203">				boolean httpOnly = false;</span>
+
+	            // Parse each field
+<span class="nc bnc" id="L206" title="All 2 branches missed.">	            for (int j=1; j&lt;fields.length; j++) {</span>
+<span class="nc bnc" id="L207" title="All 2 branches missed.">	                if (&quot;secure&quot;.equalsIgnoreCase(fields[j])) {</span>
+<span class="nc" id="L208">	                    secure = true;</span>
+<span class="nc bnc" id="L209" title="All 2 branches missed.">	                } else if (&quot;httpOnly&quot;.equalsIgnoreCase(fields[j])) {</span>
+<span class="nc" id="L210">	                    httpOnly = true;</span>
+<span class="nc bnc" id="L211" title="All 2 branches missed.">	                } else if (fields[j].indexOf('=') &gt; 0) {</span>
+<span class="nc" id="L212">	                    String[] f = fields[j].split(&quot;=&quot;);</span>
+<span class="nc bnc" id="L213" title="All 2 branches missed.">	                    if (&quot;expires&quot;.equalsIgnoreCase(f[0])) {</span>
+<span class="nc" id="L214">	                        expires = f[1];</span>
+<span class="nc bnc" id="L215" title="All 2 branches missed.">	                    } else if (&quot;domain&quot;.equalsIgnoreCase(f[0])) {</span>
+<span class="nc" id="L216">	                        domain = f[1];</span>
+<span class="nc bnc" id="L217" title="All 2 branches missed.">	                    } else if (&quot;path&quot;.equalsIgnoreCase(f[0])) {</span>
+<span class="nc" id="L218">	                        path = f[1];</span>
+	                    }
+	                }
+	            }
+
+<span class="nc" id="L223">	            String[] cookieParts = headerValue.split(&quot;=&quot;, 2);</span>
+<span class="nc" id="L224">				String cookieBody = cookieParts[1];</span>
+<span class="nc" id="L225">				String[] cookieBodyParts = cookieBody.split(&quot;; &quot;);</span>
+<span class="nc" id="L226">				Cookie cookie = new Cookie(cookieParts[0], cookieBodyParts[0]);</span>
+
+// Mockey currently manages cookies on behalf of the client.
+// There should be no need for the client to view the cookies.
+// For now, we only forward cookie name and value to the client.
+// If the need arises to forward additional cookie attributes,
+// uncomment and revisit the code below.
+//
+//				if (path != null) {
+//					cookie.setPath(path);
+//				}
+//				if (domain != null) {
+//					cookie.setDomain(domain);
+//				}
+//				cookie.setSecure(secure);
+//				cookie.setHttpOnly(httpOnly);
+//
+//				if(expires!=null){
+//				Date expiresTime = null;
+//				try {
+//					expiresTime = HttpCookieDateUtil.parseDate(expires);
+//					Date nowTime = new Date();
+//					long maxAge = nowTime.getTime() - expiresTime.getTime();
+//					cookie.setMaxAge((int) maxAge/1000);
+//				}catch(Exception e){
+//					log.error(&quot;Unable to calculate maxAge with expiration date &quot;+expiresTime, e);
+//				}
+//				}
+
+<span class="nc" id="L255">				this.cookieList.add(cookie);</span>
+	        }
+		
+		}
+<span class="nc" id="L259">	}</span>
+
+
+	public void writeToOutput(HttpServletResponse resp) throws IOException {
+		// copy the headers out
+<span class="nc bnc" id="L264" title="All 2 branches missed.">		if (headers != null) {</span>
+<span class="nc bnc" id="L265" title="All 2 branches missed.">			for (Header header : headers) {</span>
+
+				// copy the cookies
+<span class="nc bnc" id="L268" title="All 2 branches missed.">				if (ignoreHeader(header.getName())) {</span>
+<span class="nc" id="L269">					log.debug(&quot;Ignoring header: &quot; + header.getName());</span>
+<span class="nc bnc" id="L270" title="All 2 branches missed.">				} else if (header.getName().equalsIgnoreCase(&quot;Set-Cookie&quot;)) {</span>
+					// Ignore...
+<span class="nc bnc" id="L272" title="All 2 branches missed.">				} else if (header.getName().equals(&quot;Content-Type&quot;)) {</span>
+					// copy the content type
+<span class="nc" id="L274">					resp.setContentType(header.getValue());</span>
+				} else
+<span class="nc" id="L276">					resp.setHeader(header.getName(), header.getValue());</span>
+			}
+		}
+		
+		/*
+		 * HttpServletResponse adds double quotes to cookie values that
+		 * contain special characters. That throws off certain clients.
+		 * Therefore, build the Set-Cookie headers manually.
+		 */
+<span class="nc bnc" id="L285" title="All 2 branches missed.">		for (String setCookieHeaderValue: buildSetCookieHeaderValues()) {</span>
+<span class="nc" id="L286">			resp.addHeader(&quot;Set-Cookie&quot;, setCookieHeaderValue);</span>
+		}
+
+<span class="nc bnc" id="L289" title="All 2 branches missed.">		if (body != null) {</span>
+<span class="nc" id="L290">			byte[] myISO88591asBytes = body.getBytes(HTTP.ISO_8859_1);</span>
+<span class="nc" id="L291">			new PrintStream(resp.getOutputStream()).write(myISO88591asBytes);</span>
+<span class="nc" id="L292">			resp.getOutputStream().flush();</span>
+<span class="nc" id="L293">		} else {</span>
+<span class="nc" id="L294">			PrintStream out = new PrintStream(resp.getOutputStream());</span>
+<span class="nc" id="L295">			out.println(body);</span>
+		}
+
+<span class="nc" id="L298">	}</span>
+
+	private String[] buildSetCookieHeaderValues() {
+<span class="nc" id="L301">		String[] result = new String[cookieList.size()];</span>
+<span class="nc" id="L302">		int idx = 0;</span>
+<span class="nc bnc" id="L303" title="All 2 branches missed.">		for(Cookie cookie: this.cookieList){</span>
+<span class="nc" id="L304">			StringBuilder sb = new StringBuilder();</span>
+<span class="nc" id="L305">			sb.append(cookie.getName() + &quot;=&quot; + cookie.getValue());</span>
+<span class="nc bnc" id="L306" title="All 2 branches missed.">			if (cookie.getDomain() != null) {</span>
+<span class="nc" id="L307">				sb.append(&quot;; domain=&quot;);</span>
+<span class="nc" id="L308">				sb.append(cookie.getDomain());</span>
+			}
+<span class="nc bnc" id="L310" title="All 2 branches missed.">			if (cookie.getPath() != null) {</span>
+<span class="nc" id="L311">				sb.append(&quot;; path=&quot;);</span>
+<span class="nc" id="L312">				sb.append(cookie.getPath());</span>
+			}
+<span class="nc bnc" id="L314" title="All 2 branches missed.">			if (cookie.getSecure()) {</span>
+<span class="nc" id="L315">				sb.append(&quot;; secure&quot;);</span>
+			}
+			// TODO: upgrade to Server 3.0
+			/*
+			if (cookie.isHttpOnly()) {
+				sb.append(&quot;; httpOnly&quot;);
+			}
+			*/
+<span class="nc bnc" id="L323" title="All 2 branches missed.">			if (cookie.getMaxAge() &gt;= 0) {</span>
+<span class="nc" id="L324">				sb.append(&quot;; max-age=&quot;);</span>
+<span class="nc" id="L325">				sb.append(cookie.getMaxAge());</span>
+			}
+<span class="nc" id="L327">			result[idx++] = sb.toString();</span>
+<span class="nc" id="L328">		}</span>
+<span class="nc" id="L329">		return result;</span>
+	}
+
+	private boolean ignoreHeader(String name) {
+<span class="nc bnc" id="L333" title="All 2 branches missed.">		for (String header : IGNORE_HEADERS) {</span>
+<span class="nc bnc" id="L334" title="All 2 branches missed.">			if (header.equalsIgnoreCase(name)) {</span>
+<span class="nc" id="L335">				return true;</span>
+			}
+		}
+<span class="nc" id="L338">		return false;</span>
+	}
+
+	public void setOriginalRequestUrlBeforeTwisting(Url originalRequestUrlBeforeTwisting) {
+<span class="nc" id="L342">		this.originalRequestUrlBeforeTwisting = originalRequestUrlBeforeTwisting;</span>
+<span class="nc" id="L343">	}</span>
+
+	public Url getOriginalRequestUrlBeforeTwisting() {
+<span class="nc" id="L346">		return originalRequestUrlBeforeTwisting;</span>
+	}
+
+	public void setRequestUrl(Url requestUrl) {
+<span class="nc" id="L350">		this.requestUrl = requestUrl;</span>
+<span class="nc" id="L351">	}</span>
+
+	public Url getRequestUrl() {
+<span class="nc" id="L354">		return requestUrl;</span>
+	}
+
+	public String getResponseCookiesAsString() {
+<span class="nc" id="L358">		StringBuffer responseCookies = new StringBuffer();</span>
+<span class="nc bnc" id="L359" title="All 2 branches missed.">		for(Cookie cookie: this.cookieList){</span>
+<span class="nc" id="L360">			responseCookies.append(String.format(&quot;Cookie---&gt; %s = %s\n&quot;, cookie.getName(), cookie.getValue()));</span>
+<span class="nc" id="L361">		}</span>
+<span class="nc" id="L362">		return responseCookies.toString();</span>
+	}
+
+	public RequestInspectionResult getRequestInspectionResult() {
+<span class="nc" id="L366">		return requestInspectionResult;</span>
+	}
+
+	public void setRequestInspectionResult(RequestInspectionResult requestInspectionResult) {
+<span class="nc" id="L370">		this.requestInspectionResult = requestInspectionResult;</span>
+<span class="nc" id="L371">	}</span>
+
+	public String getScenarioName() {
+<span class="nc" id="L374">		return scenarioName;</span>
+	}
+
+	public void setScenarioName(String scenarioName) {
+<span class="nc" id="L378">		this.scenarioName = scenarioName;</span>
+<span class="nc" id="L379">	}</span>
+
+	public String getScenarioTagsAsString() {
+<span class="nc" id="L382">		return scenarioTagsAsString;</span>
+	}
+
+	public void setScenarioTagsAsString(String scenarioTagsAsString) {
+<span class="nc" id="L386">		this.scenarioTagsAsString = scenarioTagsAsString;</span>
+<span class="nc" id="L387">	}</span>
+	
+
+}
+</pre><div class="footer"><span class="right">Created with <a href="http://www.jacoco.org/jacoco">JaCoCo</a> 0.8.1.201803210924</span></div></body></html>

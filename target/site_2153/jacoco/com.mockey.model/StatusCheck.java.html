@@ -1,0 +1,234 @@
+<?xml version="1.0" encoding="UTF-8"?><!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Strict//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-strict.dtd"><html xmlns="http://www.w3.org/1999/xhtml" lang="zh"><head><meta http-equiv="Content-Type" content="text/html;charset=UTF-8"/><link rel="stylesheet" href="../jacoco-resources/report.css" type="text/css"/><link rel="shortcut icon" href="../jacoco-resources/report.gif" type="image/gif"/><title>StatusCheck.java</title><link rel="stylesheet" href="../jacoco-resources/prettify.css" type="text/css"/><script type="text/javascript" src="../jacoco-resources/prettify.js"></script></head><body onload="window['PR_TAB_WIDTH']=4;prettyPrint()"><div class="breadcrumb" id="breadcrumb"><span class="info"><a href="../jacoco-sessions.html" class="el_session">Sessions</a></span><a href="../index.html" class="el_report">JaCoCo Ant Example</a> &gt; <a href="index.source.html" class="el_package">com.mockey.model</a> &gt; <span class="el_source">StatusCheck.java</span></div><h1>StatusCheck.java</h1><pre class="source lang-java linenums">/*
+ * This file is part of Mockey, a tool for testing application 
+ * interactions over HTTP, with a focus on testing web services, 
+ * specifically web applications that consume XML, JSON, and HTML.
+ *  
+ * Copyright (C) 2009-2010  Authors:
+ * 
+ * chad.lafontaine (chad.lafontaine AT gmail DOT com)
+ * 
+ * This program is free software; you can redistribute it and/or
+ * modify it under the terms of the GNU General Public License
+ * as published by the Free Software Foundation; either version 2
+ * of the License, or (at your option) any later version.
+ * 
+ * This program is distributed in the hope that it will be useful,
+ * but WITHOUT ANY WARRANTY; without even the implied warranty of
+ * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+ * GNU General Public License for more details.
+ * 
+ * You should have received a copy of the GNU General Public License
+ * along with this program; if not, write to the Free Software
+ * Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301, USA.
+ *
+ */
+package com.mockey.model;
+
+import java.text.SimpleDateFormat;
+import java.util.ArrayList;
+import java.util.Collections;
+import java.util.Comparator;
+import java.util.Date;
+import java.util.List;
+
+/**
+ * Extend this class if you need to track meta information, which includes 'last
+ * visited' and 'tags'
+ * 
+ * @author chad.lafontaine
+ * 
+ */
+<span class="fc" id="L41">public abstract class StatusCheck {</span>
+
+<span class="fc" id="L43">	private List&lt;String&gt; tagList = new ArrayList&lt;String&gt;();</span>
+<span class="fc" id="L44">	private Long lastVisit = null;</span>
+<span class="fc" id="L45">	private final SimpleDateFormat formatter = new SimpleDateFormat(</span>
+			&quot;MM/dd/yyyy&quot;);
+
+	/**
+	 * Add tag to the list. Method ensures no duplication, space trimming, and
+	 * is case insensitive. Actually, this method will force lower-case
+	 * 
+	 * @param tag
+	 */
+	public void addTagToList(String tag) {
+
+<span class="nc" id="L56">		this.tagList = createUniqueLowercaseTagList(this.tagList, tag);</span>
+
+<span class="nc" id="L58">	}</span>
+
+	/**
+	 * Clear's tag list
+	 */
+	public void clearTagList() {
+<span class="nc" id="L64">		this.tagList = new ArrayList&lt;String&gt;();</span>
+<span class="nc" id="L65">	}</span>
+
+	/**
+	 * 
+	 * @param tag
+	 */
+	public void removeTagFromList(String tag) {
+
+<span class="nc bnc" id="L73" title="All 4 branches missed.">		if (tag != null &amp;&amp; tag.trim().length() &gt; 0) {</span>
+<span class="nc" id="L74">			String cleanTag = tag.toLowerCase().trim();</span>
+<span class="nc" id="L75">			String delims = &quot;[ ]+&quot;;</span>
+<span class="nc" id="L76">			String[] tokens = cleanTag.split(delims);</span>
+<span class="nc bnc" id="L77" title="All 2 branches missed.">			if (this.tagList != null) {</span>
+<span class="nc bnc" id="L78" title="All 2 branches missed.">				for (String arg : tokens) {</span>
+<span class="nc" id="L79">					this.tagList.remove(arg);</span>
+				}
+			}
+			
+			
+		}
+<span class="nc" id="L85">	}</span>
+
+	public List&lt;String&gt; getTagList() {
+<span class="nc" id="L88">		return this.tagList;</span>
+	}
+
+	public void setTagList(List&lt;String&gt; argTagList) {
+<span class="nc" id="L92">		this.tagList = createUniqueLowercaseTagList(argTagList, null);</span>
+<span class="nc" id="L93">	}</span>
+
+	public void setTag(String tag) {
+<span class="fc" id="L96">		this.tagList = createUniqueLowercaseTagList(null, tag);</span>
+<span class="fc" id="L97">	}</span>
+
+	/**
+	 * 
+	 * @return alphabetic ordered list
+	 */
+	public String getTag() {
+<span class="fc" id="L104">		StringBuffer sb = new StringBuffer();</span>
+		
+<span class="pc bpc" id="L106" title="1 of 2 branches missed.">		if (this.tagList != null) {</span>
+<span class="fc" id="L107">			List&lt;String&gt; orderedList = orderAlphabetically(this.tagList);</span>
+<span class="pc bpc" id="L108" title="1 of 2 branches missed.">			for (String arg : orderedList) {</span>
+<span class="nc" id="L109">				sb.append(arg + &quot; &quot;);</span>
+<span class="nc" id="L110">			}</span>
+		}
+<span class="fc" id="L112">		return sb.toString().trim().toLowerCase();</span>
+	}
+
+	public Long getLastVisit() {
+<span class="fc" id="L116">		return lastVisit;</span>
+	}
+
+	public void setLastVisit(Long lastVisited) {
+<span class="nc" id="L120">		this.lastVisit = lastVisited;</span>
+<span class="nc" id="L121">	}</span>
+
+	public boolean hasTag(String tag) {
+<span class="nc" id="L124">		boolean hasTag = false;</span>
+<span class="nc bnc" id="L125" title="All 4 branches missed.">		if (tag != null &amp;&amp; tag.trim().length() &gt; 0) {</span>
+<span class="nc" id="L126">			String cleanTag = tag.trim().toLowerCase();</span>
+<span class="nc" id="L127">			String delims = &quot;[ ]+&quot;;</span>
+<span class="nc" id="L128">			String[] tokens = cleanTag.split(delims);</span>
+<span class="nc bnc" id="L129" title="All 2 branches missed.">			for (String token : tokens) {</span>
+<span class="nc bnc" id="L130" title="All 2 branches missed.">				for (String tagArg : this.tagList) {</span>
+<span class="nc bnc" id="L131" title="All 2 branches missed.">					if (tagArg.equals(token)) {</span>
+<span class="nc" id="L132">						hasTag = true;</span>
+<span class="nc" id="L133">						return hasTag;</span>
+					}
+<span class="nc" id="L135">				}</span>
+			}
+		}
+<span class="nc" id="L138">		return hasTag;</span>
+
+	}
+
+	/**
+	 * 
+	 * @param tagList
+	 *            - can be null; if not null, then all values will be lower
+	 *            cased, duplicates removed, values trimmed. Example: [a, b, def
+	 *            def, HIG] will return a list of [a, b, def, hig]
+	 * @param tagArg
+	 *            - can be null; if not null, value will be split based on the
+	 *            'space' character. Example 'abc def' will have a return list
+	 *            value of 2
+	 * @return Always a String list containing 0 or more String values, each
+	 *         lower-case
+	 */
+	private List&lt;String&gt; createUniqueLowercaseTagList(List&lt;String&gt; tagList,
+			String tagArg) {
+
+		// LIST CLEAN
+<span class="fc" id="L159">		List&lt;String&gt; targetTagList = new ArrayList&lt;String&gt;();</span>
+<span class="pc bpc" id="L160" title="1 of 2 branches missed.">		if (tagList != null) {</span>
+			// REMOVE DUPLICATES AND ENSURE TO SPLIT VALUES BASED ON 'space'
+			// CHARACTER
+<span class="nc bnc" id="L163" title="All 2 branches missed.">			for (String obj : tagList) {</span>
+
+<span class="nc" id="L165">				String[] splitTagArg = obj.toLowerCase().trim().split(&quot; &quot;);</span>
+<span class="nc bnc" id="L166" title="All 2 branches missed.">				for (String cleanObj : splitTagArg) {</span>
+<span class="nc bnc" id="L167" title="All 2 branches missed.">					if (cleanObj.toLowerCase().trim().length() &gt; 0</span>
+<span class="nc bnc" id="L168" title="All 2 branches missed.">							&amp;&amp; !targetTagList.contains(cleanObj.toLowerCase()</span>
+<span class="nc" id="L169">									.trim())) {</span>
+<span class="nc" id="L170">						targetTagList.add(cleanObj);</span>
+					}
+				}
+<span class="nc" id="L173">			}</span>
+		}
+
+		// TAG HANDLING
+		//
+
+		// Let's make sure no duplicates, case-insensitive
+<span class="pc bpc" id="L180" title="1 of 2 branches missed.">		if (tagArg != null) {</span>
+<span class="fc" id="L181">			String[] splitTagArg = tagArg.toLowerCase().trim().split(&quot; &quot;);</span>
+<span class="fc bfc" id="L182" title="All 2 branches covered.">			for (String cleanTag : splitTagArg) {</span>
+<span class="pc bpc" id="L183" title="1 of 2 branches missed.">				if (cleanTag.toLowerCase().trim().length() &gt; 0</span>
+<span class="nc bnc" id="L184" title="All 2 branches missed.">						&amp;&amp; !targetTagList.contains(cleanTag.toLowerCase()</span>
+<span class="nc" id="L185">								.trim())) {</span>
+<span class="nc" id="L186">					targetTagList.add(cleanTag);</span>
+				}
+			}
+		}
+<span class="fc" id="L190">		return targetTagList;</span>
+
+	}
+
+	/**
+	 * Helper method.
+	 * 
+	 * @return if available, in MM/dd/yyyy format.
+	 */
+	public String getLastVisitSimple() {
+<span class="nc" id="L200">		String time = &quot;&quot;;</span>
+
+<span class="nc bnc" id="L202" title="All 4 branches missed.">		if (this.getLastVisit() != null &amp;&amp; this.getLastVisit() &gt; 0) {</span>
+<span class="nc" id="L203">			time = formatter.format(new Date(new Long(this.getLastVisit())));</span>
+		}
+<span class="nc" id="L205">		return time;</span>
+	}
+	
+	/**
+	 * Returns the services list ordered alphabetically.
+	 * 
+	 * @param services
+	 * @return
+	 */
+	private List&lt;String&gt; orderAlphabetically(
+			List&lt;String&gt; stringList) {
+
+		// Custom comparator
+<span class="fc" id="L218">		class StringComparator implements Comparator&lt;String&gt; {</span>
+
+			public int compare(String s1, String s2) {
+<span class="nc" id="L221">				return s1.compareToIgnoreCase(</span>
+						s2);
+
+			}
+
+		}
+		// Sort me.
+<span class="fc" id="L228">		Collections.sort(stringList, new StringComparator());</span>
+
+<span class="fc" id="L230">		return stringList;</span>
+	}
+
+}
+</pre><div class="footer"><span class="right">Created with <a href="http://www.jacoco.org/jacoco">JaCoCo</a> 0.8.1.201803210924</span></div></body></html>

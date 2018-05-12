@@ -1,0 +1,168 @@
+<?xml version="1.0" encoding="UTF-8"?><!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Strict//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-strict.dtd"><html xmlns="http://www.w3.org/1999/xhtml" lang="zh"><head><meta http-equiv="Content-Type" content="text/html;charset=UTF-8"/><link rel="stylesheet" href="../jacoco-resources/report.css" type="text/css"/><link rel="shortcut icon" href="../jacoco-resources/report.gif" type="image/gif"/><title>RedoRequestServlet.java</title><link rel="stylesheet" href="../jacoco-resources/prettify.css" type="text/css"/><script type="text/javascript" src="../jacoco-resources/prettify.js"></script></head><body onload="window['PR_TAB_WIDTH']=4;prettyPrint()"><div class="breadcrumb" id="breadcrumb"><span class="info"><a href="../jacoco-sessions.html" class="el_session">Sessions</a></span><a href="../index.html" class="el_report">JaCoCo Ant Example</a> &gt; <a href="index.source.html" class="el_package">com.mockey.server</a> &gt; <span class="el_source">RedoRequestServlet.java</span></div><h1>RedoRequestServlet.java</h1><pre class="source lang-java linenums">/*
+ * This file is part of Mockey, a tool for testing application 
+ * interactions over HTTP, with a focus on testing web services, 
+ * specifically web applications that consume XML, JSON, and HTML.
+ *  
+ * Copyright (C) 2009-2010  Authors:
+ * 
+ * chad.lafontaine (chad.lafontaine AT gmail DOT com)
+ * neil.cronin (neil AT rackle DOT com) 
+ * lorin.kobashigawa (lkb AT kgawa DOT com)
+ * rob.meyer (rob AT bigdis DOT com)
+ * 
+ * This program is free software; you can redistribute it and/or
+ * modify it under the terms of the GNU General Public License
+ * as published by the Free Software Foundation; either version 2
+ * of the License, or (at your option) any later version.
+ * 
+ * This program is distributed in the hope that it will be useful,
+ * but WITHOUT ANY WARRANTY; without even the implied warranty of
+ * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+ * GNU General Public License for more details.
+ * 
+ * You should have received a copy of the GNU General Public License
+ * along with this program; if not, write to the Free Software
+ * Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301, USA.
+ *
+ */
+package com.mockey.server;
+
+import java.io.IOException;
+import java.util.ArrayList;
+import java.util.List;
+import java.util.StringTokenizer;
+
+import javax.servlet.RequestDispatcher;
+import javax.servlet.ServletException;
+import javax.servlet.http.HttpServlet;
+import javax.servlet.http.HttpServletRequest;
+import javax.servlet.http.HttpServletResponse;
+
+import com.mockey.model.FulfilledClientRequest;
+import com.mockey.model.Url;
+import com.mockey.storage.IMockeyStorage;
+import com.mockey.storage.StorageRegistry;
+
+/**
+ * Responsible building a request and then calling for a server response.
+ * 
+ * @author chad.lafontaine
+ * 
+ */
+<span class="nc" id="L52">public class RedoRequestServlet extends HttpServlet {</span>
+
+	private static final long serialVersionUID = 7709751584129936447L;
+<span class="nc" id="L55">	private IMockeyStorage store = StorageRegistry.MockeyStorage;</span>
+
+	// private Logger logger = Logger.getLogger(RedoRequestServlet.class);
+	/**
+     * 
+     */
+	public void service(HttpServletRequest req, HttpServletResponse resp)
+			throws ServletException, IOException {
+<span class="nc" id="L63">		Long fulfilledClientRequestId = new Long(req</span>
+<span class="nc" id="L64">				.getParameter(&quot;fulfilledClientRequestId&quot;));</span>
+<span class="nc" id="L65">		FulfilledClientRequest pastFulfilledClientRequest = store</span>
+<span class="nc" id="L66">				.getFulfilledClientRequestsById(fulfilledClientRequestId);</span>
+<span class="nc" id="L67">		String pipeDelimitedHeaderInfo = req.getParameter(&quot;requestHeader&quot;);</span>
+<span class="nc" id="L68">		String parameters = req.getParameter(&quot;requestParameters&quot;);</span>
+<span class="nc" id="L69">		String body = req.getParameter(&quot;requestBody&quot;);</span>
+
+<span class="nc" id="L71">		Url serviceUrl = new Url(pastFulfilledClientRequest.getRawRequest());</span>
+<span class="nc" id="L72">		StringBuffer redoUrl = new StringBuffer();</span>
+
+		// 1. Cut out the parameters
+<span class="nc" id="L75">		String fullUrl = serviceUrl.getFullUrl();</span>
+<span class="nc" id="L76">		int indexOfParam = fullUrl.indexOf(&quot;?&quot;);</span>
+<span class="nc bnc" id="L77" title="All 2 branches missed.">		if (indexOfParam &gt; 0) {</span>
+<span class="nc" id="L78">			fullUrl = fullUrl.substring(0, indexOfParam);</span>
+		}
+<span class="nc" id="L80">		redoUrl.append(&quot;/service/&quot; + fullUrl);</span>
+
+<span class="nc" id="L82">		RedoRequestWrapper requestWrapper = new RedoRequestWrapper(req);</span>
+		// 2. Set the URI
+<span class="nc" id="L84">		String contextRoot = req.getContextPath();</span>
+<span class="nc bnc" id="L85" title="All 2 branches missed.">		if (!contextRoot.endsWith(&quot;/&quot;)) {</span>
+<span class="nc" id="L86">			contextRoot = contextRoot + &quot;/&quot;;</span>
+		}
+<span class="nc" id="L88">		String requestURI = contextRoot + &quot;service/&quot; + fullUrl;</span>
+<span class="nc" id="L89">		requestWrapper.setRequestURI(requestURI);</span>
+		// 3. Replace with new parameters.
+
+<span class="nc" id="L92">		List&lt;NameValuePair&gt; newParameters = buildNameValue(parameters);</span>
+<span class="nc bnc" id="L93" title="All 2 branches missed.">		for (int i = 0; i &lt; newParameters.size(); i++) {</span>
+<span class="nc" id="L94">			requestWrapper.addParameter(newParameters.get(i).getName(),</span>
+<span class="nc" id="L95">					newParameters.get(i).getValue());</span>
+		}
+		// 4. New Body
+<span class="nc" id="L98">		requestWrapper.setBody(body);</span>
+
+		// 5. Build headers
+<span class="nc" id="L101">		List&lt;NameValuePair&gt; headers = buildNameValue(pipeDelimitedHeaderInfo);</span>
+<span class="nc bnc" id="L102" title="All 2 branches missed.">		if (headers != null) {</span>
+<span class="nc bnc" id="L103" title="All 2 branches missed.">			for (int i = 0; i &lt; headers.size(); i++) {</span>
+<span class="nc" id="L104">				requestWrapper.addHeader(headers.get(i).getName(), headers.get(</span>
+<span class="nc" id="L105">						i).getValue());</span>
+			}
+		}
+		// String servletPath = requestWrapper.getServletPath();
+		// String requestUrl = requestWrapper.getRequestURL().toString();
+		// String requestUri = requestWrapper.getRequestURI();
+		// String queryString = requestWrapper.getQueryString();
+
+<span class="nc" id="L113">		String newPath = redoUrl.toString();</span>
+<span class="nc" id="L114">		RequestDispatcher requestDispatcher = requestWrapper</span>
+<span class="nc" id="L115">				.getRequestDispatcher(newPath); //</span>
+<span class="nc" id="L116">		requestDispatcher.forward(requestWrapper, resp);</span>
+
+<span class="nc" id="L118">	}</span>
+
+	private List&lt;NameValuePair&gt; buildNameValue(String pipeDelimitedHeaders) {
+<span class="nc" id="L121">		List&lt;NameValuePair&gt; list = new ArrayList&lt;NameValuePair&gt;();</span>
+<span class="nc" id="L122">		StringTokenizer st = new StringTokenizer(pipeDelimitedHeaders, &quot;|&quot;);</span>
+<span class="nc bnc" id="L123" title="All 2 branches missed.">		while (st.hasMoreTokens()) {</span>
+<span class="nc" id="L124">			String nameValuePair = st.nextToken();</span>
+<span class="nc" id="L125">			int equalsIndex = nameValuePair.indexOf(&quot;=&quot;);</span>
+<span class="nc bnc" id="L126" title="All 2 branches missed.">			if (equalsIndex &gt; -1) {</span>
+<span class="nc" id="L127">				String name = nameValuePair.substring(0, equalsIndex);</span>
+<span class="nc" id="L128">				String value = nameValuePair.substring(equalsIndex + 1);</span>
+<span class="nc" id="L129">				NameValuePair pair = new NameValuePair(name, value);</span>
+<span class="nc" id="L130">				list.add(pair);</span>
+			}
+<span class="nc" id="L132">		}</span>
+<span class="nc" id="L133">		return list;</span>
+	}
+
+	private class NameValuePair {
+		private String name;
+		private String value;
+
+<span class="nc" id="L140">		public NameValuePair(String name, String value) {</span>
+<span class="nc" id="L141">			this.name = name;</span>
+<span class="nc" id="L142">			this.value = value;</span>
+<span class="nc" id="L143">		}</span>
+
+		public String getValue() {
+<span class="nc" id="L146">			return value;</span>
+		}
+
+		public String getName() {
+<span class="nc" id="L150">			return name;</span>
+		}
+	}
+
+	public static void main(String[] args) {
+<span class="nc" id="L155">		String pipeDelimitedHeaders = &quot;z=y|x=y||&quot;;</span>
+<span class="nc" id="L156">		RedoRequestServlet fakeRequestServlet = new RedoRequestServlet();</span>
+<span class="nc" id="L157">		List&lt;NameValuePair&gt; pairs = fakeRequestServlet</span>
+<span class="nc" id="L158">				.buildNameValue(pipeDelimitedHeaders);</span>
+<span class="nc bnc" id="L159" title="All 2 branches missed.">		if (pairs != null) {</span>
+<span class="nc bnc" id="L160" title="All 2 branches missed.">			for (int i = 0; i &lt; pairs.size(); i++) {</span>
+<span class="nc" id="L161">				System.out.println(pairs.get(i).getName() + &quot;=&quot;</span>
+<span class="nc" id="L162">						+ pairs.get(i).getValue());</span>
+			}
+		}
+<span class="nc" id="L165">	}</span>
+
+}
+</pre><div class="footer"><span class="right">Created with <a href="http://www.jacoco.org/jacoco">JaCoCo</a> 0.8.1.201803210924</span></div></body></html>

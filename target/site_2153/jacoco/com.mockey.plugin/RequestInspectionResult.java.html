@@ -1,0 +1,75 @@
+<?xml version="1.0" encoding="UTF-8"?><!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Strict//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-strict.dtd"><html xmlns="http://www.w3.org/1999/xhtml" lang="zh"><head><meta http-equiv="Content-Type" content="text/html;charset=UTF-8"/><link rel="stylesheet" href="../jacoco-resources/report.css" type="text/css"/><link rel="shortcut icon" href="../jacoco-resources/report.gif" type="image/gif"/><title>RequestInspectionResult.java</title><link rel="stylesheet" href="../jacoco-resources/prettify.css" type="text/css"/><script type="text/javascript" src="../jacoco-resources/prettify.js"></script></head><body onload="window['PR_TAB_WIDTH']=4;prettyPrint()"><div class="breadcrumb" id="breadcrumb"><span class="info"><a href="../jacoco-sessions.html" class="el_session">Sessions</a></span><a href="../index.html" class="el_report">JaCoCo Ant Example</a> &gt; <a href="index.source.html" class="el_package">com.mockey.plugin</a> &gt; <span class="el_source">RequestInspectionResult.java</span></div><h1>RequestInspectionResult.java</h1><pre class="source lang-java linenums">/*
+ * This file is part of Mockey, a tool for testing application 
+ * interactions over HTTP, with a focus on testing web services, 
+ * specifically web applications that consume XML, JSON, and HTML.
+ *  
+ * Copyright (C) 2012  Authors:
+ * 
+ * chad.lafontaine (chad.lafontaine AT gmail DOT com)
+ * 
+ * This program is free software; you can redistribute it and/or
+ * modify it under the terms of the GNU General Public License
+ * as published by the Free Software Foundation; either version 2
+ * of the License, or (at your option) any later version.
+ * 
+ * This program is distributed in the hope that it will be useful,
+ * but WITHOUT ANY WARRANTY; without even the implied warranty of
+ * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+ * GNU General Public License for more details.
+ * 
+ * You should have received a copy of the GNU General Public License
+ * along with this program; if not, write to the Free Software
+ * Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301, USA.
+ *
+ */
+package com.mockey.plugin;
+
+import java.util.ArrayList;
+import java.util.List;
+
+/**
+ * Captures 0 or more messages as a result of evaluating incoming request via 1
+ * or more RequestInspector(s).
+ * 
+ * @author chadlafontaine
+ * 
+ */
+<span class="nc" id="L37">public class RequestInspectionResult {</span>
+<span class="nc" id="L38">	private List&lt;String&gt; resultMessageList = new ArrayList&lt;String&gt;();</span>
+
+	/**
+	 * 
+	 * @return - true if a result message is available, false otherwise.
+	 */
+	public boolean hasResultMessages() {
+<span class="nc bnc" id="L45" title="All 4 branches missed.">		if (this.resultMessageList != null &amp;&amp; this.resultMessageList.size() &gt; 0) {</span>
+<span class="nc" id="L46">			return true;</span>
+		} else {
+<span class="nc" id="L48">			return false;</span>
+		}
+
+	}
+
+	/**
+	 * 
+	 * @return non-null list, could be empty.
+	 * @see #hasResultMessages()
+	 */
+	public List&lt;String&gt; getResultMessageList() {
+<span class="nc" id="L59">		return resultMessageList;</span>
+	}
+
+	
+	/**
+	 * 
+	 * @param resultMessage 
+	 */
+	void addResultMessage(String resultMessage) {
+<span class="nc bnc" id="L68" title="All 6 branches missed.">		if (resultMessage != null &amp;&amp; resultMessage.trim().length() &gt; 0 &amp;&amp; !this.resultMessageList.contains(resultMessage)) {</span>
+<span class="nc" id="L69">			this.resultMessageList.add(resultMessage);</span>
+		}
+
+<span class="nc" id="L72">	}</span>
+
+}
+</pre><div class="footer"><span class="right">Created with <a href="http://www.jacoco.org/jacoco">JaCoCo</a> 0.8.1.201803210924</span></div></body></html>

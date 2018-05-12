@@ -1,0 +1,185 @@
+<?xml version="1.0" encoding="UTF-8"?><!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Strict//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-strict.dtd"><html xmlns="http://www.w3.org/1999/xhtml" lang="zh"><head><meta http-equiv="Content-Type" content="text/html;charset=UTF-8"/><link rel="stylesheet" href="../jacoco-resources/report.css" type="text/css"/><link rel="shortcut icon" href="../jacoco-resources/report.gif" type="image/gif"/><title>MockeyXmlFactory.java</title><link rel="stylesheet" href="../jacoco-resources/prettify.css" type="text/css"/><script type="text/javascript" src="../jacoco-resources/prettify.js"></script></head><body onload="window['PR_TAB_WIDTH']=4;prettyPrint()"><div class="breadcrumb" id="breadcrumb"><span class="info"><a href="../jacoco-sessions.html" class="el_session">Sessions</a></span><a href="../index.html" class="el_report">JaCoCo Ant Example</a> &gt; <a href="index.source.html" class="el_package">com.mockey.storage.xml</a> &gt; <span class="el_source">MockeyXmlFactory.java</span></div><h1>MockeyXmlFactory.java</h1><pre class="source lang-java linenums">/*
+ * This file is part of Mockey, a tool for testing application 
+ * interactions over HTTP, with a focus on testing web services, 
+ * specifically web applications that consume XML, JSON, and HTML.
+ *  
+ * Copyright (C) 2009-2010  Authors:
+ * 
+ * chad.lafontaine (chad.lafontaine AT gmail DOT com)
+ * neil.cronin (neil AT rackle DOT com) 
+ * lorin.kobashigawa (lkb AT kgawa DOT com)
+ * rob.meyer (rob AT bigdis DOT com)
+ * 
+ * This program is free software; you can redistribute it and/or
+ * modify it under the terms of the GNU General Public License
+ * as published by the Free Software Foundation; either version 2
+ * of the License, or (at your option) any later version.
+ * 
+ * This program is distributed in the hope that it will be useful,
+ * but WITHOUT ANY WARRANTY; without even the implied warranty of
+ * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+ * GNU General Public License for more details.
+ * 
+ * You should have received a copy of the GNU General Public License
+ * along with this program; if not, write to the Free Software
+ * Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301, USA.
+ *
+ */
+package com.mockey.storage.xml;
+
+import java.io.File;
+import java.io.FileOutputStream;
+import java.io.IOException;
+import java.io.StringWriter;
+
+import javax.xml.transform.OutputKeys;
+import javax.xml.transform.Transformer;
+import javax.xml.transform.TransformerException;
+import javax.xml.transform.TransformerFactory;
+import javax.xml.transform.dom.DOMSource;
+import javax.xml.transform.stream.StreamResult;
+
+import org.apache.http.protocol.HTTP;
+import org.apache.log4j.Logger;
+import org.w3c.dom.Document;
+
+import com.mockey.model.Scenario;
+import com.mockey.model.Service;
+import com.mockey.storage.IMockeyStorage;
+
+<span class="fc" id="L50">public class MockeyXmlFactory {</span>
+
+<span class="fc" id="L52">	private static Logger logger = Logger.getLogger(MockeyXmlFactory.class);</span>
+
+	/**
+	 * Convert document to string. Helper method. 
+	 * @return String.
+	 * @throws java.io.IOException
+	 *             when unable to write the xml
+	 * @throws javax.xml.transform.TransformerException
+	 *             when unable to transform the document
+	 */
+	public String getStoreAsString(IMockeyStorage store, boolean nonReferenceFullDocument) throws IOException,
+			TransformerException {
+<span class="fc" id="L64">		MockeyXmlFileConfigurationGenerator xmlGeneratorSupport = new MockeyXmlFileConfigurationGenerator();</span>
+<span class="fc" id="L65">		Document document = xmlGeneratorSupport.getStoreAsDocument(store, nonReferenceFullDocument);</span>
+<span class="fc" id="L66">		return getDocumentAsString(document);</span>
+	}
+
+	private String getDocumentAsString(Document document) throws IOException, TransformerException {
+<span class="fc" id="L70">		Transformer transformer = TransformerFactory.newInstance().newTransformer();</span>
+<span class="fc" id="L71">		transformer.setOutputProperty(OutputKeys.INDENT, &quot;yes&quot;);</span>
+<span class="fc" id="L72">		transformer.setOutputProperty(OutputKeys.METHOD, &quot;xml&quot;);</span>
+<span class="fc" id="L73">		transformer.setOutputProperty(OutputKeys.ENCODING, HTTP.UTF_8);</span>
+<span class="fc" id="L74">		StreamResult result = new StreamResult(new StringWriter());</span>
+<span class="fc" id="L75">		DOMSource source = new DOMSource(document);</span>
+<span class="fc" id="L76">		transformer.transform(source, result);</span>
+<span class="fc" id="L77">		return result.getWriter().toString();</span>
+	}
+
+	public void writeStoreToXML(IMockeyStorage sourceStore, String destinationFileName) {
+
+		try {
+			// 
+<span class="fc" id="L84">			MockeyXmlFileManager.getInstance().cleanDirectory();</span>
+			// WRITE STORE META FIRST
+<span class="fc" id="L86">			File parentFolder = MockeyXmlFileManager.getInstance().getBasePathFile();</span>
+<span class="fc" id="L87">			File f = new File(parentFolder,destinationFileName);</span>
+<span class="fc" id="L88">			FileOutputStream fop = new FileOutputStream(f);</span>
+
+<span class="fc" id="L90">			String fileOutput = getStoreAsString(sourceStore, false);</span>
+<span class="fc" id="L91">			byte[] fileOutputAsBytes = fileOutput.getBytes(HTTP.UTF_8);</span>
+<span class="fc" id="L92">			fop.write(fileOutputAsBytes);</span>
+<span class="fc" id="L93">			fop.flush();</span>
+<span class="fc" id="L94">			fop.close();</span>
+
+			// WRITE EACH SERVICE
+<span class="pc bpc" id="L97" title="1 of 2 branches missed.">			for (Service service : sourceStore.getServices()) {</span>
+
+				// File to write out
+<span class="nc" id="L100">				File serviceFile = MockeyXmlFileManager.getInstance().getServiceFile(service);</span>
+
+<span class="nc" id="L102">				FileOutputStream serviceFOP = new FileOutputStream(serviceFile);</span>
+<span class="nc" id="L103">				MockeyXmlFileConfigurationGenerator xmlGeneratorSupport = new MockeyXmlFileConfigurationGenerator();</span>
+<span class="nc" id="L104">				Document serviceDoc = xmlGeneratorSupport.getServiceAsDocument(service, false);</span>
+<span class="nc" id="L105">				String serviceOutput = this.getDocumentAsString(serviceDoc);</span>
+<span class="nc bnc" id="L106" title="All 2 branches missed.">				for (Scenario scenario : service.getScenarios()) {</span>
+
+<span class="nc" id="L108">					File scenarioFile = MockeyXmlFileManager.getInstance().getServiceScenarioFileAbsolutePath(service, scenario);</span>
+<span class="nc" id="L109">					this.writeServiceScenarioToXMLFile(scenarioFile, scenario);</span>
+<span class="nc" id="L110">				}</span>
+
+<span class="nc" id="L112">				byte[] serviceOutputAsBytes = serviceOutput.getBytes(HTTP.UTF_8);</span>
+<span class="nc" id="L113">				serviceFOP.write(serviceOutputAsBytes);</span>
+<span class="nc" id="L114">				serviceFOP.flush();</span>
+<span class="nc" id="L115">				serviceFOP.close();</span>
+<span class="nc" id="L116">				logger.debug(&quot;Written to: &quot; + serviceFile.getAbsolutePath());</span>
+<span class="nc" id="L117">			}</span>
+
+<span class="nc" id="L119">		} catch (Exception e) {</span>
+<span class="nc" id="L120">			logger.error(&quot;Unable to write file&quot;, e);</span>
+<span class="fc" id="L121">		}</span>
+<span class="fc" id="L122">	}</span>
+
+	/**
+	 * 
+	 * @param scenarioFile
+	 *            The file to write the scenario XML definition to.
+	 * @param scenario
+	 *            Scenario definitions/model to write to XML.
+	 * @throws IOException
+	 * @throws TransformerException
+	 */
+	private void writeServiceScenarioToXMLFile(File scenarioFile, Scenario scenario) throws IOException,
+			TransformerException {
+		
+		
+<span class="nc" id="L137">		FileOutputStream serviceFOP = new FileOutputStream(scenarioFile);</span>
+<span class="nc" id="L138">		MockeyXmlFileConfigurationGenerator xmlGeneratorSupport = new MockeyXmlFileConfigurationGenerator();</span>
+
+		// Yes, hard coded for now. As of April 18th, 2013
+<span class="nc" id="L141">		boolean writeScenarioResponseToTxtFile = true;</span>
+		// TRUE means the scenario response will NOT be included in the Scenario
+		// XML definition file. The Scenario response will be written to its
+		// own '.txt' file. For example:
+		// + &lt;scenario def&gt;.xml // Includes a x:include pointer to the *.txt file.
+		// + &lt;scenario response&gt;.txt // contains the scenario response.
+		//
+		// FALSE means the scenario response will include in the Scenario response 
+		// as a CDATA element. 
+
+<span class="nc" id="L151">		Document serviceDoc = xmlGeneratorSupport</span>
+<span class="nc" id="L152">				.getServiceScenarioAsDocument(scenario, writeScenarioResponseToTxtFile);</span>
+		// Write the XML
+<span class="nc" id="L154">		String serviceOutput = this.getDocumentAsString(serviceDoc);</span>
+<span class="nc" id="L155">		byte[] serviceOutputAsBytes = serviceOutput.getBytes(HTTP.UTF_8);</span>
+<span class="nc" id="L156">		serviceFOP.write(serviceOutputAsBytes);</span>
+<span class="nc" id="L157">		serviceFOP.flush();</span>
+<span class="nc" id="L158">		serviceFOP.close();</span>
+
+<span class="nc bnc" id="L160" title="All 2 branches missed.">		if (writeScenarioResponseToTxtFile) {</span>
+<span class="nc" id="L161">			byte[] scenarioResponseOutputAsBytes = scenario.getResponseMessage().getBytes(HTTP.UTF_8);</span>
+<span class="nc" id="L162">			String xmlDefinitionFilePath = scenarioFile.getPath();</span>
+<span class="nc" id="L163">			File scenarioResponseFile = new File(swapFileExtensions(xmlDefinitionFilePath));</span>
+<span class="nc" id="L164">			FileOutputStream scenarioResponseFOP = new FileOutputStream(scenarioResponseFile);</span>
+<span class="nc" id="L165">			scenarioResponseFOP.write(scenarioResponseOutputAsBytes);</span>
+<span class="nc" id="L166">			scenarioResponseFOP.flush();</span>
+<span class="nc" id="L167">			scenarioResponseFOP.close();</span>
+		}
+<span class="nc" id="L169">		logger.debug(&quot;Written to: &quot; + scenarioFile.getAbsolutePath());</span>
+
+<span class="nc" id="L171">	}</span>
+
+	// Quick utility to swap file extensions
+	private String swapFileExtensions(String arg) {
+<span class="nc" id="L175">		int extIndex = arg.lastIndexOf(&quot;.&quot;);</span>
+<span class="nc bnc" id="L176" title="All 2 branches missed.">		if (extIndex != -1) {</span>
+<span class="nc" id="L177">			String ext = arg.substring(extIndex);</span>
+<span class="nc bnc" id="L178" title="All 2 branches missed.">			if (ext.equalsIgnoreCase(&quot;.xml&quot;)) {</span>
+<span class="nc" id="L179">				arg = arg.substring(0, extIndex) + &quot;.txt&quot;;</span>
+			}
+		}
+<span class="nc" id="L182">		return arg;</span>
+	}
+}
+</pre><div class="footer"><span class="right">Created with <a href="http://www.jacoco.org/jacoco">JaCoCo</a> 0.8.1.201803210924</span></div></body></html>

@@ -1,0 +1,683 @@
+<?xml version="1.0" encoding="UTF-8"?><!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Strict//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-strict.dtd"><html xmlns="http://www.w3.org/1999/xhtml" lang="zh"><head><meta http-equiv="Content-Type" content="text/html;charset=UTF-8"/><link rel="stylesheet" href="../jacoco-resources/report.css" type="text/css"/><link rel="shortcut icon" href="../jacoco-resources/report.gif" type="image/gif"/><title>MockeyXmlFileManager.java</title><link rel="stylesheet" href="../jacoco-resources/prettify.css" type="text/css"/><script type="text/javascript" src="../jacoco-resources/prettify.js"></script></head><body onload="window['PR_TAB_WIDTH']=4;prettyPrint()"><div class="breadcrumb" id="breadcrumb"><span class="info"><a href="../jacoco-sessions.html" class="el_session">Sessions</a></span><a href="../index.html" class="el_report">JaCoCo Ant Example</a> &gt; <a href="index.source.html" class="el_package">com.mockey.storage.xml</a> &gt; <span class="el_source">MockeyXmlFileManager.java</span></div><h1>MockeyXmlFileManager.java</h1><pre class="source lang-java linenums">/*
+ * This file is part of Mockey, a tool for testing application 
+ * interactions over HTTP, with a focus on testing web services, 
+ * specifically web applications that consume XML, JSON, and HTML.
+ *  
+ * Copyright (C) 2009-2010  Authors:
+ * 
+ * chad.lafontaine (chad.lafontaine AT gmail DOT com)
+ * neil.cronin (neil AT rackle DOT com) 
+ * lorin.kobashigawa (lkb AT kgawa DOT com)
+ * rob.meyer (rob AT bigdis DOT com)
+ * 
+ * This program is free software; you can redistribute it and/or
+ * modify it under the terms of the GNU General Public License
+ * as published by the Free Software Foundation; either version 2
+ * of the License, or (at your option) any later version.
+ * 
+ * This program is distributed in the hope that it will be useful,
+ * but WITHOUT ANY WARRANTY; without even the implied warranty of
+ * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+ * GNU General Public License for more details.
+ * 
+ * You should have received a copy of the GNU General Public License
+ * along with this program; if not, write to the Free Software
+ * Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301, USA.
+ *
+ */
+package com.mockey.storage.xml;
+
+import com.google.common.io.CharStreams;
+import com.mockey.model.*;
+import com.mockey.storage.IMockeyStorage;
+import com.mockey.storage.StorageRegistry;
+import com.mockey.ui.ServiceMergeResults;
+import org.apache.commons.io.FileUtils;
+import org.apache.log4j.Logger;
+import org.xml.sax.SAXException;
+import org.xml.sax.SAXParseException;
+
+import java.io.*;
+import java.util.ArrayList;
+import java.util.Iterator;
+import java.util.List;
+
+/**
+ * Consumes an XML file and configures Mockey services.
+ * &lt;p&gt;
+ * &lt;pre&gt;
+ * + mock_service_definitions.xml
+ * + mockey_def_depot
+ * ++ &lt;SERVICE NAME&gt;
+ * ++ &lt;SERVICE NAME&gt;
+ * +++ &lt;NAME&gt;.xml
+ * +++ scenarios
+ * ++++ 1.xml
+ * ++++ 2.xml
+ *
+ * &lt;/pre&gt;
+ *
+ * @author Chad.Lafontaine
+ */
+public class MockeyXmlFileManager {
+
+    private static Logger logger;
+
+    static {
+        try {
+<span class="fc" id="L68">            logger = Logger.getLogger(MockeyXmlFileManager.class);</span>
+<span class="nc" id="L69">        } catch (Exception e) {</span>
+<span class="nc" id="L70">            System.out.println(e.getMessage());</span>
+<span class="fc" id="L71">        }</span>
+    }
+
+<span class="fc" id="L74">    private static final char[] VALID_FILE_NAME_CHARS = &quot;0123456789abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ_&quot;</span>
+<span class="fc" id="L75">            .toCharArray();</span>
+
+<span class="fc" id="L77">    private File basePathFile = null;</span>
+<span class="fc" id="L78">    private static IMockeyStorage store = StorageRegistry.MockeyStorage;</span>
+<span class="fc" id="L79">    private static MockeyXmlFileManager mockeyXmlFileManagerInstance = null;</span>
+    public static final String MOCK_SERVICE_DEFINITION = &quot;mock_service_definitions.xml&quot;;
+    public static final String SYSTEM_PROPERTY_MOCKEY_DEF_REPO_HOME = &quot;mockeyDefinitionsRepoHome&quot;;
+
+    protected static final String MOCK_SERVICE_FOLDER = &quot;mockey_def_depot&quot;;
+    protected static final String MOCK_SERVICE_SCENARIO_FOLDER = &quot;scenarios&quot;;
+
+<span class="fc" id="L86">    public static final String FILESEPERATOR = System.getProperty(&quot;file.separator&quot;);</span>
+
+    /**
+     * Basic constructor. Will create a folder on the file system to store XML definitions.
+     */
+<span class="fc" id="L91">    private MockeyXmlFileManager(String path) {</span>
+
+<span class="fc" id="L93">        this.basePathFile = new File(path);</span>
+<span class="pc bpc" id="L94" title="1 of 2 branches missed.">        if (!this.basePathFile.exists()) {</span>
+<span class="nc" id="L95">            this.basePathFile.mkdir();</span>
+        }
+
+<span class="fc" id="L98">        File fileDepot = new File(this.getBasePathFile(), MOCK_SERVICE_FOLDER);</span>
+<span class="pc bpc" id="L99" title="1 of 2 branches missed.">        if (!fileDepot.exists()) {</span>
+<span class="nc" id="L100">            boolean success = fileDepot.mkdirs();</span>
+<span class="nc bnc" id="L101" title="All 2 branches missed.">            if (!success) {</span>
+<span class="nc" id="L102">                logger.fatal(&quot;Unable to create a folder called &quot; + MOCK_SERVICE_FOLDER);</span>
+            } else {
+<span class="nc" id="L104">                logger.info(&quot;Created directory: &quot; + fileDepot.getAbsolutePath());</span>
+            }
+        }
+<span class="fc" id="L107">    }</span>
+
+    protected void cleanDirectory() {
+<span class="fc" id="L110">        File fileDepot = new File(this.getBasePathFile(), MOCK_SERVICE_FOLDER);</span>
+<span class="pc bpc" id="L111" title="1 of 2 branches missed.">        if (fileDepot.isDirectory()) {</span>
+
+            try {
+                // Delete it.
+<span class="fc" id="L115">                FileUtils.deleteDirectory(fileDepot);</span>
+                // Create new one.
+<span class="fc" id="L117">                fileDepot.mkdirs();</span>
+
+<span class="nc" id="L119">            } catch (IOException io) {</span>
+<span class="nc" id="L120">                logger.error(&quot;Unable to delete&quot; + fileDepot.getAbsolutePath(), io);</span>
+<span class="fc" id="L121">            }</span>
+
+
+        }
+<span class="fc" id="L125">    }</span>
+
+    /**
+     * Location of files is
+     *
+     * @return
+     */
+    public static MockeyXmlFileManager getInstance() {
+
+<span class="fc bfc" id="L134" title="All 2 branches covered.">        if (MockeyXmlFileManager.mockeyXmlFileManagerInstance == null) {</span>
+
+            // If no explicit path, then check for a system variable.
+            // Check for SYSTEM PROPERTY
+<span class="fc" id="L138">            String defaultUserDirectory = System.getProperty(&quot;user.dir&quot;);</span>
+<span class="fc" id="L139">            String systemVariableDirectory = System.getProperty(SYSTEM_PROPERTY_MOCKEY_DEF_REPO_HOME);</span>
+<span class="pc bpc" id="L140" title="1 of 2 branches missed.">            if (systemVariableDirectory != null) {</span>
+<span class="fc" id="L141">                String msg = &quot;System environment variable '&quot; + SYSTEM_PROPERTY_MOCKEY_DEF_REPO_HOME</span>
+                        + &quot;' value is provided. Writing local Mockey definition files here: &quot; + systemVariableDirectory;
+<span class="fc" id="L143">                logger.info(msg);</span>
+<span class="fc" id="L144">                System.out.println(msg);</span>
+<span class="fc" id="L145">                MockeyXmlFileManager.getInstanceWithRepoPath(systemVariableDirectory);</span>
+<span class="fc" id="L146">            } else {</span>
+
+<span class="nc" id="L148">                String msg = &quot;No system environment variable,'&quot; + SYSTEM_PROPERTY_MOCKEY_DEF_REPO_HOME</span>
+                        + &quot;' variable is provided. Writing local Mockey definition files here: &quot; + defaultUserDirectory;
+<span class="nc" id="L150">                logger.info(msg);</span>
+<span class="nc" id="L151">                System.out.println(msg);</span>
+<span class="nc" id="L152">                MockeyXmlFileManager.getInstanceWithRepoPath(defaultUserDirectory);</span>
+            }
+
+
+        }
+<span class="fc" id="L157">        return MockeyXmlFileManager.mockeyXmlFileManagerInstance;</span>
+    }
+
+    /**
+     * @param path
+     * @return TODO
+     */
+    public static MockeyXmlFileManager getInstanceWithRepoPath(String path) {
+
+
+<span class="fc" id="L167">        MockeyXmlFileManager.mockeyXmlFileManagerInstance = new MockeyXmlFileManager(path);</span>
+<span class="fc" id="L168">        return MockeyXmlFileManager.mockeyXmlFileManagerInstance;</span>
+
+    }
+
+    /**
+     * @return location of Mockey definitions.
+     */
+    public File getBasePathFile() {
+<span class="pc bpc" id="L176" title="1 of 2 branches missed.">        if (this.basePathFile == null) {</span>
+<span class="nc" id="L177">            throw new RuntimeException(&quot;Base path is NOT set.&quot;);</span>
+        }
+<span class="fc" id="L179">        return this.basePathFile;</span>
+    }
+
+    /**
+     * @param file - xml configuration file for Mockey
+     * @throws IOException
+     * @throws SAXException
+     * @throws SAXParseException
+     */
+    public String getFileContentAsString(InputStream fstream) throws IOException, SAXParseException, SAXException {
+
+<span class="fc" id="L190">        String inputStreamString = CharStreams.toString(new InputStreamReader(fstream, &quot;UTF-8&quot;));</span>
+<span class="fc" id="L191">        return inputStreamString;</span>
+
+    }
+
+    /**
+     * Loads from default file definition file.
+     *
+     * @return results of loading configuration, includes additions and possible conflicts.
+     * @throws SAXParseException
+     * @throws IOException
+     */
+    public ServiceMergeResults loadConfiguration() throws SAXParseException, IOException {
+
+<span class="fc" id="L204">        File n = new File(this.getBasePathFile(), MOCK_SERVICE_DEFINITION);</span>
+<span class="fc" id="L205">        logger.debug(&quot;Loading configuration from &quot; + n.getAbsolutePath());</span>
+
+        try {
+
+<span class="fc" id="L209">            return loadConfigurationWithXmlDef(getFileContentAsString(new FileInputStream(n)), null);</span>
+<span class="nc" id="L210">        } catch (SAXException e) {</span>
+<span class="nc" id="L211">            logger.error(&quot;Ouch, unable to parse&quot; + n.getAbsolutePath(), e);</span>
+        }
+<span class="nc" id="L213">        return new ServiceMergeResults();</span>
+    }
+
+    /**
+     * @param strXMLDefintion
+     * @param tagArguments
+     * @return results (conflicts and additions).
+     * @throws IOException
+     * @throws SAXParseException
+     * @throws SAXException
+     */
+    public ServiceMergeResults loadConfigurationWithXmlDef(String strXMLDefintion, String tagArguments)
+            throws IOException, SAXParseException, SAXException {
+<span class="fc" id="L226">        ServiceMergeResults mergeResults = new ServiceMergeResults();</span>
+
+        // ***** REMEMBER *****
+        // Every time a saveOrUpdateXXXX is made, the entire STORE is written to
+        // the file system.
+        // If the STORE has many definitions, then each SAVE will loop over
+        // every file and write.
+        //
+        // NOT GOOD FOR PERFORMANCE
+        //
+        // Solution: put the store in a temporary transient state
+        // (memory-mode-only), then revert to original transient setting,
+        // which could have been in memory-only or write-to-file in the
+        // first place.
+        //
+        // *********************
+<span class="fc" id="L242">        Boolean originalTransientState = store.getReadOnlyMode();</span>
+<span class="fc" id="L243">        store.setReadOnlyMode(true);</span>
+
+        // STEP #1. CREATE A TEMP STORE
+        // Read the incoming XML file, and create a new/temporary store for the
+        // need to ensure current store doesn't get overridden
+        //
+<span class="fc" id="L249">        MockeyXmlFileConfigurationReader msfr = new MockeyXmlFileConfigurationReader();</span>
+<span class="fc" id="L250">        IMockeyStorage mockServiceStoreTemporary = msfr.readDefinition(strXMLDefintion);</span>
+
+        // STEP #2. PROXY SETTINGS
+        // If the proxy settings are _empty_, then set the incoming
+        // proxy settings. Otherwise, call out a merge conflict.
+        //
+<span class="fc" id="L256">        ProxyServerModel proxyServerModel = store.getProxy();</span>
+<span class="pc bpc" id="L257" title="1 of 2 branches missed.">        if (proxyServerModel.hasSettings()) {</span>
+<span class="nc" id="L258">            mergeResults.addConflictMsg(&quot;Proxy settings NOT set from incoming file.&quot;);</span>
+        } else {
+<span class="fc" id="L260">            store.setProxy(mockServiceStoreTemporary.getProxy());</span>
+<span class="fc" id="L261">            mergeResults.addAdditionMsg(&quot;Proxy settings set.&quot;);</span>
+        }
+
+        // STEP #3. BUILD SERVICE REFERENCES
+        // Why is this needed?
+        // We are adding _new_ services into the Store, and that means that the
+        // store's state is always changing. We need references as a saved
+        // snapshot list of store state prior to adding new services.
+        // **********
+        // I forget why we really need this though...
+        // **********
+<span class="fc" id="L272">        List&lt;Service&gt; serviceListFromRefs = new ArrayList&lt;Service&gt;();</span>
+<span class="pc bpc" id="L273" title="1 of 2 branches missed.">        for (ServiceRef serviceRef : mockServiceStoreTemporary.getServiceRefs()) {</span>
+            try {
+
+<span class="nc" id="L276">                File childFile = new File(this.getBasePathFile(), serviceRef.getFileName());</span>
+<span class="nc" id="L277">                String mockServiceDefinition = getFileContentAsString(new FileInputStream(childFile));</span>
+
+                // HACK:
+                // I tried to find an easier way to use XML ENTITY and let
+                // Digester
+                // to the work of slurping up the XML but was unsuccessful.
+                // Hence, the brute force.
+                // YYYYY
+                //
+
+<span class="nc" id="L287">                List&lt;Service&gt; tmpList = msfr.readServiceDefinition(mockServiceDefinition);</span>
+<span class="nc bnc" id="L288" title="All 2 branches missed.">                for (Service tmpService : tmpList) {</span>
+<span class="nc" id="L289">                    serviceListFromRefs.add(tmpService);</span>
+<span class="nc" id="L290">                }</span>
+<span class="nc" id="L291">            } catch (SAXParseException spe) {</span>
+<span class="nc" id="L292">                logger.error(&quot;Unable to parse file of name &quot; + serviceRef.getFileName(), spe);</span>
+<span class="nc" id="L293">                mergeResults.addConflictMsg(&quot;File not parseable: &quot; + serviceRef.getFileName());</span>
+
+<span class="nc" id="L295">            } catch (FileNotFoundException fnf) {</span>
+<span class="nc" id="L296">                logger.error(&quot;File not found: &quot; + serviceRef.getFileName());</span>
+<span class="nc" id="L297">                mergeResults.addConflictMsg(&quot;File not found: &quot; + serviceRef.getFileName());</span>
+<span class="nc" id="L298">            }</span>
+
+<span class="nc" id="L300">        }</span>
+<span class="fc" id="L301">        addServicesToStore(mergeResults, serviceListFromRefs, tagArguments);</span>
+
+        // STEP #4. MERGE SERVICES AND SCENARIOS
+        // Since this gets complicated, logic was moved to it's own method.
+<span class="fc" id="L305">        mergeResults = addServicesToStore(mergeResults, mockServiceStoreTemporary.getServices(), tagArguments);</span>
+
+        // STEP #5. UNIVERSAL RESPONSE SETTINGS
+        // Important: usage of the temporary-store's Scenario reference
+        // information is used to set the primary in-memory store. The primary
+        // store has all the information and the TEMP store only needs to pass
+        // the references, e.g. Service 1, Scenario 2.
+<span class="pc bpc" id="L312" title="1 of 2 branches missed.">        if (store.getUniversalErrorScenario() != null</span>
+<span class="nc bnc" id="L313" title="All 2 branches missed.">                &amp;&amp; mockServiceStoreTemporary.getUniversalErrorScenarioRef() != null) {</span>
+<span class="nc" id="L314">            mergeResults.addConflictMsg(&quot;Universal error message already defined with name '&quot;</span>
+<span class="nc" id="L315">                    + store.getUniversalErrorScenario().getScenarioName() + &quot;'&quot;);</span>
+<span class="pc bpc" id="L316" title="1 of 2 branches missed.">        } else if (store.getUniversalErrorScenario() == null</span>
+<span class="pc bpc" id="L317" title="1 of 2 branches missed.">                &amp;&amp; mockServiceStoreTemporary.getUniversalErrorScenarioRef() != null) {</span>
+<span class="nc" id="L318">            store.setUniversalErrorScenarioRef(mockServiceStoreTemporary.getUniversalErrorScenarioRef());</span>
+<span class="nc" id="L319">            mergeResults.addAdditionMsg(&quot;Universal error response defined.&quot;);</span>
+
+        }
+
+        // STEP #6. MERGE SERVICE PLANS
+<span class="pc bpc" id="L324" title="1 of 2 branches missed.">        for (ServicePlan servicePlan : mockServiceStoreTemporary.getServicePlans()) {</span>
+<span class="nc bnc" id="L325" title="All 2 branches missed.">            if (tagArguments != null) {</span>
+<span class="nc" id="L326">                servicePlan.addTagToList(tagArguments);</span>
+            }
+<span class="nc" id="L328">            store.saveOrUpdateServicePlan(servicePlan);</span>
+<span class="nc" id="L329">        }</span>
+
+        // STEP #7. TWIST CONFIGURATION
+<span class="pc bpc" id="L332" title="1 of 2 branches missed.">        for (TwistInfo twistInfo : mockServiceStoreTemporary.getTwistInfoList()) {</span>
+<span class="nc" id="L333">            store.saveOrUpdateTwistInfo(twistInfo);</span>
+<span class="nc" id="L334">        }</span>
+
+        // STEP #8. DEFAULT Service Plan ID
+        // Only set a default service plan ID from the incoming XML file
+        // if one is not already set in the current store.
+<span class="fc" id="L339">        ServicePlan servicePlan = mockServiceStoreTemporary</span>
+<span class="fc" id="L340">                .getServicePlanById(mockServiceStoreTemporary.getDefaultServicePlanIdAsLong());</span>
+<span class="pc bpc" id="L341" title="3 of 4 branches missed.">        if (servicePlan != null &amp;&amp; store.getDefaultServicePlanIdAsLong() == null) {</span>
+            // OK, we have a 'default' service plan from the incoming file AND
+            // the current store does not. Let's update the current store.
+<span class="nc" id="L344">            store.setDefaultServicePlanId(mockServiceStoreTemporary.getDefaultServicePlanId());</span>
+<span class="nc" id="L345">            store.setServicePlan(servicePlan);</span>
+
+        }
+
+        // Don't forget to set state back to original state.
+        // NOTE: if transient state (read only) is false, then this method will
+        // write to STORE to the file system.
+        // Yeah!
+        // *********************
+<span class="fc" id="L354">        store.setReadOnlyMode(originalTransientState);</span>
+        // *********************
+
+<span class="fc" id="L357">        return mergeResults;</span>
+    }
+
+    // Let's Merge!
+    private ServiceMergeResults addServicesToStore(ServiceMergeResults mergeResults, List&lt;Service&gt; serviceListToAdd,
+                                                   String tagArguments) {
+        // When loading a definition file, by default, we should
+        // compare the uploaded Service list mock URL to what's currently
+        // in memory.
+        //
+        // 1) MATCHING MOCK URL
+        // If there is an existing/matching mockURL, then this isn't
+        // a new service and we DON'T want to overwrite. But, we
+        // want new Scenarios if they exist. See Scenario.equals()
+        //
+        // 2) NO MATCHING MOCK URL
+        // If there is no matching service URL, then we want to create a new
+        // service and associated scenarios. But here's an odd case. What if
+        // we are merging two same-name Services, each with empty matching URL
+        // lists?
+        //
+
+<span class="pc bpc" id="L379" title="1 of 2 branches missed.">        for (Service uploadedServiceBean : serviceListToAdd) {</span>
+<span class="nc" id="L380">            List&lt;Service&gt; serviceBeansInMemory = store.getServices();</span>
+<span class="nc" id="L381">            Iterator&lt;Service&gt; inMemoryServiceIter = serviceBeansInMemory.iterator();</span>
+
+<span class="nc" id="L383">            boolean existingService = false;</span>
+<span class="nc" id="L384">            Service inMemoryServiceBean = null;</span>
+
+<span class="nc bnc" id="L386" title="All 2 branches missed.">            while (inMemoryServiceIter.hasNext()) {</span>
+<span class="nc" id="L387">                inMemoryServiceBean = (Service) inMemoryServiceIter.next();</span>
+
+                // Same name?
+<span class="nc" id="L390">                if (uploadedServiceBean.getServiceName().trim().toLowerCase()</span>
+<span class="nc bnc" id="L391" title="All 2 branches missed.">                        .equals(inMemoryServiceBean.getServiceName().trim().toLowerCase())) {</span>
+<span class="nc" id="L392">                    existingService = true;</span>
+<span class="nc" id="L393">                    mergeResults.addConflictMsg(&quot;Service '&quot; + uploadedServiceBean.getServiceName()</span>
+                            + &quot;' not created because one with the same name already defined. '&quot;
+<span class="nc" id="L395">                            + inMemoryServiceBean.getServiceName() + &quot;' &quot;);</span>
+
+                }
+            }
+<span class="nc bnc" id="L399" title="All 2 branches missed.">            if (!existingService) {</span>
+                // YES, no in-store matching Name.
+                // We null ID, to not write-over on any in-store
+                // services with same ID
+<span class="nc" id="L403">                uploadedServiceBean.setId(null);</span>
+
+                // #TAG HANDLING - BEGIN
+                // Ensure Service, and all it's child scenarios have
+                // incoming/uploaded tag arguments
+<span class="nc" id="L408">                uploadedServiceBean.addTagToList(tagArguments);</span>
+<span class="nc bnc" id="L409" title="All 2 branches missed.">                for (Scenario scenarioTmp : uploadedServiceBean.getScenarios()) {</span>
+<span class="nc" id="L410">                    scenarioTmp.addTagToList(tagArguments);</span>
+<span class="nc" id="L411">                }</span>
+                // #TAG HANDLING - END
+
+                // Save to the IN-MEMORY STORE
+<span class="nc" id="L415">                store.saveOrUpdateService(uploadedServiceBean);</span>
+<span class="nc" id="L416">                mergeResults.addAdditionMsg(</span>
+<span class="nc" id="L417">                        &quot;Uploaded Service '&quot; + uploadedServiceBean.getServiceName() + &quot;' created with scenarios.&quot;);</span>
+
+            } else {
+                // We have an existing Service
+                // Just merge scenarios per matching services
+<span class="nc" id="L422">                mergeResults = this.mergeServices(uploadedServiceBean, inMemoryServiceBean, mergeResults, tagArguments);</span>
+            }
+
+<span class="nc" id="L425">        }</span>
+<span class="fc" id="L426">        return mergeResults;</span>
+    }
+
+    /**
+     * This method will make an effort to take things that exist in the
+     *
+     * @param uploadedService
+     * @param inMemoryService
+     * @param readResults
+     * @return
+     */
+    public ServiceMergeResults mergeServices(Service uploadedService, Service inMemoryService
+
+            , ServiceMergeResults readResults, String tagArguments) {
+
+<span class="nc" id="L441">        Boolean originalMode = store.getReadOnlyMode();</span>
+<span class="nc" id="L442">        store.setReadOnlyMode(true);</span>
+
+<span class="nc bnc" id="L444" title="All 4 branches missed.">        if (uploadedService != null &amp;&amp; inMemoryService != null</span>
+<span class="nc bnc" id="L445" title="All 2 branches missed.">                &amp;&amp; uploadedService.getServiceName().trim().equalsIgnoreCase(inMemoryService.getServiceName().trim())</span>
+
+                ) {
+
+            // ********************** TAG - BEGIN ***********************
+            // #TAG HANDLING for the Service - BEGIN
+            // Ensure Service gets incoming/uploaded-file tag arguments
+<span class="nc" id="L452">            inMemoryService.addTagToList(tagArguments);</span>
+            // Ensure Service gets uploaded Service tag arguments
+<span class="nc" id="L454">            inMemoryService.addTagToList(uploadedService.getTag());</span>
+            // #TAG HANDLING for the Service - END
+            // ********************** TAG - END *****************
+
+            // ********************* SCENARIOS BEGIN *******************
+<span class="nc bnc" id="L459" title="All 2 branches missed.">            if (readResults == null) {</span>
+<span class="nc" id="L460">                readResults = new ServiceMergeResults();</span>
+            }
+
+<span class="nc" id="L463">            Iterator&lt;Scenario&gt; uploadedListIter = uploadedService.getScenarios().iterator();</span>
+<span class="nc" id="L464">            Iterator&lt;Scenario&gt; inMemListIter = inMemoryService.getScenarios().iterator();</span>
+
+<span class="nc bnc" id="L466" title="All 2 branches missed.">            while (uploadedListIter.hasNext()) {</span>
+<span class="nc" id="L467">                Scenario uploadedScenario = (Scenario) uploadedListIter.next();</span>
+<span class="nc" id="L468">                boolean inMemScenarioExistTemp = false;</span>
+<span class="nc" id="L469">                Scenario inMemScenarioTemp = null;</span>
+
+<span class="nc bnc" id="L471" title="All 2 branches missed.">                while (inMemListIter.hasNext()) {</span>
+<span class="nc" id="L472">                    inMemScenarioTemp = (Scenario) inMemListIter.next();</span>
+
+<span class="nc bnc" id="L474" title="All 2 branches missed.">                    if (inMemScenarioTemp.hasSameNameAndResponse(uploadedScenario)) {</span>
+
+<span class="nc" id="L476">                        inMemScenarioExistTemp = true;</span>
+<span class="nc" id="L477">                        break;</span>
+                    }
+                }
+<span class="nc bnc" id="L480" title="All 2 branches missed.">                if (!inMemScenarioExistTemp) {</span>
+
+                    // Hey, we have a new scenario.
+                    // NOTE: incoming/uploaded scenario has an ID.
+                    // We MUST nullify it, to ensure there's no common Service's
+                    // scenario's ID
+<span class="nc" id="L486">                    uploadedScenario.setId(null);</span>
+<span class="nc" id="L487">                    uploadedScenario.setServiceId(inMemoryService.getId());</span>
+                    // Tag for Service:Scenario
+<span class="nc" id="L489">                    uploadedScenario.addTagToList(tagArguments);</span>
+<span class="nc" id="L490">                    inMemoryService.saveOrUpdateScenario(uploadedScenario);</span>
+
+<span class="nc" id="L492">                    readResults.addAdditionMsg(&quot;Scenario name '&quot; + uploadedScenario.getScenarioName()</span>
+<span class="nc" id="L493">                            + &quot;' from uploaded service named '&quot; + uploadedService.getServiceName()</span>
+<span class="nc" id="L494">                            + &quot;' was merged into service '&quot; + inMemoryService.getServiceName() + &quot;' &quot;);</span>
+                } else {
+                    // OK, we have a MATCHING Scenario.
+                    // Be sure to add the uploaded-file tags
+<span class="nc" id="L498">                    inMemScenarioTemp.addTagToList(tagArguments);</span>
+                    // Be sure to add the uploaded-scenario tags
+<span class="nc" id="L500">                    inMemScenarioTemp.addTagToList(uploadedScenario.getTag());</span>
+                    // Save the scenario to the Service
+<span class="nc" id="L502">                    inMemoryService.saveOrUpdateScenario(inMemScenarioTemp);</span>
+
+                    // Although we still need to
+<span class="nc" id="L505">                    readResults.addConflictMsg(&quot;Uploaded Scenario '&quot; + uploadedScenario.getScenarioName()</span>
+<span class="nc" id="L506">                            + &quot;' not added, already defined in in-memory service '&quot; + inMemoryService.getServiceName()</span>
+                            + &quot;' &quot;);
+                }
+
+<span class="nc" id="L510">            }</span>
+            // ********************* SCENARIOS - END ******************
+
+            // ********************* REAL URLS - BEGIN *******************
+<span class="nc bnc" id="L514" title="All 2 branches missed.">            for (Url uploadedUrl : uploadedService.getRealServiceUrls()) {</span>
+<span class="nc" id="L515">                inMemoryService.saveOrUpdateRealServiceUrl(uploadedUrl);</span>
+<span class="nc" id="L516">            }</span>
+            // ********************* REAL URLS - END *******************
+<span class="nc" id="L518">            store.saveOrUpdateService(inMemoryService);</span>
+
+        }
+
+<span class="nc" id="L522">        store.setReadOnlyMode(originalMode);</span>
+<span class="nc" id="L523">        return readResults;</span>
+    }
+
+    /**
+     * @param service
+     * @return
+     */
+    protected File getServiceFile(Service service) {
+        // Ensure the name is good.
+
+<span class="nc" id="L533">        String serviceFileName = service.getServiceName();</span>
+
+<span class="nc bnc" id="L535" title="All 2 branches missed.">        if (serviceFileName != null) {</span>
+<span class="nc" id="L536">            serviceFileName = getSafeForFileSystemName(serviceFileName);</span>
+
+<span class="nc" id="L538">            File serviceDirectoryFile = new File(this.getBasePathFile(),</span>
+                    MockeyXmlFileManager.MOCK_SERVICE_FOLDER + FILESEPERATOR + serviceFileName);
+            // depot directory/&lt;service ID&gt; directory
+<span class="nc bnc" id="L541" title="All 2 branches missed.">            if (!serviceDirectoryFile.exists()) {</span>
+<span class="nc" id="L542">                serviceDirectoryFile.mkdir();</span>
+            }
+            // depot directory/&lt;service ID&gt; directory/scenario directory/
+<span class="nc" id="L545">            File serviceScenarioListDirectory = new File(</span>
+<span class="nc" id="L546">                    serviceDirectoryFile.getPath() + FILESEPERATOR + MOCK_SERVICE_SCENARIO_FOLDER);</span>
+<span class="nc bnc" id="L547" title="All 2 branches missed.">            if (!serviceScenarioListDirectory.exists()) {</span>
+<span class="nc" id="L548">                serviceScenarioListDirectory.mkdir();</span>
+            }
+            // depot directory/&lt;service ID&gt; directory/&lt;service ID&gt; file
+<span class="nc" id="L551">            File serviceFile = new File(serviceDirectoryFile.getPath() + FILESEPERATOR + serviceFileName + &quot;.xml&quot;);</span>
+<span class="nc" id="L552">            return serviceFile;</span>
+        } else {
+<span class="nc" id="L554">            return null;</span>
+        }
+
+    }
+
+    protected File[] getServiceScenarioFileNames(Service service) {
+
+<span class="nc" id="L561">        File serviceScenarioDir = new File(this.getBasePathFile(),</span>
+<span class="nc" id="L562">                getSafeForFileSystemName(service.getServiceName()) + FILESEPERATOR + MOCK_SERVICE_SCENARIO_FOLDER);</span>
+<span class="nc" id="L563">        return serviceScenarioDir.listFiles();</span>
+
+    }
+
+    private File getServiceScenarioDirectoryAbsolutePath(Service service, Scenario scenario) {
+        // mockey_def_depot/&lt;service ID&gt;/scenarios/&lt;scenario_name&gt;.xml
+<span class="nc" id="L569">        File serviceScenarioFolder = new File(this.getBasePathFile(),</span>
+                MockeyXmlFileManager.MOCK_SERVICE_FOLDER + FILESEPERATOR
+<span class="nc" id="L571">                        + getSafeForFileSystemName(service.getServiceName()) + FILESEPERATOR</span>
+                        + MOCK_SERVICE_SCENARIO_FOLDER);
+
+<span class="nc" id="L574">        return serviceScenarioFolder;</span>
+    }
+
+    protected File getServiceScenarioFileAbsolutePath(Service service, Scenario scenario) {
+        // mockey_def_depot/&lt;service ID&gt;/scenarios/&lt;scenario_name&gt;.xml
+<span class="nc" id="L579">        File serviceScenarioFolder = getServiceScenarioDirectoryAbsolutePath(service, scenario);</span>
+<span class="nc" id="L580">        File serviceScenarioFile = new File(</span>
+<span class="nc" id="L581">                serviceScenarioFolder.getPath() + FILESEPERATOR + getScenarioXmlFileName(scenario));</span>
+
+<span class="nc" id="L583">        return serviceScenarioFile;</span>
+    }
+
+    /**
+     * Example if file is here:
+     * &lt;p&gt;
+     * &lt;pre&gt;
+     * // /Users/&lt;User&gt;/Work/Mockey/dist/mockey_def_depot/&lt;ServiceName&gt;/scenarios/&lt;ScenarioName&gt;.xml
+     * &lt;/pre&gt;
+     * &lt;p&gt;
+     * then returns
+     * &lt;p&gt;
+     * &lt;pre&gt;
+     * mockey_def_depot/&lt;ServiceName&gt;/scenarios/&lt;ScenarioName&gt;.xml
+     * &lt;/pre&gt;
+     *
+     * @param service
+     * @param scenario
+     * @return a path name relative to the root mockey depot folder.
+     */
+    protected String getServiceScenarioFileRelativePathToDepotFolder(Service service, Scenario scenario) {
+
+<span class="nc" id="L605">        String relativePath = MockeyXmlFileManager.MOCK_SERVICE_FOLDER + FILESEPERATOR</span>
+<span class="nc" id="L606">                + getSafeForFileSystemName(service.getServiceName()) + FILESEPERATOR + MOCK_SERVICE_SCENARIO_FOLDER</span>
+<span class="nc" id="L607">                + FILESEPERATOR + getSafeForFileSystemName(scenario.getScenarioName()) + &quot;.xml&quot;;</span>
+
+<span class="nc" id="L609">        return relativePath;</span>
+    }
+
+    /**
+     * @param scenario
+     * @return
+     */
+    public String getScenarioResponseFileName(Scenario scenario) {
+<span class="nc" id="L617">        return getSafeForFileSystemName(scenario.getScenarioName()) + &quot;.txt&quot;;</span>
+    }
+
+    /**
+     * @param scenario
+     * @return
+     */
+    public String getScenarioXmlFileName(Scenario scenario) {
+<span class="nc" id="L625">        return getSafeForFileSystemName(scenario.getScenarioName()) + &quot;.xml&quot;;</span>
+    }
+
+    /**
+     * @param arg
+     * @return a file name safe for a file system.
+     * @see MockeyXmlFileManager#VALID_FILE_NAME_CHARS
+     */
+    public static String getSafeForFileSystemName(String arg) {
+
+        // Let's make sure we only accept valid characters (AlphaNumberic +
+        // '_').
+<span class="nc" id="L637">        StringBuffer safe = new StringBuffer();</span>
+<span class="nc bnc" id="L638" title="All 2 branches missed.">        for (int x = 0; x &lt; arg.length(); x++) {</span>
+<span class="nc" id="L639">            boolean valid = false;</span>
+<span class="nc bnc" id="L640" title="All 2 branches missed.">            for (int i = 0; i &lt; VALID_FILE_NAME_CHARS.length; i++) {</span>
+<span class="nc bnc" id="L641" title="All 2 branches missed.">                if (arg.charAt(x) == VALID_FILE_NAME_CHARS[i]) {</span>
+<span class="nc" id="L642">                    valid = true;</span>
+<span class="nc" id="L643">                    break;</span>
+                }
+            }
+<span class="nc bnc" id="L646" title="All 2 branches missed.">            if (valid) {</span>
+<span class="nc" id="L647">                safe.append(arg.charAt(x));</span>
+            }
+        }
+<span class="nc" id="L650">        return safe.toString().toLowerCase();</span>
+
+        //
+    }
+
+    /**
+     * @param fileArg
+     * @return the RELATIVE path of the fileArg if a child of base file. Otherwise, returns the absolute path of the
+     * fileArg.
+     */
+    public String getRelativePath(File fileArg) {
+<span class="nc" id="L661">        String relativePath = &quot;&quot;;</span>
+<span class="nc" id="L662">        String basePath = this.getBasePathFile().getAbsolutePath();</span>
+<span class="nc" id="L663">        String filePath = fileArg.getAbsolutePath();</span>
+<span class="nc" id="L664">        int index = filePath.indexOf(basePath);</span>
+<span class="nc bnc" id="L665" title="All 2 branches missed.">        if (index &gt; -1) {</span>
+            try {
+                //
+<span class="nc" id="L668">                relativePath = fileArg.getAbsolutePath().substring(index + basePath.length() + 1);</span>
+<span class="nc" id="L669">            } catch (Exception e) {</span>
+<span class="nc" id="L670">                logger.error(&quot;Unable to retrive a relative path from: &quot; + fileArg.getAbsolutePath()</span>
+                        + &quot;' with base path '&quot; + basePath + &quot;'&quot;, e);
+<span class="nc" id="L672">                relativePath = &quot;ERROR&quot;;</span>
+<span class="nc" id="L673">            }</span>
+        } else {
+<span class="nc" id="L675">            relativePath = &quot;ERROR&quot;;</span>
+<span class="nc" id="L676">            logger.error(&quot;Unable to retrive a relative path from: &quot; + fileArg.getAbsolutePath() + &quot;' with base path '&quot;</span>
+                    + basePath + &quot;'&quot;);
+        }
+<span class="nc" id="L679">        return relativePath;</span>
+    }
+
+}
+</pre><div class="footer"><span class="right">Created with <a href="http://www.jacoco.org/jacoco">JaCoCo</a> 0.8.1.201803210924</span></div></body></html>

@@ -1,0 +1,175 @@
+<?xml version="1.0" encoding="UTF-8"?><!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Strict//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-strict.dtd"><html xmlns="http://www.w3.org/1999/xhtml" lang="zh"><head><meta http-equiv="Content-Type" content="text/html;charset=UTF-8"/><link rel="stylesheet" href="../jacoco-resources/report.css" type="text/css"/><link rel="shortcut icon" href="../jacoco-resources/report.gif" type="image/gif"/><title>FileSystemManager.java</title><link rel="stylesheet" href="../jacoco-resources/prettify.css" type="text/css"/><script type="text/javascript" src="../jacoco-resources/prettify.js"></script></head><body onload="window['PR_TAB_WIDTH']=4;prettyPrint()"><div class="breadcrumb" id="breadcrumb"><span class="info"><a href="../jacoco-sessions.html" class="el_session">Sessions</a></span><a href="../index.html" class="el_report">JaCoCo Ant Example</a> &gt; <a href="index.source.html" class="el_package">com.mockey.storage.file</a> &gt; <span class="el_source">FileSystemManager.java</span></div><h1>FileSystemManager.java</h1><pre class="source lang-java linenums">/*
+ * This file is part of Mockey, a tool for testing application 
+ * interactions over HTTP, with a focus on testing web services, 
+ * specifically web applications that consume XML, JSON, and HTML.
+ *  
+ * Copyright (C) 2009-2010  Authors:
+ * 
+ * chad.lafontaine (chad.lafontaine AT gmail DOT com)
+ * 
+ * This program is free software; you can redistribute it and/or
+ * modify it under the terms of the GNU General Public License
+ * as published by the Free Software Foundation; either version 2
+ * of the License, or (at your option) any later version.
+ * 
+ * This program is distributed in the hope that it will be useful,
+ * but WITHOUT ANY WARRANTY; without even the implied warranty of
+ * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+ * GNU General Public License for more details.
+ * 
+ * You should have received a copy of the GNU General Public License
+ * along with this program; if not, write to the Free Software
+ * Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301, USA.
+ *
+ */
+package com.mockey.storage.file;
+
+import java.io.File;
+import java.io.FileInputStream;
+import java.io.IOException;
+import java.io.InputStream;
+import java.util.ArrayList;
+import java.util.List;
+
+import org.apache.log4j.Logger;
+
+/**
+ * 
+ * @author clafonta
+ * 
+ */
+public class FileSystemManager {
+	
+	
+<span class="fc" id="L44">	private static Logger logger = Logger.getLogger(FileSystemManager.class);</span>
+<span class="fc" id="L45">	private File IMAGE_LOCATION = new File(&quot;image_depot&quot;);</span>
+
+<span class="fc" id="L47">	private File[] FOLDER_LIST = new File[] { IMAGE_LOCATION };</span>
+
+	/**
+	 * Basic constructor
+	 */
+<span class="fc" id="L52">	public FileSystemManager() {</span>
+
+<span class="fc bfc" id="L54" title="All 2 branches covered.">		for (File folder : FOLDER_LIST) {</span>
+<span class="pc bpc" id="L55" title="1 of 2 branches missed.">			if (!folder.exists()) {</span>
+<span class="nc" id="L56">				folder.mkdir();</span>
+<span class="nc" id="L57">				logger.debug(&quot;Created directory: &quot; + folder.getAbsolutePath());</span>
+			} else {
+<span class="fc" id="L59">				logger.debug(&quot;Directory: &quot; + folder.getAbsolutePath());</span>
+			}
+		}
+<span class="fc" id="L62">	}</span>
+
+	public File getImageFile(String imageFileName) {
+
+<span class="pc bpc" id="L66" title="1 of 2 branches missed.">		if (!IMAGE_LOCATION.exists()) {</span>
+<span class="nc" id="L67">			IMAGE_LOCATION.mkdir();</span>
+<span class="nc" id="L68">			logger.debug(&quot;Created directory: &quot;</span>
+<span class="nc" id="L69">					+ IMAGE_LOCATION.getAbsolutePath());</span>
+		}
+<span class="fc" id="L71">		String cleanFileName = this.ensureCleanFilename(imageFileName);</span>
+<span class="fc" id="L72">		return new File(IMAGE_LOCATION.getAbsolutePath() + File.separatorChar</span>
+				+ cleanFileName);
+	}
+
+	public FileInfo[] getImageFileList() {
+<span class="fc" id="L77">		return getFileList(IMAGE_LOCATION);</span>
+	}
+
+	private FileInfo[] getFileList(File folder) {
+<span class="fc" id="L81">		List&lt;FileInfo&gt; filteredInputFiles = new ArrayList&lt;FileInfo&gt;();</span>
+<span class="fc" id="L82">		String[] inputFiles = folder.list();</span>
+		// Remove Hidden files
+<span class="fc bfc" id="L84" title="All 2 branches covered.">		for (String fileName : inputFiles) {</span>
+<span class="fc" id="L85">			int i = fileName.indexOf(&quot;.&quot;);</span>
+<span class="pc bpc" id="L86" title="1 of 2 branches missed.">			if (i != 0) {</span>
+<span class="fc" id="L87">				File f = this.getImageFile(fileName);</span>
+<span class="fc" id="L88">				FileInfo fi = new FileInfo();</span>
+<span class="fc" id="L89">				fi.setFilename(f.getName());</span>
+<span class="fc" id="L90">				fi.setLastModified(f.lastModified());</span>
+<span class="fc" id="L91">				fi.setLength(f.length());</span>
+<span class="fc" id="L92">				filteredInputFiles.add(fi);</span>
+			}
+		}
+<span class="fc" id="L95">		return filteredInputFiles.toArray(new FileInfo[filteredInputFiles</span>
+<span class="fc" id="L96">				.size()]);</span>
+	}
+
+	public boolean deleteImageFile(String fileName) {
+<span class="nc" id="L100">		String cleanFileName = this.ensureCleanFilename(fileName);</span>
+<span class="nc" id="L101">		return deleteMe(getImageFile(cleanFileName));</span>
+
+	}
+
+	private boolean deleteMe(File f) {
+
+		// Make sure the file or directory exists and isn't write protected
+<span class="nc bnc" id="L108" title="All 2 branches missed.">		if (!f.exists())</span>
+<span class="nc" id="L109">			throw new IllegalArgumentException(</span>
+<span class="nc" id="L110">					&quot;Delete: no such file or directory: &quot; + f.getName());</span>
+
+<span class="nc bnc" id="L112" title="All 2 branches missed.">		if (!f.canWrite())</span>
+<span class="nc" id="L113">			throw new IllegalArgumentException(&quot;Delete: write protected: &quot;</span>
+<span class="nc" id="L114">					+ f.getName());</span>
+
+		// If it is a directory, make sure it is empty
+<span class="nc bnc" id="L117" title="All 2 branches missed.">		if (f.isDirectory()) {</span>
+<span class="nc" id="L118">			String[] files = f.list();</span>
+<span class="nc bnc" id="L119" title="All 2 branches missed.">			if (files.length &gt; 0)</span>
+<span class="nc" id="L120">				throw new IllegalArgumentException(</span>
+<span class="nc" id="L121">						&quot;Delete: directory not empty: &quot; + f.getName());</span>
+		}
+
+		// Attempt to delete it
+<span class="nc" id="L125">		boolean success = f.delete();</span>
+
+<span class="nc bnc" id="L127" title="All 2 branches missed.">		if (!success)</span>
+<span class="nc" id="L128">			throw new IllegalArgumentException(&quot;Delete: deletion failed&quot;);</span>
+
+<span class="nc" id="L130">		return success;</span>
+	}
+
+	public byte[] getBytesFromFile(File file) throws IOException {
+<span class="nc" id="L134">		InputStream is = new FileInputStream(file);</span>
+
+		// Get the size of the file
+<span class="nc" id="L137">		long length = file.length();</span>
+
+		// You cannot create an array using a long type.
+		// It needs to be an int type.
+		// Before converting to an int type, check
+		// to ensure that file is not larger than Integer.MAX_VALUE.
+<span class="nc bnc" id="L143" title="All 2 branches missed.">		if (length &gt; Integer.MAX_VALUE) {</span>
+			// File is too large
+		}
+
+		// Create the byte array to hold the data
+<span class="nc" id="L148">		byte[] bytes = new byte[(int) length];</span>
+
+		// Read in the bytes
+<span class="nc" id="L151">		int offset = 0;</span>
+<span class="nc" id="L152">		int numRead = 0;</span>
+<span class="nc bnc" id="L153" title="All 2 branches missed.">		while (offset &lt; bytes.length</span>
+<span class="nc bnc" id="L154" title="All 2 branches missed.">				&amp;&amp; (numRead = is.read(bytes, offset, bytes.length - offset)) &gt;= 0) {</span>
+<span class="nc" id="L155">			offset += numRead;</span>
+		}
+
+		// Ensure all the bytes have been read in
+<span class="nc bnc" id="L159" title="All 2 branches missed.">		if (offset &lt; bytes.length) {</span>
+<span class="nc" id="L160">			throw new IOException(&quot;Could not completely read file &quot;</span>
+<span class="nc" id="L161">					+ file.getName());</span>
+		}
+
+		// Close the input stream and return bytes
+<span class="nc" id="L165">		is.close();</span>
+<span class="nc" id="L166">		return bytes;</span>
+	}
+	
+	private String ensureCleanFilename(String filenameWithPath){
+<span class="fc" id="L170">		int index = filenameWithPath.lastIndexOf(File.separatorChar);</span>
+<span class="fc" id="L171">		String name = filenameWithPath.substring(index+1);</span>
+<span class="fc" id="L172">		return name.trim();</span>
+	}
+}
+</pre><div class="footer"><span class="right">Created with <a href="http://www.jacoco.org/jacoco">JaCoCo</a> 0.8.1.201803210924</span></div></body></html>

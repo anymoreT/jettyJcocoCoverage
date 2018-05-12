@@ -1,0 +1,437 @@
+<?xml version="1.0" encoding="UTF-8"?><!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Strict//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-strict.dtd"><html xmlns="http://www.w3.org/1999/xhtml" lang="zh"><head><meta http-equiv="Content-Type" content="text/html;charset=UTF-8"/><link rel="stylesheet" href="../jacoco-resources/report.css" type="text/css"/><link rel="shortcut icon" href="../jacoco-resources/report.gif" type="image/gif"/><title>ServicePlanSetupServlet.java</title><link rel="stylesheet" href="../jacoco-resources/prettify.css" type="text/css"/><script type="text/javascript" src="../jacoco-resources/prettify.js"></script></head><body onload="window['PR_TAB_WIDTH']=4;prettyPrint()"><div class="breadcrumb" id="breadcrumb"><span class="info"><a href="../jacoco-sessions.html" class="el_session">Sessions</a></span><a href="../index.html" class="el_report">JaCoCo Ant Example</a> &gt; <a href="index.source.html" class="el_package">com.mockey.ui</a> &gt; <span class="el_source">ServicePlanSetupServlet.java</span></div><h1>ServicePlanSetupServlet.java</h1><pre class="source lang-java linenums">/*
+ * This file is part of Mockey, a tool for testing application 
+ * interactions over HTTP, with a focus on testing web services, 
+ * specifically web applications that consume XML, JSON, and HTML.
+ *  
+ * Copyright (C) 2009-2010  Authors:
+ * 
+ * chad.lafontaine (chad.lafontaine AT gmail DOT com)
+ * neil.cronin (neil AT rackle DOT com) 
+ * lorin.kobashigawa (lkb AT kgawa DOT com)
+ * rob.meyer (rob AT bigdis DOT com)
+ * 
+ * This program is free software; you can redistribute it and/or
+ * modify it under the terms of the GNU General Public License
+ * as published by the Free Software Foundation; either version 2
+ * of the License, or (at your option) any later version.
+ * 
+ * This program is distributed in the hope that it will be useful,
+ * but WITHOUT ANY WARRANTY; without even the implied warranty of
+ * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+ * GNU General Public License for more details.
+ * 
+ * You should have received a copy of the GNU General Public License
+ * along with this program; if not, write to the Free Software
+ * Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301, USA.
+ *
+ */
+package com.mockey.ui;
+
+import java.io.IOException;
+import java.io.PrintWriter;
+import java.util.ArrayList;
+import java.util.Calendar;
+import java.util.List;
+
+import javax.servlet.RequestDispatcher;
+import javax.servlet.ServletException;
+import javax.servlet.http.HttpServlet;
+import javax.servlet.http.HttpServletRequest;
+import javax.servlet.http.HttpServletResponse;
+
+import org.apache.commons.logging.Log;
+import org.apache.commons.logging.LogFactory;
+import org.json.JSONException;
+import org.json.JSONObject;
+
+import com.mockey.model.ApiDocAttribute;
+import com.mockey.model.ApiDocFieldValue;
+import com.mockey.model.ApiDocRequest;
+import com.mockey.model.ApiDocResponse;
+import com.mockey.model.ApiDocService;
+import com.mockey.model.PlanItem;
+import com.mockey.model.Service;
+import com.mockey.model.ServicePlan;
+import com.mockey.storage.IApiStorage;
+import com.mockey.storage.IApiStorageInMemory;
+import com.mockey.storage.IMockeyStorage;
+import com.mockey.storage.StorageRegistry;
+
+/**
+ * Management of SAVE, DELETE, or SET for a Service Plan, in addition to HTTP
+ * Documentation.
+ * 
+ * @author chadlafontaine
+ * 
+ */
+<span class="fc" id="L67">public class ServicePlanSetupServlet extends HttpServlet implements ServicePlanConfigurationAPI {</span>
+	private static final long serialVersionUID = -2964632050151431391L;
+<span class="fc" id="L69">	private Log log = LogFactory.getLog(ServicePlanSetupServlet.class);</span>
+<span class="fc" id="L70">	private IMockeyStorage store = StorageRegistry.MockeyStorage;</span>
+<span class="fc" id="L71">	private IApiStorage apiStore = IApiStorageInMemory.getInstance();</span>
+
+	/**
+	 * Loads up the HTTP API Documentation in memory for this service. The HTTP
+	 * API information to describe this servlet's REQUEST and RESPONSE messaging
+	 * is displayed to the end user via the Service API help page.
+	 */
+	public void init() throws ServletException {
+		// *****************************
+		// THIS SERVICE API DESCRIPTION CONTRACT
+		// *****************************
+		// This information is used in the API JSP document, used to describe
+		// how to make setting changes from a head-less client.
+
+<span class="pc bpc" id="L85" title="1 of 2 branches missed.">		if (apiStore.getApiDocServiceByName(API_SERVICE_PLAN_CONFIGURATION_NAME) == null) {</span>
+<span class="fc" id="L86">			ApiDocService apiDocService = new ApiDocService();</span>
+<span class="fc" id="L87">			apiDocService.setName(API_SERVICE_PLAN_CONFIGURATION_NAME);</span>
+<span class="fc" id="L88">			apiDocService</span>
+<span class="fc" id="L89">					.setDescription(&quot;If you need Mockey to load a specific Service Plan, then this API may meet your needs. When to use: your automated test scripts need Mockey in a certain state of mind.&quot;);</span>
+			// TODO: We need to use a pattern matching replace e.g. ${0} ${1}
+			// with array [&quot;a&quot;, &quot;b&quot;] for VALUES
+<span class="fc" id="L92">			apiDocService.setServicePath(&quot;/plan/setup&quot;);</span>
+
+			// *****************************
+			// REQUEST DEFINITION
+			// *****************************
+
+<span class="fc" id="L98">			ApiDocRequest apiDocRequest = new ApiDocRequest();</span>
+
+			// Parameter - 'action'
+<span class="fc" id="L101">			ApiDocAttribute reqAttributeAction = new ApiDocAttribute();</span>
+<span class="fc" id="L102">			reqAttributeAction.setFieldName(API_SETPLAN_PARAMETER_ACTION);</span>
+<span class="fc" id="L103">			reqAttributeAction.addFieldValues(new ApiDocFieldValue(API_SETPLAN_PARAMETER_ACTION_VALUE_DELETE_PLAN,</span>
+					&quot;Delete the service plan definition given a valid plan_id parameter.&quot;));
+<span class="fc" id="L105">			reqAttributeAction.addFieldValues(new ApiDocFieldValue(API_SETPLAN_PARAMETER_ACTION_VALUE_SAVE_PLAN,</span>
+					&quot;Saves current configuration settings as a service plan definition.&quot;));
+<span class="fc" id="L107">			reqAttributeAction.addFieldValues(new ApiDocFieldValue(API_SETPLAN_PARAMETER_ACTION_VALUE_SET_PLAN,</span>
+					&quot;Sets a service plan given a valid plan_id parameter.&quot;));
+<span class="fc" id="L109">			reqAttributeAction.addFieldValues(new ApiDocFieldValue(API_SETPLAN_PARAMETER_ACTION_VALUE_SET_AS_DEFAULT_PLAN,</span>
+					&quot;Sets a service plan to be set as the default state upon a Mockey startup. Set &quot; + API_SETPLAN_PARAMETER_PLAN_ID
+					+&quot; to 'none' if no desired default plan is to be set.&quot;));
+			
+<span class="fc" id="L113">			apiDocRequest.addAttribute(reqAttributeAction);</span>
+
+			// Parameter - 'plan_id'
+<span class="fc" id="L116">			ApiDocAttribute reqAttributePlanId = new ApiDocAttribute();</span>
+<span class="fc" id="L117">			reqAttributePlanId.setFieldName(API_SETPLAN_PARAMETER_PLAN_ID);</span>
+<span class="fc" id="L118">			reqAttributePlanId.addFieldValues(new ApiDocFieldValue(&quot;[identifier]&quot;, &quot;A valid service plan identifier.&quot;));</span>
+<span class="fc" id="L119">			reqAttributePlanId.setExample(&quot;123&quot;);</span>
+<span class="fc" id="L120">			apiDocRequest.addAttribute(reqAttributePlanId);</span>
+
+			// Parameter - 'service_plan_name'
+<span class="fc" id="L123">			ApiDocAttribute reqAttributePlanName = new ApiDocAttribute();</span>
+<span class="fc" id="L124">			reqAttributePlanName.setFieldName(API_SET_SAVE_OR_UPDATE_PARAMETER_PLAN_NAME);</span>
+<span class="fc" id="L125">			reqAttributePlanName</span>
+<span class="fc" id="L126">					.addFieldValues(new ApiDocFieldValue(</span>
+							&quot;[string]&quot;,
+							&quot;The service plan name needed to create or save/update. If plan_id not provided, then this value is used to locate the service plan for setting or updating.&quot;));
+<span class="fc" id="L129">			reqAttributePlanName.setExample(&quot;The Gold Service Plan&quot;);</span>
+<span class="fc" id="L130">			apiDocRequest.addAttribute(reqAttributePlanName);</span>
+
+			// Parameter - 'service_plan_name'
+<span class="fc" id="L133">			ApiDocAttribute reqAttributePlanTag = new ApiDocAttribute();</span>
+<span class="fc" id="L134">			reqAttributePlanTag.setFieldName(API_SET_SAVE_OR_UPDATE_PARAMETER_PLAN_TAG);</span>
+<span class="fc" id="L135">			reqAttributePlanTag.addFieldValues(new ApiDocFieldValue(&quot;[string]&quot;, &quot;The service plan tag(s).&quot;));</span>
+<span class="fc" id="L136">			reqAttributePlanTag.setExample(&quot;Tag1 Tag2 Tag3&quot;);</span>
+<span class="fc" id="L137">			apiDocRequest.addAttribute(reqAttributePlanTag);</span>
+
+			// Parameter - 'type'
+<span class="fc" id="L140">			ApiDocAttribute reqAttributeType = new ApiDocAttribute();</span>
+<span class="fc" id="L141">			reqAttributeType.setFieldName(API_SETPLAN_PARAMETER_TYPE);</span>
+<span class="fc" id="L142">			reqAttributeType.addFieldValues(new ApiDocFieldValue(&quot;json&quot;,</span>
+					&quot;Response will be in JSON. Any other value for 'type' is undefined and you may experience a 302.&quot;));
+<span class="fc" id="L144">			apiDocRequest.addAttribute(reqAttributeType);</span>
+<span class="fc" id="L145">			apiDocService.setApiRequest(apiDocRequest);</span>
+
+			// Parameter - 'type'
+<span class="fc" id="L148">			ApiDocAttribute reqTransientState = new ApiDocAttribute();</span>
+<span class="fc" id="L149">			reqTransientState.setFieldName(API_TRANSIENT_STATE);</span>
+<span class="fc" id="L150">			reqTransientState</span>
+<span class="fc" id="L151">					.addFieldValues(new ApiDocFieldValue(</span>
+							&quot;[boolean]&quot;,
+							&quot;If available and set to 'true', then all settings in this call will be in-memory only, not persisted to the file system. Otherwise, state settings will be written to the file system.&quot;));
+<span class="fc" id="L154">			apiDocRequest.addAttribute(reqTransientState);</span>
+<span class="fc" id="L155">			apiDocService.setApiRequest(apiDocRequest);</span>
+
+			// *****************************
+			// RESPONSE DEFINITION
+			// *****************************
+
+<span class="fc" id="L161">			ApiDocResponse apiResponse = new ApiDocResponse();</span>
+			// Building a JSON RESPONSE example
+			try {
+<span class="fc" id="L164">				JSONObject jsonResponseObject = new JSONObject();</span>
+<span class="fc" id="L165">				JSONObject jsonResultObject = new JSONObject();</span>
+<span class="fc" id="L166">				jsonResultObject</span>
+<span class="fc" id="L167">						.put(&quot;success&quot;,</span>
+								&quot;Some informative coaching message. If success isn't a value, then maybe you have a 'fail' message.&quot;);
+<span class="fc" id="L169">				jsonResultObject.put(&quot;planId&quot;, &quot;1234&quot;);</span>
+<span class="fc" id="L170">				jsonResultObject.put(&quot;planName&quot;, &quot;Some service name&quot;);</span>
+<span class="fc" id="L171">				jsonResponseObject.put(&quot;result&quot;, jsonResultObject);</span>
+<span class="fc" id="L172">				apiResponse.setExample(jsonResponseObject.toString());</span>
+<span class="nc" id="L173">			} catch (Exception e) {</span>
+<span class="nc" id="L174">				log.error(&quot;Unabel to build a sample JSON message. &quot;, e);</span>
+<span class="fc" id="L175">			}</span>
+
+			// Response attribute 'planId'
+<span class="fc" id="L178">			ApiDocAttribute resAttributePlanId = new ApiDocAttribute();</span>
+<span class="fc" id="L179">			resAttributePlanId.setFieldName(&quot;planId&quot;);</span>
+<span class="fc" id="L180">			resAttributePlanId.setFieldDescription(&quot;Identifier of a Service Plan&quot;);</span>
+<span class="fc" id="L181">			apiResponse.addAttribute(resAttributePlanId);</span>
+
+			// Response attribute 'planName'
+<span class="fc" id="L184">			ApiDocAttribute resAttributePlanName = new ApiDocAttribute();</span>
+<span class="fc" id="L185">			resAttributePlanName.setFieldName(&quot;planName&quot;);</span>
+<span class="fc" id="L186">			resAttributePlanName.setFieldDescription(&quot;Name of a Service Plan&quot;);</span>
+<span class="fc" id="L187">			apiResponse.addAttribute(resAttributePlanName);</span>
+
+			// Response attribute 'success'
+<span class="fc" id="L190">			ApiDocAttribute resAttributeSuccess = new ApiDocAttribute();</span>
+<span class="fc" id="L191">			resAttributeSuccess.setFieldName(&quot;success&quot;);</span>
+<span class="fc" id="L192">			resAttributeSuccess</span>
+<span class="fc" id="L193">					.setFieldDescription(&quot;Successfully set, deleted, or saved a plan.  You get 'fail' or 'success', not both.&quot;);</span>
+<span class="fc" id="L194">			apiResponse.addAttribute(resAttributeSuccess);</span>
+
+<span class="fc" id="L196">			ApiDocAttribute resAttributeFail = new ApiDocAttribute();</span>
+<span class="fc" id="L197">			resAttributeFail.setFieldName(&quot;fail&quot;);</span>
+<span class="fc" id="L198">			resAttributeFail</span>
+<span class="fc" id="L199">					.setFieldDescription(&quot;Failed to set, delete, or save a plan. You get 'fail' or 'success', not both.&quot;);</span>
+<span class="fc" id="L200">			apiResponse.addAttribute(resAttributeFail);</span>
+
+<span class="fc" id="L202">			apiDocService.setApiResponse(apiResponse);</span>
+<span class="fc" id="L203">			apiStore.saveOrUpdateService(apiDocService);</span>
+		}
+<span class="fc" id="L205">	}</span>
+
+	/**
+	 * 
+	 * 
+	 * @param req
+	 *            basic request
+	 * @param resp
+	 *            basic resp
+	 * @throws ServletException
+	 *             basic
+	 * @throws IOException
+	 *             basic
+	 */
+	public void service(HttpServletRequest req, HttpServletResponse resp) throws ServletException, IOException {
+
+		try {
+			// API BUSINESS LOGIC
+			// log.debug(&quot;Service Plan setup/delete&quot;);
+<span class="nc" id="L224">			ServicePlan servicePlan = null;</span>
+<span class="nc" id="L225">			Long servicePlanId = null;</span>
+<span class="nc" id="L226">			String servicePlanIdAsString = req.getParameter(API_SETPLAN_PARAMETER_PLAN_ID);</span>
+<span class="nc" id="L227">			List&lt;Service&gt; allServices = store.getServices();</span>
+			// *********************
+			// BEST EFFORT HERE.
+			// We try to find the service by ID.
+			// If not found, we try by NAME.
+			// Otherwise, let the rest of the logic do its thing.
+			// *********************
+
+			try {
+<span class="nc" id="L236">				servicePlanId = new Long(servicePlanIdAsString);</span>
+<span class="nc" id="L237">				servicePlan = store.getServicePlanById(servicePlanId);</span>
+<span class="nc" id="L238">			} catch (Exception e) {</span>
+<span class="nc bnc" id="L239" title="All 2 branches missed.">				if (req.getParameter(API_SETPLAN_PARAMETER_PLAN_ID) != null) {</span>
+<span class="nc" id="L240">					log.debug(&quot;No service plan with ID '&quot; + req.getParameter(API_SETPLAN_PARAMETER_PLAN_ID)</span>
+							+ &quot;' found.&quot;, e);
+				}
+<span class="nc" id="L243">			}</span>
+<span class="nc bnc" id="L244" title="All 2 branches missed.">			if (servicePlan == null) {</span>
+				try {
+<span class="nc" id="L246">					String servicePlanName = req.getParameter(API_SET_SAVE_OR_UPDATE_PARAMETER_PLAN_NAME);</span>
+					
+<span class="nc" id="L248">					servicePlan = store.getServicePlanByName(servicePlanName.trim());</span>
+<span class="nc" id="L249">				} catch (Exception e) {</span>
+<span class="nc bnc" id="L250" title="All 2 branches missed.">					if (req.getParameter(API_SET_SAVE_OR_UPDATE_PARAMETER_PLAN_NAME) != null) {</span>
+<span class="nc" id="L251">						log.debug(</span>
+								&quot;No service plan with NAME '&quot;
+<span class="nc" id="L253">										+ req.getParameter(API_SET_SAVE_OR_UPDATE_PARAMETER_PLAN_NAME) + &quot;' found.&quot;, e);</span>
+					}
+<span class="nc" id="L255">				}</span>
+			}
+
+<span class="nc" id="L258">			JSONObject jsonResultObject = new JSONObject();</span>
+
+<span class="nc" id="L260">			String action = req.getParameter(API_SETPLAN_PARAMETER_ACTION);</span>
+<span class="nc" id="L261">			String transientState = req.getParameter(API_TRANSIENT_STATE);</span>
+			try {
+<span class="nc bnc" id="L263" title="All 2 branches missed.">				if (transientState != null) {</span>
+<span class="nc" id="L264">					servicePlan.setTransientState(new Boolean(transientState));</span>
+				}
+<span class="nc" id="L266">			} catch (Exception e) {</span>
+<span class="nc" id="L267">				log.debug(&quot;ServicePlan not set to transient state but a value was given as: &quot; + transientState);</span>
+
+<span class="nc" id="L269">			}</span>
+<span class="nc bnc" id="L270" title="All 2 branches missed.">			if (API_SETPLAN_PARAMETER_ACTION_VALUE_DELETE_PLAN.equals(action)) {</span>
+<span class="nc" id="L271">				JSONObject jsonObject = new JSONObject();</span>
+
+				try {
+<span class="nc" id="L274">					store.deleteServicePlan(servicePlan);</span>
+<span class="nc" id="L275">					jsonObject.put(&quot;success&quot;, &quot;Service plan '&quot; + servicePlan.getName() + &quot;' deleted&quot;);</span>
+<span class="nc" id="L276">					jsonObject.put(&quot;planId&quot;, &quot;&quot; + servicePlan.getId());</span>
+<span class="nc" id="L277">					jsonObject.put(&quot;planName&quot;, &quot;&quot; + servicePlan.getName());</span>
+<span class="nc" id="L278">				} catch (Exception e) {</span>
+
+<span class="nc" id="L280">					jsonObject.put(&quot;fail&quot;, &quot;Service plan not deleted. Please check your logs for insight.&quot;);</span>
+
+<span class="nc" id="L282">				}</span>
+<span class="nc" id="L283">				resp.setContentType(&quot;application/json&quot;);</span>
+<span class="nc" id="L284">				PrintWriter out = resp.getWriter();</span>
+<span class="nc" id="L285">				jsonResultObject.put(&quot;result&quot;, jsonObject);</span>
+<span class="nc" id="L286">				out.println(jsonResultObject.toString());</span>
+<span class="nc" id="L287">				out.flush();</span>
+<span class="nc" id="L288">				out.close();</span>
+<span class="nc" id="L289">				return;</span>
+<span class="nc bnc" id="L290" title="All 4 branches missed.">			} else if (API_SETPLAN_PARAMETER_ACTION_VALUE_SET_PLAN.equals(action) &amp;&amp; servicePlan != null) {</span>
+<span class="nc" id="L291">				JSONObject jsonObject = new JSONObject();</span>
+
+				try {
+					
+<span class="nc" id="L295">					store.setServicePlan(servicePlan);</span>
+<span class="nc" id="L296">					String msg = &quot;Service plan &quot; + servicePlan.getName() + &quot; set&quot;;</span>
+<span class="nc" id="L297">					jsonObject.put(&quot;success&quot;, msg);</span>
+<span class="nc" id="L298">					jsonObject.put(&quot;planid&quot;, &quot;&quot; + servicePlan.getId());</span>
+<span class="nc" id="L299">					jsonObject.put(&quot;planName&quot;, &quot;&quot; + servicePlan.getName());</span>
+
+<span class="nc" id="L301">					Util.saveSuccessMessage(msg, req); // For redirect</span>
+<span class="nc" id="L302">				} catch (Exception e) {</span>
+<span class="nc" id="L303">					jsonObject.put(&quot;fail&quot;, &quot;Service plan not set. Please check your logs for insight.&quot;);</span>
+<span class="nc" id="L304">				}</span>
+<span class="nc" id="L305">				resp.setContentType(&quot;application/json&quot;);</span>
+<span class="nc" id="L306">				PrintWriter out = resp.getWriter();</span>
+<span class="nc" id="L307">				jsonResultObject.put(&quot;result&quot;, jsonObject);</span>
+<span class="nc" id="L308">				out.println(jsonResultObject.toString());</span>
+<span class="nc" id="L309">				out.flush();</span>
+<span class="nc" id="L310">				out.close();</span>
+<span class="nc" id="L311">				return;</span>
+				
+			}
+<span class="nc bnc" id="L314" title="All 2 branches missed.">			else if(API_SETPLAN_PARAMETER_ACTION_VALUE_SET_AS_DEFAULT_PLAN.equals(action)){</span>
+<span class="nc" id="L315">				PrintWriter out = resp.getWriter();</span>
+<span class="nc" id="L316">				JSONObject jsonObject = new JSONObject();</span>
+<span class="nc bnc" id="L317" title="All 2 branches missed.">				if(&quot;none&quot;.equalsIgnoreCase(servicePlanIdAsString)){</span>
+<span class="nc" id="L318">					store.setDefaultServicePlanId(null);</span>
+					// JSON response
+<span class="nc" id="L320">					jsonObject.put(&quot;success&quot;, &quot;Removed default plan.&quot;);</span>
+				}
+<span class="nc bnc" id="L322" title="All 4 branches missed.">				else if(servicePlan!=null &amp;&amp; servicePlan.getId()!=null){</span>
+<span class="nc" id="L323">					store.setDefaultServicePlanId(servicePlan.getId().toString());</span>
+					// JSON response
+<span class="nc" id="L325">					jsonObject.put(&quot;success&quot;, &quot;Set as Default Service Plan&quot;);</span>
+<span class="nc" id="L326">					jsonObject.put(&quot;planid&quot;, &quot;&quot; + servicePlan.getId());</span>
+<span class="nc" id="L327">					jsonObject.put(&quot;planName&quot;, &quot;&quot; + servicePlan.getName());</span>
+					
+				}else {
+<span class="nc" id="L330">					jsonObject.put(&quot;fail&quot;, &quot;Unable to set Default Service Plan. Unknown Service Plan ID.&quot;);</span>
+				}
+<span class="nc" id="L332">				jsonResultObject.put(&quot;result&quot;, jsonObject);</span>
+<span class="nc" id="L333">				out.println(jsonResultObject.toString());</span>
+<span class="nc" id="L334">				out.flush();</span>
+<span class="nc" id="L335">				out.close();</span>
+<span class="nc" id="L336">				return;</span>
+				
+			}
+<span class="nc bnc" id="L339" title="All 2 branches missed.">			else if (API_SETPLAN_PARAMETER_ACTION_VALUE_SAVE_PLAN.equals(action)) {</span>
+
+<span class="nc bnc" id="L341" title="All 2 branches missed.">				if (servicePlan == null) {</span>
+<span class="nc" id="L342">					servicePlan = new ServicePlan();</span>
+				}
+
+<span class="nc" id="L345">				String[] serviceIds = req.getParameterValues(&quot;service_ids[]&quot;);</span>
+
+				// ***************************
+				// LET'S PREVENT EMPTY PLAN NAMES
+				// ***************************
+
+<span class="nc" id="L351">				String servicePlanName = req.getParameter(API_SET_SAVE_OR_UPDATE_PARAMETER_PLAN_NAME);</span>
+<span class="nc" id="L352">				String servicePlanTag = req.getParameter(API_SET_SAVE_OR_UPDATE_PARAMETER_PLAN_TAG);</span>
+<span class="nc bnc" id="L353" title="All 2 branches missed.">				if (servicePlanName == null) {</span>
+					// If possible, carry over the name from an existing Plan.
+<span class="nc" id="L355">					servicePlanName = servicePlan.getName();</span>
+				}
+				// If all fails, inject a name.
+<span class="nc bnc" id="L358" title="All 4 branches missed.">				if (servicePlanName == null || servicePlanName.trim().length() == 0) {</span>
+<span class="nc" id="L359">					servicePlanName = &quot;Plan (auto-generated-name)&quot;;</span>
+				}
+<span class="nc" id="L361">				servicePlan.setName(servicePlanName.trim());</span>
+
+<span class="nc bnc" id="L363" title="All 2 branches missed.">				if (servicePlanTag != null) {</span>
+<span class="nc" id="L364">					servicePlan.setTag(servicePlanTag);</span>
+				}
+				// ***************************
+				// SAVE/UPDATE THE PLAN
+				// ***************************
+<span class="nc" id="L369">				ServicePlan savedServicePlan = createOrUpdatePlan(servicePlan, serviceIds);</span>
+
+				// ***************************
+				// SAVE/UPDATE THE PLAN
+				// ***************************
+<span class="nc" id="L374">				resp.setContentType(&quot;application/json&quot;);</span>
+<span class="nc" id="L375">				PrintWriter out = resp.getWriter();</span>
+<span class="nc" id="L376">				String msg = &quot;Service plan &quot; + servicePlan.getName() + &quot; saved&quot;;</span>
+
+				// HACK: For redirect IF JavaScript decides to (if type is not
+				// JSON)
+<span class="nc bnc" id="L380" title="All 2 branches missed.">				if (!&quot;json&quot;.equalsIgnoreCase(req.getParameter(API_SETPLAN_PARAMETER_TYPE))) {</span>
+<span class="nc" id="L381">					Util.saveSuccessMessage(msg, req);</span>
+				}
+				// JSON response
+<span class="nc" id="L384">				JSONObject jsonObject = new JSONObject();</span>
+<span class="nc" id="L385">				jsonObject.put(&quot;success&quot;, msg);</span>
+<span class="nc" id="L386">				jsonObject.put(&quot;planid&quot;, &quot;&quot; + savedServicePlan.getId());</span>
+<span class="nc" id="L387">				jsonObject.put(&quot;planName&quot;, &quot;&quot; + savedServicePlan.getName());</span>
+<span class="nc" id="L388">				jsonResultObject.put(&quot;result&quot;, jsonObject);</span>
+<span class="nc" id="L389">				out.println(jsonResultObject.toString());</span>
+<span class="nc" id="L390">				out.flush();</span>
+<span class="nc" id="L391">				out.close();</span>
+<span class="nc" id="L392">				return;</span>
+			}
+
+<span class="nc" id="L395">			req.setAttribute(&quot;services&quot;, allServices);</span>
+<span class="nc" id="L396">			req.setAttribute(&quot;plans&quot;, store.getServicePlans());</span>
+<span class="nc" id="L397">			RequestDispatcher dispatch = req.getRequestDispatcher(&quot;/home.jsp&quot;);</span>
+<span class="nc" id="L398">			dispatch.forward(req, resp);</span>
+<span class="nc" id="L399">		} catch (JSONException jsonException) {</span>
+<span class="nc" id="L400">			throw new ServletException(jsonException);</span>
+<span class="nc" id="L401">		}</span>
+<span class="nc" id="L402">	}</span>
+
+	/**
+	 * 
+	 * @param servicePlan
+	 * @param serviceIdArray
+	 *            list of Service IDs that will be included in the plan.
+	 * @return
+	 */
+	private ServicePlan createOrUpdatePlan(ServicePlan servicePlan, String[] serviceIdArray) {
+<span class="nc" id="L412">		List&lt;PlanItem&gt; planItemList = new ArrayList&lt;PlanItem&gt;();</span>
+<span class="nc bnc" id="L413" title="All 2 branches missed.">		if (serviceIdArray != null) {</span>
+<span class="nc bnc" id="L414" title="All 2 branches missed.">			for (String serviceId : serviceIdArray) {</span>
+
+<span class="nc" id="L416">				Service service = store.getServiceById(new Long(serviceId));</span>
+
+<span class="nc" id="L418">				PlanItem planItem = new PlanItem();</span>
+<span class="nc" id="L419">				planItem.setHangTime(service.getHangTime());</span>
+<span class="nc" id="L420">				planItem.setServiceName(service.getServiceName());</span>
+
+<span class="nc" id="L422">				planItem.setScenarioName(service.getDefaultScenarioName());</span>
+<span class="nc" id="L423">				planItem.setServiceResponseType(service.getServiceResponseType());</span>
+<span class="nc" id="L424">				planItemList.add(planItem);</span>
+
+			}
+		}
+<span class="nc" id="L428">		servicePlan.setPlanItemList(planItemList);</span>
+<span class="nc" id="L429">		servicePlan.setLastVisit(new Long(Calendar.getInstance().getTimeInMillis()));</span>
+
+<span class="nc" id="L431">		return store.saveOrUpdateServicePlan(servicePlan);</span>
+
+	}
+
+	
+}
+</pre><div class="footer"><span class="right">Created with <a href="http://www.jacoco.org/jacoco">JaCoCo</a> 0.8.1.201803210924</span></div></body></html>

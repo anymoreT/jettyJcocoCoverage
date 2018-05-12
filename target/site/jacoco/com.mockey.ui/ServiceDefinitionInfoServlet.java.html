@@ -1,0 +1,214 @@
+<?xml version="1.0" encoding="UTF-8"?><!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Strict//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-strict.dtd"><html xmlns="http://www.w3.org/1999/xhtml" lang="zh"><head><meta http-equiv="Content-Type" content="text/html;charset=UTF-8"/><link rel="stylesheet" href="../jacoco-resources/report.css" type="text/css"/><link rel="shortcut icon" href="../jacoco-resources/report.gif" type="image/gif"/><title>ServiceDefinitionInfoServlet.java</title><link rel="stylesheet" href="../jacoco-resources/prettify.css" type="text/css"/><script type="text/javascript" src="../jacoco-resources/prettify.js"></script></head><body onload="window['PR_TAB_WIDTH']=4;prettyPrint()"><div class="breadcrumb" id="breadcrumb"><span class="info"><a href="../jacoco-sessions.html" class="el_session">Sessions</a></span><a href="../index.html" class="el_report">JaCoCo Ant Example</a> &gt; <a href="index.source.html" class="el_package">com.mockey.ui</a> &gt; <span class="el_source">ServiceDefinitionInfoServlet.java</span></div><h1>ServiceDefinitionInfoServlet.java</h1><pre class="source lang-java linenums">/*
+ * This file is part of Mockey, a tool for testing application 
+ * interactions over HTTP, with a focus on testing web services, 
+ * specifically web applications that consume XML, JSON, and HTML.
+ *  
+ * Copyright (C) 2009-2010  Authors:
+ * 
+ * chad.lafontaine (chad.lafontaine AT gmail DOT com)
+ * 
+ * This program is free software; you can redistribute it and/or
+ * modify it under the terms of the GNU General Public License
+ * as published by the Free Software Foundation; either version 2
+ * of the License, or (at your option) any later version.
+ * 
+ * This program is distributed in the hope that it will be useful,
+ * but WITHOUT ANY WARRANTY; without even the implied warranty of
+ * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+ * GNU General Public License for more details.
+ * 
+ * You should have received a copy of the GNU General Public License
+ * along with this program; if not, write to the Free Software
+ * Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301, USA.
+ *
+ */
+package com.mockey.ui;
+
+import java.io.IOException;
+import java.io.PrintWriter;
+import java.util.ArrayList;
+import java.util.List;
+
+import javax.servlet.ServletException;
+import javax.servlet.http.HttpServlet;
+import javax.servlet.http.HttpServletRequest;
+import javax.servlet.http.HttpServletResponse;
+
+import org.apache.log4j.Logger;
+import org.json.JSONObject;
+
+import com.mockey.model.ApiDocAttribute;
+import com.mockey.model.ApiDocFieldValue;
+import com.mockey.model.ApiDocRequest;
+import com.mockey.model.ApiDocResponse;
+import com.mockey.model.ApiDocService;
+import com.mockey.model.Scenario;
+import com.mockey.model.Service;
+import com.mockey.storage.IApiStorage;
+import com.mockey.storage.IApiStorageInMemory;
+import com.mockey.storage.IMockeyStorage;
+import com.mockey.storage.StorageRegistry;
+
+/**
+ * Information of a service and service scenarios, in addition to HTTP
+ * Documentation.
+ * 
+ * @author chadlafontaine
+ * 
+ */
+<span class="fc" id="L59">public class ServiceDefinitionInfoServlet extends HttpServlet {</span>
+
+	/**
+	 * 
+	 */
+	private static final long serialVersionUID = -1191330345815660271L;
+
+<span class="fc" id="L66">	private Logger log = Logger.getLogger(ServiceDefinitionInfoServlet.class);</span>
+
+<span class="fc" id="L68">	private IMockeyStorage store = StorageRegistry.MockeyStorage;</span>
+<span class="fc" id="L69">	private IApiStorage apiStore = IApiStorageInMemory.getInstance();</span>
+
+	/**
+	 * Loads up the HTTP API Documentation in memory for this service. The HTTP
+	 * API information to describe this servlet's REQUEST and RESPONSE messaging
+	 * is displayed to the end user via the Service API help page.
+	 */
+	public void init() throws ServletException {
+		// *****************************
+		// THIS SERVICE API DESCRIPTION CONTRACT
+		// *****************************
+		// This information is used in the API JSP document, used to describe
+		// how to make setting changes from a head-less client.
+
+<span class="pc bpc" id="L83" title="1 of 2 branches missed.">		if (apiStore.getApiDocServiceByName(ServiceDefinitionInfoAPI.API_SERVICE_INFO_NAME) == null) {</span>
+<span class="fc" id="L84">			ApiDocService apiDocService = new ApiDocService();</span>
+<span class="fc" id="L85">			apiDocService.setName(ServiceDefinitionInfoAPI.API_SERVICE_INFO_NAME);</span>
+<span class="fc" id="L86">			apiDocService</span>
+<span class="fc" id="L87">					.setDescription(&quot;Do you need META-DATA on service definitions? Here's your meta-data. When to use: if you have a test script that needs to iterate over each service or service scenario and your test script needs information from Mockey, then this is a good source of information.&quot;);</span>
+<span class="fc" id="L88">			apiDocService.setServicePath(&quot;/definitions&quot;);</span>
+
+			// *****************************
+			// REQUEST DEFINITION
+			// *****************************
+
+<span class="fc" id="L94">			ApiDocRequest apiDocRequest = new ApiDocRequest();</span>
+<span class="fc" id="L95">			String commonTxt = &quot;(optional) Either a Service ID or Service Name is needed. Otherwise, all Service definitions meta-data will be provided.&quot;;</span>
+<span class="fc" id="L96">			ApiDocAttribute reqServiceId = new ApiDocAttribute();</span>
+<span class="fc" id="L97">			reqServiceId.setFieldName(ServiceConfigurationAPI.API_SERVICE_ID);</span>
+<span class="fc" id="L98">			reqServiceId.addFieldValues(new ApiDocFieldValue(&quot;[identifier]&quot;, commonTxt));</span>
+<span class="fc" id="L99">			reqServiceId.setExample(&quot;123&quot;);</span>
+<span class="fc" id="L100">			apiDocRequest.addAttribute(reqServiceId);</span>
+
+<span class="fc" id="L102">			ApiDocAttribute reqServiceName = new ApiDocAttribute();</span>
+<span class="fc" id="L103">			reqServiceName.setFieldName(ServiceConfigurationAPI.API_SERVICE_NAME);</span>
+<span class="fc" id="L104">			reqServiceName.addFieldValues(new ApiDocFieldValue(&quot;[string]&quot;, commonTxt));</span>
+<span class="fc" id="L105">			reqServiceName.setExample(&quot;My Service Name&quot;);</span>
+<span class="fc" id="L106">			apiDocRequest.addAttribute(reqServiceName);</span>
+
+<span class="fc" id="L108">			apiDocService.setApiRequest(apiDocRequest);</span>
+
+			// *****************************
+			// RESPONSE DEFINITION
+			// *****************************
+
+<span class="fc" id="L114">			ApiDocResponse apiResponse = new ApiDocResponse();</span>
+			// Building a JSON RESPONSE example
+			try {
+<span class="fc" id="L117">				JSONObject jsonResponseObject = new JSONObject();</span>
+<span class="fc" id="L118">				JSONObject jsonResultObject = new JSONObject();</span>
+<span class="fc" id="L119">				jsonResultObject.put(ServiceConfigurationAPI.API_SERVICE_ID, &quot;1234&quot;);</span>
+<span class="fc" id="L120">				jsonResultObject.put(ServiceConfigurationAPI.API_SERVICE_NAME, &quot;Some service name&quot;);</span>
+<span class="fc" id="L121">				jsonResultObject.put(ServiceConfigurationAPI.API_DEFAULT_SCENARIO_ID, &quot;5678&quot;);</span>
+<span class="fc" id="L122">				jsonResultObject.put(ServiceConfigurationAPI.API_DEFAULT_SCENARIO_NAME, &quot;Some scenario name&quot;);</span>
+<span class="fc" id="L123">				jsonResultObject.put(ServiceConfigurationAPI.API_SERVICE_RESPONSE_TYPE,</span>
+						ServiceConfigurationAPI.API_SERVICE_RESPONSE_TYPE_VALUE_PROXY);
+<span class="fc" id="L125">				jsonResultObject.put(ServiceConfigurationAPI.API_SERVICE_HANGTIME, &quot;500&quot;);</span>
+<span class="fc" id="L126">				JSONObject jsonScenarioObject = new JSONObject();</span>
+<span class="fc" id="L127">				jsonScenarioObject.put(ServiceConfigurationAPI.API_SERVICE_SCENARIO_ID, 1);</span>
+<span class="fc" id="L128">				jsonScenarioObject.put(ServiceConfigurationAPI.API_SERVICE_SCENARIO_NAME, &quot;Some scenario name&quot;);</span>
+<span class="fc" id="L129">				jsonResultObject.append(&quot;scenarioArray&quot;, jsonScenarioObject);</span>
+<span class="fc" id="L130">				jsonResponseObject.append(&quot;serviceDefinitions&quot;, jsonResultObject);</span>
+<span class="fc" id="L131">				apiResponse.setExample(jsonResponseObject.toString());</span>
+<span class="nc" id="L132">			} catch (Exception e) {</span>
+<span class="nc" id="L133">				log.error(&quot;Unabel to build a sample JSON message. &quot;, e);</span>
+<span class="fc" id="L134">			}</span>
+<span class="fc" id="L135">			ApiDocAttribute resAttributeFail = new ApiDocAttribute();</span>
+<span class="fc" id="L136">			resAttributeFail.setFieldName(&quot;&quot;);</span>
+<span class="fc" id="L137">			resAttributeFail.setFieldDescription(&quot;Refer to example. This is a simple JSON dump of Mockey definitions. &quot;);</span>
+<span class="fc" id="L138">			apiResponse.addAttribute(resAttributeFail);</span>
+
+<span class="fc" id="L140">			apiDocService.setApiResponse(apiResponse);</span>
+<span class="fc" id="L141">			apiStore.saveOrUpdateService(apiDocService);</span>
+
+<span class="fc" id="L143">			apiStore.saveOrUpdateService(apiDocService);</span>
+		}
+<span class="fc" id="L145">	}</span>
+
+	public void service(HttpServletRequest req, HttpServletResponse resp) throws ServletException, IOException {
+
+<span class="nc" id="L149">		String serviceId = req.getParameter(ServiceConfigurationAPI.API_SERVICE_ID);</span>
+<span class="nc" id="L150">		String serviceName = req.getParameter(ServiceConfigurationAPI.API_SERVICE_NAME);</span>
+
+<span class="nc" id="L152">		Service service = null;</span>
+<span class="nc" id="L153">		JSONObject jsonResultObject = new JSONObject();</span>
+
+<span class="nc bnc" id="L155" title="All 2 branches missed.">		if (serviceId != null) {</span>
+<span class="nc" id="L156">			service = store.getServiceById(new Long(serviceId));</span>
+<span class="nc bnc" id="L157" title="All 2 branches missed.">		} else if (serviceName != null) {</span>
+<span class="nc" id="L158">			service = store.getServiceByName(serviceName);</span>
+		}
+
+<span class="nc" id="L161">		resp.setContentType(&quot;application/json&quot;);</span>
+<span class="nc" id="L162">		PrintWriter out = resp.getWriter();</span>
+<span class="nc" id="L163">		JSONObject jsonResponseObject = new JSONObject();</span>
+		try {
+
+<span class="nc" id="L166">			List&lt;Service&gt; servicesList = null;</span>
+<span class="nc bnc" id="L167" title="All 2 branches missed.">			if (service != null) {</span>
+<span class="nc" id="L168">				servicesList = new ArrayList&lt;Service&gt;();</span>
+<span class="nc" id="L169">				servicesList.add(service);</span>
+			} else {
+<span class="nc" id="L171">				servicesList = store.getServices();</span>
+			}
+
+<span class="nc bnc" id="L174" title="All 2 branches missed.">			for (Service tempService : servicesList) {</span>
+<span class="nc" id="L175">				JSONObject jsonServiceObject = new JSONObject();</span>
+<span class="nc" id="L176">				jsonServiceObject.put(ServiceConfigurationAPI.API_SERVICE_NAME, tempService.getServiceName());</span>
+<span class="nc" id="L177">				jsonServiceObject.put(ServiceConfigurationAPI.API_SERVICE_ID, tempService.getId());</span>
+<span class="nc" id="L178">				jsonServiceObject.put(ServiceConfigurationAPI.API_DEFAULT_SCENARIO_ID, tempService</span>
+<span class="nc" id="L179">						.getDefaultScenarioId());</span>
+<span class="nc" id="L180">				jsonServiceObject.put(ServiceConfigurationAPI.API_DEFAULT_SCENARIO_NAME, tempService</span>
+<span class="nc" id="L181">						.getDefaultScenarioName());</span>
+<span class="nc" id="L182">				jsonServiceObject.put(ServiceConfigurationAPI.API_SERVICE_RESPONSE_TYPE, tempService</span>
+<span class="nc" id="L183">						.getServiceResponseTypeAsString());</span>
+<span class="nc" id="L184">				jsonServiceObject.put(ServiceConfigurationAPI.API_SERVICE_HANGTIME, tempService.getHangTime());</span>
+<span class="nc" id="L185">				jsonServiceObject.put(ServiceConfigurationAPI.API_SERVICE_REQUEST_INSPECTOR_NAME, tempService.getRequestInspectorName());</span>
+<span class="nc bnc" id="L186" title="All 2 branches missed.">				for (Scenario tempScenario : tempService.getScenarios()) {</span>
+<span class="nc" id="L187">					JSONObject jsonScenarioObject = new JSONObject();</span>
+<span class="nc" id="L188">					jsonScenarioObject.put(ServiceConfigurationAPI.API_SERVICE_SCENARIO_ID, tempScenario.getId());</span>
+<span class="nc" id="L189">					jsonScenarioObject.put(ServiceConfigurationAPI.API_SERVICE_SCENARIO_NAME, tempScenario</span>
+<span class="nc" id="L190">							.getScenarioName());</span>
+<span class="nc" id="L191">					jsonServiceObject.append(&quot;scenarioArray&quot;, jsonScenarioObject);</span>
+<span class="nc" id="L192">				}</span>
+<span class="nc" id="L193">				jsonResponseObject.append(&quot;serviceDefinitions&quot;, jsonServiceObject);</span>
+<span class="nc" id="L194">			}</span>
+
+<span class="nc" id="L196">			out.println(jsonResponseObject.toString());</span>
+<span class="nc" id="L197">		} catch (Exception e) {</span>
+<span class="nc" id="L198">			log.error(&quot;Unable to build a JSON response. &quot;, e);</span>
+			try {
+<span class="nc" id="L200">				jsonResultObject.put(&quot;fail&quot;, &quot;Unable to create service definitions output.&quot;);</span>
+<span class="nc" id="L201">				jsonResponseObject.put(&quot;result&quot;, jsonResultObject);</span>
+<span class="nc" id="L202">				out.println(jsonResponseObject.toString());</span>
+<span class="nc" id="L203">			} catch (Exception ee) {</span>
+<span class="nc" id="L204">				log.error(&quot;Unable to again build an informative error JSON message response.&quot;, e);</span>
+<span class="nc" id="L205">			}</span>
+
+<span class="nc" id="L207">		}</span>
+<span class="nc" id="L208">		out.flush();</span>
+<span class="nc" id="L209">		out.close();</span>
+
+<span class="nc" id="L211">	}</span>
+
+}
+</pre><div class="footer"><span class="right">Created with <a href="http://www.jacoco.org/jacoco">JaCoCo</a> 0.8.1.201803210924</span></div></body></html>

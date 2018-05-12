@@ -1,0 +1,987 @@
+<?xml version="1.0" encoding="UTF-8"?><!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Strict//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-strict.dtd"><html xmlns="http://www.w3.org/1999/xhtml" lang="zh"><head><meta http-equiv="Content-Type" content="text/html;charset=UTF-8"/><link rel="stylesheet" href="../jacoco-resources/report.css" type="text/css"/><link rel="shortcut icon" href="../jacoco-resources/report.gif" type="image/gif"/><title>InMemoryMockeyStorage.java</title><link rel="stylesheet" href="../jacoco-resources/prettify.css" type="text/css"/><script type="text/javascript" src="../jacoco-resources/prettify.js"></script></head><body onload="window['PR_TAB_WIDTH']=4;prettyPrint()"><div class="breadcrumb" id="breadcrumb"><span class="info"><a href="../jacoco-sessions.html" class="el_session">Sessions</a></span><a href="../index.html" class="el_report">JaCoCo Ant Example</a> &gt; <a href="index.source.html" class="el_package">com.mockey.storage</a> &gt; <span class="el_source">InMemoryMockeyStorage.java</span></div><h1>InMemoryMockeyStorage.java</h1><pre class="source lang-java linenums">/*
+ * This file is part of Mockey, a tool for testing application 
+ * interactions over HTTP, with a focus on testing web services, 
+ * specifically web applications that consume XML, JSON, and HTML.
+ *  
+ * Copyright (C) 2009-2010  Authors:
+ * 
+ * chad.lafontaine (chad.lafontaine AT gmail DOT com)
+ * neil.cronin (neil AT rackle DOT com) 
+ * lorin.kobashigawa (lkb AT kgawa DOT com)
+ * rob.meyer (rob AT bigdis DOT com)
+ * 
+ * This program is free software; you can redistribute it and/or
+ * modify it under the terms of the GNU General Public License
+ * as published by the Free Software Foundation; either version 2
+ * of the License, or (at your option) any later version.
+ * 
+ * This program is distributed in the hope that it will be useful,
+ * but WITHOUT ANY WARRANTY; without even the implied warranty of
+ * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+ * GNU General Public License for more details.
+ * 
+ * You should have received a copy of the GNU General Public License
+ * along with this program; if not, write to the Free Software
+ * Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301, USA.
+ *
+ */
+package com.mockey.storage;
+
+import java.net.MalformedURLException;
+import java.util.ArrayList;
+import java.util.Calendar;
+import java.util.Collection;
+import java.util.Iterator;
+import java.util.List;
+import java.util.*;
+
+
+import com.mockey.model.*;
+import org.apache.http.Header;
+import org.apache.log4j.Logger;
+
+import com.mockey.OrderedMap;
+import com.mockey.storage.xml.MockeyXmlFactory;
+import com.mockey.storage.xml.MockeyXmlFileManager;
+
+/**
+ * In memory implementation to the storage of mock services and scenarios.
+ * 
+ * @author chad.lafontaine
+ */
+public class InMemoryMockeyStorage implements IMockeyStorage {
+
+	private OrderedMap&lt;FulfilledClientRequest&gt; historyStore;
+<span class="fc" id="L55">	private OrderedMap&lt;Service&gt; mockServiceStore = new OrderedMap&lt;Service&gt;();</span>
+<span class="fc" id="L56">	private OrderedMap&lt;ServiceRef&gt; serviceRefStore = new OrderedMap&lt;ServiceRef&gt;();</span>
+<span class="fc" id="L57">	private OrderedMap&lt;ServicePlan&gt; servicePlanStore = new OrderedMap&lt;ServicePlan&gt;();</span>
+<span class="fc" id="L58">	private Long creationTime = null;</span>
+<span class="fc" id="L59">	private OrderedMap&lt;TwistInfo&gt; twistInfoStore = new OrderedMap&lt;TwistInfo&gt;();</span>
+<span class="fc" id="L60">	private static Logger logger = Logger.getLogger(InMemoryMockeyStorage.class);</span>
+<span class="fc" id="L61">	private ProxyServerModel proxyInfoBean = new ProxyServerModel();</span>
+<span class="fc" id="L62">	private Long univeralTwistInfoId = null;</span>
+<span class="fc" id="L63">	private Long defaultServicePlanId = null;</span>
+<span class="fc" id="L64">	private Long universalErrorServiceId = null;</span>
+<span class="fc" id="L65">	private Long universalErrorScenarioId = null;</span>
+<span class="fc" id="L66">	private static InMemoryMockeyStorage store = new InMemoryMockeyStorage();</span>
+	// Yes, by default, we need this as TRUE.
+<span class="fc" id="L68">	private Boolean transientState = new Boolean(true);</span>
+<span class="fc" id="L69">	private String globalFilterTag = null;</span>
+
+	/**
+	 * 
+	 * @return
+	 */
+	static InMemoryMockeyStorage getInstance() {
+
+<span class="fc" id="L77">		return store;</span>
+	}
+
+	/**
+	 * 
+	 * @return
+	 */
+	public void setReadOnlyMode(Boolean transientState) {
+<span class="pc bpc" id="L85" title="1 of 2 branches missed.">		if (transientState != null) {</span>
+<span class="fc" id="L86">			this.transientState = transientState;</span>
+		}
+
+<span class="pc bpc" id="L89" title="1 of 2 branches missed.">		if (!transientState) {</span>
+<span class="nc" id="L90">			this.writeMemoryToFile();</span>
+		}
+
+<span class="fc" id="L93">	}</span>
+
+	/**
+	 * 
+	 * @return empty string if service plan id is null, otherwise long value as
+	 *         string.
+	 */
+	public String getDefaultServicePlanId() {
+<span class="nc bnc" id="L101" title="All 2 branches missed.">		if (defaultServicePlanId != null) {</span>
+<span class="nc" id="L102">			return defaultServicePlanId.toString();</span>
+		} else {
+<span class="nc" id="L104">			return &quot;&quot;;</span>
+		}
+	}
+
+	/**
+	 * 
+	 * @return empty string if service plan id is null, otherwise long value as
+	 *         string.
+	 */
+	public void setDefaultServicePlanId(String v) {
+<span class="nc bnc" id="L114" title="All 2 branches missed.">		if (v != null) {</span>
+			try {
+<span class="nc" id="L116">				this.defaultServicePlanId = new Long(v);</span>
+<span class="nc" id="L117">				this.writeMemoryToFile();</span>
+<span class="nc" id="L118">			} catch (Exception e) {</span>
+				// Do nothing. Leave value as is.
+<span class="nc" id="L120">			}</span>
+		} else {
+<span class="nc" id="L122">			this.defaultServicePlanId = null;</span>
+		}
+
+<span class="nc" id="L125">	}</span>
+
+	public Long getDefaultServicePlanIdAsLong() {
+<span class="fc" id="L128">		return this.defaultServicePlanId;</span>
+	}
+
+	/**
+	 * HACK: this class is supposed to be a singleton but making this public for
+	 * XML parsing (Digester)
+	 * 
+	 * Error is:
+	 * 
+	 * Class org.apache.commons.digester.ObjectCreateRule can not access a
+	 * member of class com.mockey.storage.InMemoryMockeyStorage with modifiers
+	 * &quot;private&quot;
+	 * 
+	 * Possible Fix: write/implement objectcreatefactory classes.
+	 * 
+	 * Example:
+	 * 
+	 * &lt;pre&gt;
+	 * http://jsp.codefetch.com/example/fr/storefront-source/com/oreilly/struts/storefront/service/memory/StorefrontMemoryDatabase.java?qy=parse+xml
+	 * &lt;/pre&gt;
+	 */
+<span class="fc" id="L149">	public InMemoryMockeyStorage() {</span>
+<span class="fc" id="L150">		Calendar time = Calendar.getInstance();</span>
+<span class="fc" id="L151">		this.creationTime = new Long(time.getTimeInMillis());</span>
+<span class="fc" id="L152">		initHistoryStore(); // Careful, more than ~45</span>
+		// and AJAX /JavaScript
+		// gets funky.
+<span class="fc" id="L155">	}</span>
+
+	public Service getServiceById(Long id) {
+<span class="fc" id="L158">		return mockServiceStore.get(id);</span>
+	}
+
+	public Service getServiceByName(String name) {
+<span class="nc bnc" id="L162" title="All 2 branches missed.">		if (name != null) {</span>
+<span class="nc bnc" id="L163" title="All 2 branches missed.">			for (Service service : getServices()) {</span>
+<span class="nc bnc" id="L164" title="All 4 branches missed.">				if (service.getServiceName() != null &amp;&amp; service.getServiceName().trim().equalsIgnoreCase(name.trim())) {</span>
+<span class="nc" id="L165">					return service;</span>
+				}
+<span class="nc" id="L167">			}</span>
+		}
+<span class="nc" id="L169">		return null;</span>
+	}
+
+	/**
+	 * This will only return a Service
+	 * 
+	 * @see #getGlobalStateSystemFilterTag()
+	 */
+	public Service getServiceByUrl(String url) {
+
+<span class="nc" id="L179">		Service service = null;</span>
+<span class="nc" id="L180">		String filterTag = this.getGlobalStateSystemFilterTag();</span>
+		try {
+
+			// **************************************************
+			// Be sure to include Filter match if non-empty
+			// **************************************************
+
+<span class="nc" id="L187">			Iterator&lt;Service&gt; iter = getServices().iterator();</span>
+<span class="nc bnc" id="L188" title="All 2 branches missed.">			while (iter.hasNext()) {</span>
+<span class="nc" id="L189">				Service serviceTmp = iter.next();</span>
+<span class="nc" id="L190">				service = findServiceBasedOnUrlPattern(url, serviceTmp);</span>
+<span class="nc bnc" id="L191" title="All 2 branches missed.">				if (service != null) {</span>
+<span class="nc" id="L192">					break;</span>
+				}
+<span class="nc" id="L194">			}</span>
+<span class="nc" id="L195">		} catch (Exception e) {</span>
+<span class="nc" id="L196">			logger.error(&quot;Unable to retrieve service w/ url pattern: &quot; + url, e);</span>
+<span class="nc" id="L197">		}</span>
+
+<span class="nc bnc" id="L199" title="All 8 branches missed.">		if (service != null &amp;&amp; filterTag != null &amp;&amp; filterTag.trim().length() &gt; 0 &amp;&amp; service.hasTag(filterTag)) {</span>
+<span class="nc" id="L200">			logger.debug(&quot;Found service with Service path: &quot; + url + &quot;, with tag filter '&quot; + filterTag + &quot;'.&quot;);</span>
+<span class="nc" id="L201">			return service;</span>
+<span class="nc bnc" id="L202" title="All 8 branches missed.">		} else if (service != null &amp;&amp; filterTag != null &amp;&amp; filterTag.trim().length() &gt; 0 &amp;&amp; !service.hasTag(filterTag)) {</span>
+<span class="nc" id="L203">			logger.debug(&quot;Found service with Service path: &quot; + url + &quot;, but DOES NOT have a matching tag filter of '&quot;</span>
+					+ filterTag + &quot;', so Mockey is returning not-found.&quot;);
+<span class="nc" id="L205">			service = null;</span>
+<span class="nc bnc" id="L206" title="All 2 branches missed.">		} else if (service != null) {</span>
+<span class="nc" id="L207">			logger.debug(&quot;Found service with Service path: &quot; + url + &quot;. No tag filter. &quot;);</span>
+<span class="nc" id="L208">			return service;</span>
+		} else {
+<span class="nc" id="L210">			logger.debug(&quot;Didn't find service with Service path: &quot; + url + &quot;.  Creating a new one.&quot;);</span>
+		}
+
+<span class="nc" id="L213">		service = new Service();</span>
+		try {
+<span class="nc" id="L215">			Url newUrl = new Url(Url.getSchemeHostPortPathFromURL(url));</span>
+<span class="nc" id="L216">			service.setUrl(newUrl.getFullUrl());</span>
+<span class="nc" id="L217">			service.saveOrUpdateRealServiceUrl(newUrl);</span>
+<span class="nc" id="L218">			store.saveOrUpdateService(service);</span>
+
+<span class="nc" id="L220">		} catch (MalformedURLException e) {</span>
+<span class="nc" id="L221">			logger.error(&quot;Unable to build a Service with URL '&quot; + url + &quot;'&quot;, e);</span>
+<span class="nc" id="L222">		}</span>
+
+<span class="nc" id="L224">		service.setTag(this.getGlobalStateSystemFilterTag());</span>
+<span class="nc" id="L225">		return service;</span>
+	}
+
+	/**
+	 * This will return a Service with a matching URL pattern, a Service's
+	 * filter tags, and is RESTful aware
+	 * 
+	 * For example, we need to support the following:
+	 * 
+	 * &lt;pre&gt;
+	 * http://www.service.com/customers - returns a list of customers. 
+	 * http://www.service.com/customers/{ID} - returns a customer
+	 * http://www.service.com/customers/{ID}/subscription - returns a customer's subscriptions entity
+	 * &lt;/pre&gt;
+	 * 
+	 * 
+	 * @param url
+	 *            - Incoming URL being requested.
+	 * @param serviceToEvaluate
+	 *            service state to compare to the url
+	 * @return service if url pattern matches
+	 */
+	private Service findServiceBasedOnUrlPattern(String url, Service serviceToEvaluate) {
+<span class="nc" id="L248">		Url fullUrl = new Url(serviceToEvaluate.getUrl());</span>
+<span class="nc" id="L249">		Service foundService = null;</span>
+		// EXAMPLE: &quot;http://example.com/hotels/{hotel}/bookings/{booking}&quot;
+<span class="nc" id="L251">		UriTemplate template = new UriTemplate(fullUrl.getFullUrl());</span>
+
+		// EXAMPLE: &quot;http://example.com/hotels/1/bookings/42&quot;
+		@SuppressWarnings(&quot;rawtypes&quot;)
+<span class="nc" id="L255">		Map results = template.match(url);</span>
+<span class="nc bnc" id="L256" title="All 2 branches missed.">		if (results.size() &gt; 0) {</span>
+			// Possible match
+<span class="nc" id="L258">			foundService = serviceToEvaluate;</span>
+		} else {
+
+			// OK, not found based on template URL.
+<span class="nc bnc" id="L262" title="All 2 branches missed.">			if (fullUrl.getFullUrl().equalsIgnoreCase(url)) {</span>
+<span class="nc" id="L263">				foundService = serviceToEvaluate;</span>
+			} else {
+				// Let's look at secondary list of real URLs
+<span class="nc" id="L266">				List&lt;Url&gt; serviceUrlList = serviceToEvaluate.getRealServiceUrls();</span>
+<span class="nc" id="L267">				Iterator&lt;Url&gt; altUrlIter = serviceUrlList.iterator();</span>
+<span class="nc bnc" id="L268" title="All 2 branches missed.">				while (altUrlIter.hasNext()) {</span>
+<span class="nc" id="L269">					Url altUrl = altUrlIter.next();</span>
+
+					// Variable template is set to the template of the service's
+					// full URL.
+					// The template is matched against the service real URLs,
+					// therefore the match always succeeds. The template should
+					// be
+					// matched against the url of the request instead.
+<span class="nc" id="L277">					template = new UriTemplate(altUrl.getFullUrl());</span>
+<span class="nc" id="L278">					results = template.match(url);</span>
+
+<span class="nc bnc" id="L280" title="All 2 branches missed.">					if (results.size() &gt; 0) {</span>
+						// Possible match
+<span class="nc" id="L282">						foundService = serviceToEvaluate;</span>
+<span class="nc" id="L283">						break;</span>
+					}
+<span class="nc" id="L285">				}</span>
+			}
+		}
+<span class="nc" id="L288">		return foundService;</span>
+	}
+
+	/**
+	 * Deep clone of a Service.
+	 * 
+	 * @param service
+	 */
+	public Service duplicateService(Service service) {
+<span class="nc" id="L297">		Service newService = new Service();</span>
+<span class="nc" id="L298">		newService.setHangTime(service.getHangTime());</span>
+<span class="nc" id="L299">		newService.setHttpMethod(service.getHttpMethod());</span>
+<span class="nc" id="L300">		newService.setServiceName(service.getServiceName());</span>
+<span class="nc" id="L301">		newService.setServiceResponseTypeByString(service.getServiceResponseTypeAsString());</span>
+<span class="nc" id="L302">		newService.setDefaultRealUrlIndex(service.getDefaultRealUrlIndex());</span>
+<span class="nc" id="L303">		newService.setUrl(service.getUrl());</span>
+		// We don't do this because the Default scenario ID is not guaranteed to
+		// be the same as the duplicate items are created.
+		// newService.setDefaultScenarioId(service.getDefaultScenarioId());
+<span class="nc" id="L307">		newService.setDescription(service.getDescription());</span>
+		// Meta data
+<span class="nc bnc" id="L309" title="All 2 branches missed.">		for (Url url : service.getRealServiceUrls()) {</span>
+<span class="nc" id="L310">			newService.saveOrUpdateRealServiceUrl(url);</span>
+
+<span class="nc" id="L312">		}</span>
+		// Why save, and save again below?
+		// - The first save gets a Service ID created.
+		// - Scenario's refer to the Service ID
+<span class="nc" id="L316">		newService = this.saveOrUpdateService(newService);</span>
+		// Now add scenarios
+<span class="nc bnc" id="L318" title="All 2 branches missed.">		for (Scenario scenario : service.getScenarios()) {</span>
+<span class="nc" id="L319">			Scenario newScenario = new Scenario();</span>
+<span class="nc" id="L320">			newScenario.setHttpResponseStatusCode(scenario.getHttpResponseStatusCode());</span>
+<span class="nc" id="L321">			newScenario.setMatchStringArg(scenario.getMatchStringArg());</span>
+<span class="nc" id="L322">			newScenario.setResponseHeader(scenario.getResponseHeader());</span>
+<span class="nc" id="L323">			newScenario.setResponseMessage(scenario.getResponseMessage());</span>
+<span class="nc" id="L324">			newScenario.setScenarioName(scenario.getScenarioName());</span>
+<span class="nc" id="L325">			newScenario.setTag(scenario.getTag());</span>
+
+<span class="nc" id="L327">			newService.saveOrUpdateScenario(newScenario);</span>
+
+<span class="nc" id="L329">		}</span>
+		// Save AGAIN.
+<span class="nc" id="L331">		newService = this.saveOrUpdateService(newService);</span>
+<span class="nc" id="L332">		return newService;</span>
+	}
+
+	public Service saveOrUpdateService(Service mockServiceBean) {
+
+		//Helpful messaging:				
+		// Let's see if ServiceBean's NAME conflicts with other ServiceBeans
+<span class="nc" id="L339">		List&lt;Service&gt; services = this.getServices();</span>
+<span class="nc" id="L340">		List&lt;String&gt; serviceNames = new ArrayList&lt;String&gt;();</span>
+<span class="nc bnc" id="L341" title="All 2 branches missed.">		for(Service service: services){</span>
+<span class="nc" id="L342">			serviceNames.add(service.getServiceName());</span>
+<span class="nc" id="L343">		}</span>
+<span class="nc" id="L344">		checkForDuplicateFileName(serviceNames, mockServiceBean.getServiceName());</span>
+		
+<span class="nc" id="L346">		PersistableItem item = mockServiceStore.save(mockServiceBean);</span>
+		
+		
+		
+<span class="nc bnc" id="L350" title="All 4 branches missed.">		if (mockServiceBean != null &amp;&amp; !mockServiceBean.getTransientState()) {</span>
+<span class="nc" id="L351">			this.writeMemoryToFile();</span>
+		}
+<span class="nc" id="L353">		return (Service) item;</span>
+	}
+
+	public void deleteService(Service mockServiceBean) {
+<span class="nc bnc" id="L357" title="All 2 branches missed.">		if (mockServiceBean != null) {</span>
+<span class="nc" id="L358">			mockServiceStore.remove(mockServiceBean.getId());</span>
+<span class="nc bnc" id="L359" title="All 4 branches missed.">			if (mockServiceBean != null &amp;&amp; !mockServiceBean.getTransientState()) {</span>
+<span class="nc" id="L360">				this.writeMemoryToFile();</span>
+			}
+			
+		}
+<span class="nc" id="L364">	}</span>
+
+	public List&lt;Long&gt; getServiceIds() {
+<span class="nc" id="L367">		List&lt;Long&gt; ids = new ArrayList&lt;Long&gt;();</span>
+<span class="nc bnc" id="L368" title="All 2 branches missed.">		for (Service service : this.getServices()) {</span>
+<span class="nc" id="L369">			ids.add(service.getId());</span>
+<span class="nc" id="L370">		}</span>
+<span class="nc" id="L371">		return ids;</span>
+	}
+
+	public List&lt;Service&gt; getServices() {
+<span class="fc" id="L375">		return this.mockServiceStore.getOrderedList();</span>
+	}
+
+	// public String toString() {
+	// return new MockeyStorageWriter().StorageAsString(this);
+	// }
+
+	/**
+	 * @return list of FulfilledClientRequest objects
+	 */
+	public List&lt;FulfilledClientRequest&gt; getFulfilledClientRequests() {
+<span class="nc" id="L386">		return this.historyStore.getOrderedList();</span>
+	}
+
+	public void deleteFulfilledClientRequestsFromIP(Long scenarioId) {
+<span class="nc" id="L390">		historyStore.remove(scenarioId);</span>
+<span class="nc" id="L391">	}</span>
+
+	public void saveOrUpdateFulfilledClientRequest(FulfilledClientRequest request) {
+<span class="nc" id="L394">		logger.debug(&quot;saving a request.&quot;);</span>
+<span class="nc" id="L395">		historyStore.save(request);</span>
+<span class="nc" id="L396">	}</span>
+
+	public void deleteFulfilledClientRequestsForService(Long serviceId) {
+<span class="nc bnc" id="L399" title="All 2 branches missed.">		for (FulfilledClientRequest req : historyStore.getOrderedList()) {</span>
+<span class="nc bnc" id="L400" title="All 2 branches missed.">			if (req.getServiceId().equals(serviceId)) {</span>
+<span class="nc" id="L401">				this.historyStore.remove(req.getId());</span>
+			}
+<span class="nc" id="L403">		}</span>
+<span class="nc" id="L404">	}</span>
+
+	public ProxyServerModel getProxy() {
+<span class="fc" id="L407">		return this.proxyInfoBean;</span>
+	}
+
+	public void setProxy(ProxyServerModel proxyInfoBean) {
+<span class="fc" id="L411">		this.proxyInfoBean = proxyInfoBean;</span>
+<span class="fc" id="L412">		this.writeMemoryToFile();</span>
+<span class="fc" id="L413">	}</span>
+
+	public void deleteServicePlan(ServicePlan servicePlan) {
+<span class="nc bnc" id="L416" title="All 2 branches missed.">		if (servicePlan != null) {</span>
+<span class="nc" id="L417">			this.servicePlanStore.remove(servicePlan.getId());</span>
+			// Dont' forget to delete the Default Plan ID
+<span class="nc bnc" id="L419" title="All 2 branches missed.">			if (this.getDefaultServicePlanId().equals(new Long(servicePlan.getId()).toString())) {</span>
+<span class="nc" id="L420">				this.setDefaultServicePlanId(null);</span>
+			}
+<span class="nc" id="L422">			this.writeMemoryToFile();</span>
+		}
+<span class="nc" id="L424">	}</span>
+
+	public void updateServicePlansWithNewServiceName(String oldServiceName, String newServiceName) {
+
+<span class="nc bnc" id="L428" title="All 2 branches missed.">		for (ServicePlan servicePlan : this.getServicePlans()) {</span>
+<span class="nc bnc" id="L429" title="All 2 branches missed.">			for (PlanItem planItem : servicePlan.getPlanItemList()) {</span>
+<span class="nc bnc" id="L430" title="All 4 branches missed.">				if (planItem.getServiceName() != null &amp;&amp; planItem.getServiceName().equals(oldServiceName)) {</span>
+<span class="nc" id="L431">					planItem.setServiceName(newServiceName);</span>
+					// 'Add' will 'update' too.
+<span class="nc" id="L433">					servicePlan.addPlanItem(planItem);</span>
+
+				}
+<span class="nc" id="L436">			}</span>
+
+<span class="nc" id="L438">		}</span>
+
+<span class="nc" id="L440">		this.writeMemoryToFile();</span>
+<span class="nc" id="L441">	}</span>
+
+	public void updateServicePlansWithNewScenarioName(Long serviceId, String oldScenarioName, String newScenarioName) {
+
+<span class="nc" id="L445">		Service service = this.getServiceById(serviceId);</span>
+<span class="nc bnc" id="L446" title="All 2 branches missed.">		if (service != null) {</span>
+
+<span class="nc bnc" id="L448" title="All 2 branches missed.">			for (ServicePlan servicePlan : this.getServicePlans()) {</span>
+<span class="nc bnc" id="L449" title="All 2 branches missed.">				for (PlanItem planItem : servicePlan.getPlanItemList()) {</span>
+<span class="nc bnc" id="L450" title="All 4 branches missed.">					if (planItem.getServiceName() != null &amp;&amp; planItem.getServiceName().equals(service.getServiceName())</span>
+<span class="nc bnc" id="L451" title="All 2 branches missed.">							&amp;&amp; planItem.getScenarioName().equals(oldScenarioName)) {</span>
+<span class="nc" id="L452">						planItem.setScenarioName(newScenarioName);</span>
+						// 'Add' will 'update' too.
+<span class="nc" id="L454">						servicePlan.addPlanItem(planItem);</span>
+					}
+<span class="nc" id="L456">				}</span>
+<span class="nc" id="L457">			}</span>
+
+		}
+<span class="nc" id="L460">		this.writeMemoryToFile();</span>
+<span class="nc" id="L461">	}</span>
+
+	public ServicePlan getServicePlanById(Long servicePlanId) {
+<span class="fc" id="L464">		return servicePlanStore.get(servicePlanId);</span>
+	}
+
+	public ServicePlan getServicePlanByName(String servicePlanName) {
+<span class="nc" id="L468">		ServicePlan sp = null;</span>
+<span class="nc bnc" id="L469" title="All 2 branches missed.">		for (ServicePlan servicePlan : this.getServicePlans()) {</span>
+<span class="nc bnc" id="L470" title="All 4 branches missed.">			if (servicePlan.getName() != null &amp;&amp; servicePlan.getName().equalsIgnoreCase(servicePlanName)) {</span>
+<span class="nc" id="L471">				sp = servicePlan;</span>
+<span class="nc" id="L472">				break;</span>
+			}
+<span class="nc" id="L474">		}</span>
+<span class="nc" id="L475">		return sp;</span>
+	}
+
+	public List&lt;ServicePlan&gt; getServicePlans() {
+<span class="fc" id="L479">		return this.servicePlanStore.getOrderedList();</span>
+	}
+
+	public ServicePlan saveOrUpdateServicePlan(ServicePlan servicePlan) {
+<span class="nc" id="L483">		PersistableItem item = this.servicePlanStore.save(servicePlan);</span>
+<span class="nc bnc" id="L484" title="All 4 branches missed.">		if (servicePlan != null &amp;&amp; !servicePlan.getTransientState()) {</span>
+<span class="nc" id="L485">			this.writeMemoryToFile();</span>
+		}
+<span class="nc" id="L487">		return (ServicePlan) item;</span>
+
+	}
+
+	public ScenarioRef getUniversalErrorScenarioRef() {
+<span class="fc" id="L492">		ScenarioRef scenarioRef = null; // new ScenarioRef();</span>
+<span class="pc bpc" id="L493" title="3 of 4 branches missed.">		if (this.universalErrorScenarioId != null &amp;&amp; this.universalErrorServiceId != null) {</span>
+<span class="nc" id="L494">			scenarioRef = new ScenarioRef(this.universalErrorScenarioId, this.universalErrorServiceId);</span>
+		}
+<span class="fc" id="L496">		return scenarioRef;</span>
+	}
+
+	public Scenario getUniversalErrorScenario() {
+<span class="fc" id="L500">		Scenario error = null;</span>
+<span class="fc" id="L501">		Service service = getServiceById(this.universalErrorServiceId);</span>
+<span class="pc bpc" id="L502" title="1 of 2 branches missed.">		if (service != null) {</span>
+<span class="nc" id="L503">			error = service.getScenario(this.universalErrorScenarioId);</span>
+		}
+<span class="fc" id="L505">		return error;</span>
+	}
+
+	public void setUniversalErrorScenarioRef(ScenarioRef scenarioRef) {
+
+<span class="nc bnc" id="L510" title="All 2 branches missed.">		if (scenarioRef != null) {</span>
+<span class="nc" id="L511">			this.universalErrorServiceId = scenarioRef.getServiceId();</span>
+<span class="nc" id="L512">			this.universalErrorScenarioId = scenarioRef.getId();</span>
+<span class="nc" id="L513">			this.writeMemoryToFile();</span>
+		} else {
+<span class="nc" id="L515">			this.universalErrorServiceId = null;</span>
+<span class="nc" id="L516">			this.universalErrorScenarioId = null;</span>
+<span class="nc" id="L517">			this.writeMemoryToFile();</span>
+		}
+<span class="nc" id="L519">	}</span>
+
+	/**
+	 * Convenience Method for the XML writers...
+	 */
+	public void setUniversalErrorScenarioId(String id) {
+		try {
+
+<span class="nc" id="L527">			this.universalErrorScenarioId = new Long(id);</span>
+<span class="nc" id="L528">		} catch (Exception e) {</span>
+			// By design, ignore.
+<span class="nc" id="L530">		}</span>
+<span class="nc" id="L531">	}</span>
+
+	/**
+	 * Convenience Method for the XML writers...
+	 */
+	public void setUniversalErrorServiceId(String id) {
+		try {
+
+<span class="nc" id="L539">			this.universalErrorServiceId = new Long(id);</span>
+<span class="nc" id="L540">		} catch (Exception e) {</span>
+			// By design, ignore.
+<span class="nc" id="L542">		}</span>
+<span class="nc" id="L543">	}</span>
+
+	public void deleteEverything() {
+<span class="fc" id="L546">		initHistoryStore();</span>
+<span class="fc" id="L547">		mockServiceStore = new OrderedMap&lt;Service&gt;();</span>
+<span class="fc" id="L548">		servicePlanStore = new OrderedMap&lt;ServicePlan&gt;();</span>
+<span class="fc" id="L549">		twistInfoStore = new OrderedMap&lt;TwistInfo&gt;();</span>
+<span class="fc" id="L550">		this.proxyInfoBean = new ProxyServerModel();</span>
+<span class="fc" id="L551">		this.globalFilterTag = &quot;&quot;;</span>
+<span class="fc" id="L552">		this.defaultServicePlanId = null;</span>
+<span class="fc" id="L553">		this.universalErrorServiceId = null;</span>
+<span class="fc" id="L554">		this.universalErrorScenarioId = null;</span>
+<span class="fc" id="L555">		this.writeMemoryToFile();</span>
+<span class="fc" id="L556">	}</span>
+
+	public List&lt;String&gt; uniqueClientIPs() {
+<span class="nc" id="L559">		List&lt;String&gt; uniqueIPs = new ArrayList&lt;String&gt;();</span>
+<span class="nc bnc" id="L560" title="All 2 branches missed.">		for (FulfilledClientRequest tx : this.historyStore.getOrderedList()) {</span>
+<span class="nc" id="L561">			String tmpIP = tx.getRequestorIP();</span>
+<span class="nc bnc" id="L562" title="All 2 branches missed.">			if (!uniqueIPs.contains(tmpIP)) {</span>
+<span class="nc" id="L563">				uniqueIPs.add(tmpIP);</span>
+			}
+<span class="nc" id="L565">		}</span>
+<span class="nc" id="L566">		return uniqueIPs;</span>
+	}
+
+	public List&lt;String&gt; uniqueClientIPsForService(Long serviceId) {
+
+<span class="nc" id="L571">		logger.debug(&quot;getting IPs for serviceId: &quot; + serviceId + &quot;. there are a total of &quot; + this.historyStore.size()</span>
+				+ &quot; requests currently stored.&quot;);
+
+<span class="nc" id="L574">		List&lt;String&gt; uniqueIPs = new ArrayList&lt;String&gt;();</span>
+<span class="nc bnc" id="L575" title="All 2 branches missed.">		for (FulfilledClientRequest tx : this.historyStore.getOrderedList()) {</span>
+<span class="nc" id="L576">			String ip = tx.getRequestorIP();</span>
+<span class="nc bnc" id="L577" title="All 4 branches missed.">			if (!uniqueIPs.contains(ip) &amp;&amp; tx.getServiceId().equals(serviceId)) {</span>
+<span class="nc" id="L578">				uniqueIPs.add(ip);</span>
+			}
+<span class="nc" id="L580">		}</span>
+<span class="nc" id="L581">		return uniqueIPs;</span>
+	}
+
+	public FulfilledClientRequest getFulfilledClientRequestsById(Long fulfilledClientRequestId) {
+
+<span class="nc" id="L586">		return this.historyStore.get(fulfilledClientRequestId);</span>
+
+	}
+
+	public List&lt;FulfilledClientRequest&gt; getFulfilledClientRequestsForService(Long serviceId) {
+<span class="nc" id="L591">		logger.debug(&quot;getting requests for serviceId: &quot; + serviceId + &quot;. there are a total of &quot;</span>
+<span class="nc" id="L592">				+ this.historyStore.size() + &quot; requests currently stored.&quot;);</span>
+<span class="nc" id="L593">		List&lt;FulfilledClientRequest&gt; rv = new ArrayList&lt;FulfilledClientRequest&gt;();</span>
+<span class="nc bnc" id="L594" title="All 2 branches missed.">		for (FulfilledClientRequest req : this.historyStore.getOrderedList()) {</span>
+<span class="nc bnc" id="L595" title="All 2 branches missed.">			if (req.getServiceId().equals(serviceId)) {</span>
+<span class="nc" id="L596">				rv.add(req);</span>
+			}
+<span class="nc" id="L598">		}</span>
+<span class="nc" id="L599">		return rv;</span>
+	}
+
+	public List&lt;FulfilledClientRequest&gt; getFulfilledClientRequestsFromIP(String ip) {
+<span class="nc" id="L603">		List&lt;FulfilledClientRequest&gt; rv = new ArrayList&lt;FulfilledClientRequest&gt;();</span>
+<span class="nc bnc" id="L604" title="All 2 branches missed.">		for (FulfilledClientRequest req : this.historyStore.getOrderedList()) {</span>
+<span class="nc bnc" id="L605" title="All 2 branches missed.">			if (req.getRequestorIP().equals(ip)) {</span>
+<span class="nc" id="L606">				rv.add(req);</span>
+			}
+<span class="nc" id="L608">		}</span>
+<span class="nc" id="L609">		return rv;</span>
+	}
+
+	public List&lt;FulfilledClientRequest&gt; getFulfilledClientRequestsFromIPForService(String ip, Long serviceId) {
+<span class="nc" id="L613">		List&lt;FulfilledClientRequest&gt; rv = new ArrayList&lt;FulfilledClientRequest&gt;();</span>
+<span class="nc bnc" id="L614" title="All 2 branches missed.">		for (FulfilledClientRequest req : this.historyStore.getOrderedList()) {</span>
+<span class="nc bnc" id="L615" title="All 4 branches missed.">			if (req.getServiceId().equals(serviceId) &amp;&amp; req.getRequestorIP().equals(ip)) {</span>
+<span class="nc" id="L616">				rv.add(req);</span>
+			}
+<span class="nc" id="L618">		}</span>
+<span class="nc" id="L619">		return rv;</span>
+	}
+
+	public void deleteFulfilledClientRequests() {
+<span class="nc" id="L623">		initHistoryStore();</span>
+<span class="nc" id="L624">	}</span>
+
+	private void initHistoryStore() {
+<span class="fc" id="L627">		historyStore = new OrderedMap&lt;FulfilledClientRequest&gt;();</span>
+		//historyStore.setMaxSize(new Integer(5000));
+<span class="fc" id="L629">	}</span>
+
+	public void deleteFulfilledClientRequestsFromIPForService(String ip, Long serviceId) {
+<span class="nc bnc" id="L632" title="All 2 branches missed.">		for (FulfilledClientRequest req : historyStore.getOrderedList()) {</span>
+<span class="nc bnc" id="L633" title="All 4 branches missed.">			if (req.getServiceId().equals(serviceId) &amp;&amp; req.getRequestorIP().equals(ip)) {</span>
+<span class="nc" id="L634">				this.historyStore.remove(req.getId());</span>
+			}
+<span class="nc" id="L636">		}</span>
+
+<span class="nc" id="L638">	}</span>
+
+	public void deleteFulfilledClientRequestById(Long fulfilledRequestID) {
+<span class="nc bnc" id="L641" title="All 2 branches missed.">		for (FulfilledClientRequest req : historyStore.getOrderedList()) {</span>
+<span class="nc bnc" id="L642" title="All 2 branches missed.">			if (req.getId().equals(fulfilledRequestID)) {</span>
+<span class="nc" id="L643">				this.historyStore.remove(req.getId());</span>
+			}
+<span class="nc" id="L645">		}</span>
+
+<span class="nc" id="L647">	}</span>
+
+	/**
+	 * Filters list with AND not OR. If string starts with &quot;!&quot;, we consider it
+	 * NOT.
+	 */
+	public List&lt;FulfilledClientRequest&gt; getFulfilledClientRequest(Collection&lt;String&gt; filterArguments) {
+
+<span class="nc" id="L655">		List&lt;FulfilledClientRequest&gt; rv = new ArrayList&lt;FulfilledClientRequest&gt;();</span>
+<span class="nc bnc" id="L656" title="All 4 branches missed.">		if (filterArguments == null || filterArguments.size() == 0) {</span>
+<span class="nc" id="L657">			rv = this.getFulfilledClientRequests();</span>
+		} else {
+
+<span class="nc bnc" id="L660" title="All 2 branches missed.">			for (FulfilledClientRequest req : this.historyStore.getOrderedList()) {</span>
+<span class="nc" id="L661">				boolean allFilterTokensPresentInReq = true;</span>
+<span class="nc bnc" id="L662" title="All 2 branches missed.">				for (String filterArg : filterArguments) {</span>
+<span class="nc" id="L663">					boolean notValue = filterArg.startsWith(&quot;!&quot;);</span>
+
+<span class="nc" id="L665">					boolean tokenFound = hasToken(req, filterArg);</span>
+<span class="nc bnc" id="L666" title="All 4 branches missed.">					if (notValue &amp;&amp; tokenFound) {</span>
+<span class="nc" id="L667">						allFilterTokensPresentInReq = false;</span>
+<span class="nc" id="L668">						break;</span>
+<span class="nc bnc" id="L669" title="All 4 branches missed.">					} else if (!tokenFound &amp;&amp; !notValue) {</span>
+<span class="nc" id="L670">						allFilterTokensPresentInReq = false;</span>
+<span class="nc" id="L671">						break;</span>
+<span class="nc bnc" id="L672" title="All 4 branches missed.">					} else if (!tokenFound &amp;&amp; notValue) {</span>
+<span class="nc" id="L673">						allFilterTokensPresentInReq = true;</span>
+					}
+
+<span class="nc" id="L676">				}</span>
+<span class="nc bnc" id="L677" title="All 2 branches missed.">				if (allFilterTokensPresentInReq) {</span>
+<span class="nc" id="L678">					rv.add(req);</span>
+				}
+
+<span class="nc" id="L681">			}</span>
+		}
+<span class="nc" id="L683">		return rv;</span>
+	}
+
+	/**
+	 * Filters list with AND not OR. If string starts with &quot;!&quot;, we consider it
+	 * NOT.
+	 */
+	private boolean hasToken(FulfilledClientRequest req, String filterArg) {
+
+		// Short circuit incase fitlerTag is null.
+<span class="nc bnc" id="L693" title="All 2 branches missed.">		if(filterArg == null){</span>
+<span class="nc" id="L694">			return false;</span>
+		}
+<span class="nc" id="L696">		boolean notValue = filterArg.startsWith(&quot;!&quot;);</span>
+<span class="nc bnc" id="L697" title="All 2 branches missed.">		if (notValue) {</span>
+			try {
+				// get the value
+<span class="nc" id="L700">				filterArg = filterArg.substring(1);</span>
+<span class="nc" id="L701">			} catch (Exception e) {</span>
+				// do nothing. exception may occur
+				// with out of index
+<span class="nc" id="L704">			}</span>
+		}
+<span class="nc" id="L706">		boolean tokenFound = false;</span>
+<span class="nc bnc" id="L707" title="All 2 branches missed.">		if (req.getServiceId().toString().indexOf(filterArg) &gt; -1) {</span>
+<span class="nc" id="L708">			tokenFound = true;</span>
+
+<span class="nc bnc" id="L710" title="All 2 branches missed.">		} else if (req.getClientRequestBody().indexOf(filterArg) &gt; -1) {</span>
+<span class="nc" id="L711">			tokenFound = true;</span>
+
+<span class="nc bnc" id="L713" title="All 2 branches missed.">		} else if (req.getClientRequestHeaders().indexOf(filterArg) &gt; -1) {</span>
+<span class="nc" id="L714">			tokenFound = true;</span>
+
+<span class="nc bnc" id="L716" title="All 2 branches missed.">		} else if (req.getClientRequestParameters().indexOf(filterArg) &gt; -1) {</span>
+<span class="nc" id="L717">			tokenFound = true;</span>
+
+<span class="nc bnc" id="L719" title="All 2 branches missed.">		} else if (req.getRequestorIP().indexOf(filterArg) &gt; -1) {</span>
+<span class="nc" id="L720">			tokenFound = true;</span>
+
+<span class="nc bnc" id="L722" title="All 2 branches missed.">		} else if (req.getRawRequest().indexOf(filterArg) &gt; -1) {</span>
+<span class="nc" id="L723">			tokenFound = true;</span>
+
+<span class="nc bnc" id="L725" title="All 2 branches missed.">		} else if (req.getResponseMessage().getBody().indexOf(filterArg) &gt; -1) {</span>
+<span class="nc" id="L726">			tokenFound = true;</span>
+
+<span class="nc bnc" id="L728" title="All 2 branches missed.">		} else if (req.getResponseMessage().getHeaderInfo().indexOf(filterArg) &gt; -1) {</span>
+<span class="nc" id="L729">			tokenFound = true;</span>
+
+<span class="nc bnc" id="L731" title="All 2 branches missed.">		} else if (req.getServiceName().indexOf(filterArg) &gt; -1) {</span>
+<span class="nc" id="L732">			tokenFound = true;</span>
+
+<span class="nc bnc" id="L734" title="All 2 branches missed.">		} else if (req.getScenarioTagsAsString().indexOf(filterArg) &gt; -1) {</span>
+<span class="nc" id="L735">			tokenFound = true;</span>
+
+<span class="nc bnc" id="L737" title="All 2 branches missed.">		} else if (req.getServiceTagsAsString().indexOf(filterArg) &gt; -1) {</span>
+<span class="nc" id="L738">			tokenFound = true;</span>
+
+		} else {
+			// Go through the list of HEADERS
+<span class="nc" id="L742">			Header[] headers = req.getResponseMessage().getHeaders();</span>
+<span class="nc bnc" id="L743" title="All 2 branches missed.">			if (headers != null) {</span>
+<span class="nc bnc" id="L744" title="All 2 branches missed.">				for (Header header : headers) {</span>
+<span class="nc bnc" id="L745" title="All 2 branches missed.">					if (header.getName().indexOf(filterArg) &gt; -1) {</span>
+<span class="nc" id="L746">						tokenFound = true;</span>
+<span class="nc" id="L747">						break;</span>
+<span class="nc bnc" id="L748" title="All 2 branches missed.">					} else if (header.getValue().indexOf(filterArg) &gt; -1) {</span>
+<span class="nc" id="L749">						tokenFound = true;</span>
+<span class="nc" id="L750">						break;</span>
+
+					}
+				}
+			}
+			
+			// Go through the list of 
+		}
+<span class="nc" id="L758">		return tokenFound;</span>
+
+	}
+
+	/**
+	 * Every time something gets saved, we write to memory.
+	 */
+	private synchronized void writeMemoryToFile() {
+
+<span class="pc bpc" id="L767" title="1 of 2 branches missed.">		if (!transientState) {</span>
+<span class="nc" id="L768">			MockeyXmlFactory g = new MockeyXmlFactory();</span>
+<span class="nc" id="L769">			g.writeStoreToXML(store, MockeyXmlFileManager.MOCK_SERVICE_DEFINITION);</span>
+		}
+
+<span class="fc" id="L772">	}</span>
+
+	public List&lt;TwistInfo&gt; getTwistInfoList() {
+<span class="fc" id="L775">		return this.twistInfoStore.getOrderedList();</span>
+	}
+
+	public TwistInfo getTwistInfoById(Long id) {
+<span class="fc" id="L779">		return (TwistInfo) this.twistInfoStore.get(id);</span>
+	}
+
+	public TwistInfo getTwistInfoByName(String name) {
+<span class="nc" id="L783">		TwistInfo item = null;</span>
+<span class="nc bnc" id="L784" title="All 2 branches missed.">		for (TwistInfo i : getTwistInfoList()) {</span>
+<span class="nc bnc" id="L785" title="All 4 branches missed.">			if (i.getName() != null &amp;&amp; i.getName().equals(name)) {</span>
+<span class="nc" id="L786">				item = i;</span>
+<span class="nc" id="L787">				break;</span>
+			}
+<span class="nc" id="L789">		}</span>
+<span class="nc" id="L790">		return item;</span>
+	}
+
+	public TwistInfo saveOrUpdateTwistInfo(TwistInfo twistInfo) {
+<span class="nc" id="L794">		PersistableItem item = twistInfoStore.save(twistInfo);</span>
+<span class="nc" id="L795">		this.writeMemoryToFile();</span>
+<span class="nc" id="L796">		return (TwistInfo) item;</span>
+	}
+
+	public void deleteTwistInfo(TwistInfo twistInfo) {
+<span class="nc bnc" id="L800" title="All 2 branches missed.">		if (twistInfo != null) {</span>
+<span class="nc" id="L801">			this.twistInfoStore.remove(twistInfo.getId());</span>
+<span class="nc" id="L802">			this.writeMemoryToFile();</span>
+		}
+<span class="nc" id="L804">	}</span>
+
+	public Long getUniversalTwistInfoId() {
+<span class="fc" id="L807">		return this.univeralTwistInfoId;</span>
+	}
+
+	public void setUniversalTwistInfoId(Long twistInfoId) {
+<span class="nc" id="L811">		this.univeralTwistInfoId = twistInfoId;</span>
+<span class="nc" id="L812">		this.writeMemoryToFile();</span>
+<span class="nc" id="L813">	}</span>
+
+	public List&lt;ServiceRef&gt; getServiceRefs() {
+<span class="fc" id="L816">		return this.serviceRefStore.getOrderedList();</span>
+	}
+
+	public ServiceRef saveOrUpdateServiceRef(ServiceRef serviceRef) {
+<span class="nc" id="L820">		PersistableItem item = this.serviceRefStore.save(serviceRef);</span>
+<span class="nc" id="L821">		this.writeMemoryToFile();</span>
+<span class="nc" id="L822">		return (ServiceRef) item;</span>
+	}
+
+	public Boolean getReadOnlyMode() {
+<span class="pc bpc" id="L826" title="1 of 2 branches missed.">		if (this.transientState == null) {</span>
+<span class="nc" id="L827">			this.transientState = new Boolean(true);</span>
+		}
+<span class="fc" id="L829">		return this.transientState;</span>
+	}
+
+	/**
+	 * Visits each item in the store with tags, and returns the list of
+	 * unique tag items.
+	 * @return
+	 */
+	public Set&lt;TagItem&gt; getAllTagsFromStore(){
+
+<span class="fc" id="L839">		String filterTagArg = store.getGlobalStateSystemFilterTag();</span>
+
+<span class="fc" id="L841">		Set&lt;TagItem&gt; treeSet = new TreeSet&lt;TagItem&gt;();</span>
+<span class="pc bpc" id="L842" title="1 of 2 branches missed.">		for (Service service : mockServiceStore.getOrderedList()) {</span>
+<span class="nc bnc" id="L843" title="All 2 branches missed.">			for(String tag: service.getTagList()){</span>
+<span class="nc" id="L844">				treeSet.add( new TagItem(tag, false));</span>
+<span class="nc" id="L845">			}</span>
+<span class="nc bnc" id="L846" title="All 2 branches missed.">			for (Scenario scenario : service.getScenarios()) {</span>
+<span class="nc bnc" id="L847" title="All 2 branches missed.">				for(String tag: scenario.getTagList()){</span>
+<span class="nc" id="L848">					treeSet.add(new TagItem(tag, false));</span>
+<span class="nc" id="L849">				}</span>
+<span class="nc" id="L850">			}</span>
+<span class="nc" id="L851">		}</span>
+<span class="pc bpc" id="L852" title="1 of 2 branches missed.">		for (ServicePlan servicePlan : servicePlanStore.getOrderedList()) {</span>
+
+<span class="nc bnc" id="L854" title="All 2 branches missed.">			for(String tag: servicePlan.getTagList()){</span>
+<span class="nc" id="L855">				treeSet.add(new TagItem(tag, false));</span>
+<span class="nc" id="L856">			}</span>
+
+<span class="nc" id="L858">		}</span>
+
+		//
+<span class="fc" id="L861">		String[] currentEnabledTags = filterTagArg.split(&quot;\\s+&quot;);</span>
+
+<span class="pc bpc" id="L863" title="1 of 2 branches missed.">		for(TagItem item : treeSet)     {</span>
+<span class="nc bnc" id="L864" title="All 2 branches missed.">			for(String t : currentEnabledTags){</span>
+<span class="nc bnc" id="L865" title="All 2 branches missed.">				if(item.getValue().trim().equalsIgnoreCase(t)){</span>
+<span class="nc" id="L866">					item.setState(true);</span>
+				}
+			}
+<span class="nc" id="L869">		}</span>
+<span class="fc" id="L870">		return treeSet;</span>
+	}
+
+	
+
+	public void deleteTagFromStore(String tag) {
+
+<span class="nc bnc" id="L877" title="All 4 branches missed.">		if (tag != null &amp;&amp; tag.trim().length() &gt; 0) {</span>
+<span class="nc bnc" id="L878" title="All 2 branches missed.">			for (Service service : mockServiceStore.getOrderedList()) {</span>
+<span class="nc" id="L879">				service.removeTagFromList(tag);</span>
+<span class="nc bnc" id="L880" title="All 2 branches missed.">				for (Scenario scenario : service.getScenarios()) {</span>
+<span class="nc" id="L881">					scenario.removeTagFromList(tag);</span>
+<span class="nc bnc" id="L882" title="All 2 branches missed.">					if (tag.trim().toLowerCase().equals(scenario.getLastVisitSimple())) {</span>
+<span class="nc" id="L883">						scenario.setLastVisit(null);</span>
+					}
+<span class="nc" id="L885">				}</span>
+
+<span class="nc bnc" id="L887" title="All 2 branches missed.">				if (tag.trim().toLowerCase().equals(service.getLastVisitSimple())) {</span>
+<span class="nc" id="L888">					service.setLastVisit(null);</span>
+				}
+<span class="nc" id="L890">			}</span>
+<span class="nc bnc" id="L891" title="All 2 branches missed.">			for (ServicePlan servicePlan : servicePlanStore.getOrderedList()) {</span>
+<span class="nc" id="L892">				servicePlan.removeTagFromList(tag);</span>
+
+<span class="nc bnc" id="L894" title="All 2 branches missed.">				if (tag.trim().toLowerCase().equals(servicePlan.getLastVisitSimple())) {</span>
+<span class="nc" id="L895">					servicePlan.setLastVisit(null);</span>
+				}
+<span class="nc" id="L897">			}</span>
+<span class="nc" id="L898">			this.writeMemoryToFile();</span>
+		}
+
+<span class="nc" id="L901">	}</span>
+
+	public String getGlobalStateSystemFilterTag() {
+<span class="pc bpc" id="L904" title="1 of 2 branches missed.">		if (this.globalFilterTag == null) {</span>
+<span class="nc" id="L905">			this.globalFilterTag = &quot;&quot;;</span>
+		} else {
+<span class="fc" id="L907">			this.globalFilterTag = this.globalFilterTag.toLowerCase().trim();</span>
+		}
+<span class="fc" id="L909">		return this.globalFilterTag;</span>
+	}
+
+	public void setGlobalStateSystemFilterTag(String filterTag) {
+<span class="pc bpc" id="L913" title="1 of 2 branches missed.">		if (filterTag == null) {</span>
+<span class="nc" id="L914">			this.globalFilterTag = &quot;&quot;;</span>
+		} else {
+<span class="fc" id="L916">			this.globalFilterTag = filterTag.toLowerCase().trim();</span>
+		}
+<span class="fc" id="L918">	}</span>
+
+	@Override
+	public void setServicePlan(ServicePlan servicePlan) {
+
+<span class="nc bnc" id="L923" title="All 2 branches missed.">		if (servicePlan != null) {</span>
+
+<span class="nc bnc" id="L925" title="All 2 branches missed.">			for (PlanItem planItem : servicePlan.getPlanItemList()) {</span>
+
+<span class="nc" id="L927">				Service service = this.getServiceByName(planItem.getServiceName());</span>
+
+<span class="nc bnc" id="L929" title="All 2 branches missed.">				if (service != null) {</span>
+<span class="nc" id="L930">					service.setHangTime(planItem.getHangTime());</span>
+<span class="nc" id="L931">					service.setDefaultScenarioByName(planItem.getScenarioName());</span>
+<span class="nc" id="L932">					service.setServiceResponseType(planItem.getServiceResponseType());</span>
+<span class="nc" id="L933">					this.saveOrUpdateService(service);</span>
+				}
+<span class="nc" id="L935">			}</span>
+			// Why do we save the Plan here?
+			// To save the lastVisit time
+<span class="nc" id="L938">			servicePlan.setLastVisit(new Long(Calendar.getInstance().getTimeInMillis()));</span>
+<span class="nc" id="L939">			this.saveOrUpdateServicePlan(servicePlan);</span>
+		}
+<span class="nc" id="L941">	}</span>
+
+	
+	public Long getTimeOfCreation() {
+<span class="nc" id="L945">		return this.creationTime;</span>
+	}
+	
+	private void checkForDuplicateFileName(List&lt;String&gt; inStateFileNames, String fileName)  {
+		
+<span class="nc" id="L950">		String safeFileName = MockeyXmlFileManager.getSafeForFileSystemName(fileName);</span>
+<span class="nc bnc" id="L951" title="All 2 branches missed.">		for(String inStateFileName: inStateFileNames) {</span>
+<span class="nc bnc" id="L952" title="All 2 branches missed.">			if(safeFileName.equals( MockeyXmlFileManager.getSafeForFileSystemName(inStateFileName))){</span>
+<span class="nc" id="L953">				String mssg = &quot;DANGER the following names will conflict with each other and potentially &quot;</span>
+						+ &quot;overwrite files. In state name: '&quot; + inStateFileName + &quot;' and '&quot;+fileName+&quot;'&quot;;
+<span class="nc" id="L955">				logger.error(mssg);</span>
+<span class="nc" id="L956">				System.out.println(mssg);</span>
+			}
+<span class="nc" id="L958">		}</span>
+<span class="nc" id="L959">	}</span>
+	
+	public static void main(String[] args ) {
+<span class="nc" id="L962">		InMemoryMockeyStorage store = InMemoryMockeyStorage.getInstance();</span>
+<span class="nc" id="L963">		Service service1 = new Service();</span>
+<span class="nc" id="L964">		service1.setUrl(&quot;/id/{ID}/test&quot;);</span>
+		
+		
+<span class="nc" id="L967">		Service service2 = new Service();</span>
+<span class="nc" id="L968">		service2.setUrl(&quot;/id/{ID1}/otherid/{ID2}/test&quot;);</span>
+		
+<span class="nc" id="L970">		Service service3 = new Service();</span>
+<span class="nc" id="L971">		service3.setUrl(&quot;http://example.com/hotels/{hotel}/bookings/{booking}&quot;);</span>
+		
+<span class="nc" id="L973">		String url1 = &quot;/id/1/test&quot;;</span>
+<span class="nc" id="L974">		String url2 = &quot;/id/1/otherid/2/test&quot;;</span>
+<span class="nc" id="L975">		String url3 = &quot;http://example.com/hotels/XYZ/bookings/PTT&quot;;</span>
+<span class="nc" id="L976">		Service serviceMatch1 = store.findServiceBasedOnUrlPattern(url1, service1);</span>
+<span class="nc" id="L977">		Service serviceMatch2 = store.findServiceBasedOnUrlPattern(url2, service2);</span>
+<span class="nc" id="L978">		Service serviceMatch3 = store.findServiceBasedOnUrlPattern(url3, service3);</span>
+<span class="nc" id="L979">		System.out.println(&quot;Match1: &quot; + serviceMatch1);</span>
+<span class="nc" id="L980">		System.out.println(&quot;Match2: &quot; + serviceMatch2);</span>
+<span class="nc" id="L981">		System.out.println(&quot;Match3: &quot; + serviceMatch3);</span>
+		
+		
+<span class="nc" id="L984">	}</span>
+
+}
+</pre><div class="footer"><span class="right">Created with <a href="http://www.jacoco.org/jacoco">JaCoCo</a> 0.8.1.201803210924</span></div></body></html>

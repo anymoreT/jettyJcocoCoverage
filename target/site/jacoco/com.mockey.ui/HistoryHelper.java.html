@@ -1,0 +1,104 @@
+<?xml version="1.0" encoding="UTF-8"?><!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Strict//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-strict.dtd"><html xmlns="http://www.w3.org/1999/xhtml" lang="zh"><head><meta http-equiv="Content-Type" content="text/html;charset=UTF-8"/><link rel="stylesheet" href="../jacoco-resources/report.css" type="text/css"/><link rel="shortcut icon" href="../jacoco-resources/report.gif" type="image/gif"/><title>HistoryHelper.java</title><link rel="stylesheet" href="../jacoco-resources/prettify.css" type="text/css"/><script type="text/javascript" src="../jacoco-resources/prettify.js"></script></head><body onload="window['PR_TAB_WIDTH']=4;prettyPrint()"><div class="breadcrumb" id="breadcrumb"><span class="info"><a href="../jacoco-sessions.html" class="el_session">Sessions</a></span><a href="../index.html" class="el_report">JaCoCo Ant Example</a> &gt; <a href="index.source.html" class="el_package">com.mockey.ui</a> &gt; <span class="el_source">HistoryHelper.java</span></div><h1>HistoryHelper.java</h1><pre class="source lang-java linenums">package com.mockey.ui;
+
+<span class="nc" id="L3">public class HistoryHelper {</span>
+<span class="nc" id="L4">	private String conversationRecordId = null;</span>
+<span class="nc" id="L5">	private String serviceId = null;</span>
+<span class="nc" id="L6">	private String serviceName = null;</span>
+<span class="nc" id="L7">	private String requestUrl = null;</span>
+<span class="nc" id="L8">	private String requestHeaders = null;</span>
+<span class="nc" id="L9">	private String requestParameters = null;</span>
+<span class="nc" id="L10">	private String requestBody  = null;</span>
+<span class="nc" id="L11">	private String requestCookies = null;</span>
+<span class="nc" id="L12">	private String responseCookies = null;</span>
+<span class="nc" id="L13">	private String responseStatus = null;</span>
+<span class="nc" id="L14">	private String responseHeader = null;</span>
+<span class="nc" id="L15">	private String responseBody = null;</span>
+<span class="nc" id="L16">	private String responseScenarioName = null;</span>
+<span class="nc" id="L17">	private String responseScenarioTags = null;</span>
+	public String getConversationRecordId() {
+<span class="nc" id="L19">		return conversationRecordId;</span>
+	}
+	public void setConversationRecordId(String conversationRecordId) {
+<span class="nc" id="L22">		this.conversationRecordId = conversationRecordId;</span>
+<span class="nc" id="L23">	}</span>
+	public String getServiceId() {
+<span class="nc" id="L25">		return serviceId;</span>
+	}
+	public void setServiceId(String serviceId) {
+<span class="nc" id="L28">		this.serviceId = serviceId;</span>
+<span class="nc" id="L29">	}</span>
+	public String getServiceName() {
+<span class="nc" id="L31">		return serviceName;</span>
+	}
+	public void setServiceName(String serviceName) {
+<span class="nc" id="L34">		this.serviceName = serviceName;</span>
+<span class="nc" id="L35">	}</span>
+	public String getRequestUrl() {
+<span class="nc" id="L37">		return requestUrl;</span>
+	}
+	public void setRequestUrl(String requestUrl) {
+<span class="nc" id="L40">		this.requestUrl = requestUrl;</span>
+<span class="nc" id="L41">	}</span>
+	public String getRequestHeaders() {
+<span class="nc" id="L43">		return requestHeaders;</span>
+	}
+	public void setRequestHeaders(String requestHeaders) {
+<span class="nc" id="L46">		this.requestHeaders = requestHeaders;</span>
+<span class="nc" id="L47">	}</span>
+	public String getRequestParameters() {
+<span class="nc" id="L49">		return requestParameters;</span>
+	}
+	public void setRequestParameters(String requestParameters) {
+<span class="nc" id="L52">		this.requestParameters = requestParameters;</span>
+<span class="nc" id="L53">	}</span>
+	public String getRequestBody() {
+<span class="nc" id="L55">		return requestBody;</span>
+	}
+	public void setRequestBody(String requestBody) {
+<span class="nc" id="L58">		this.requestBody = requestBody;</span>
+<span class="nc" id="L59">	}</span>
+	public String getRequestCookies() {
+<span class="nc" id="L61">		return requestCookies;</span>
+	}
+	public void setRequestCookies(String requestCookies) {
+<span class="nc" id="L64">		this.requestCookies = requestCookies;</span>
+<span class="nc" id="L65">	}</span>
+	public String getResponseCookies() {
+<span class="nc" id="L67">		return responseCookies;</span>
+	}
+	public void setResponseCookies(String responseCookies) {
+<span class="nc" id="L70">		this.responseCookies = responseCookies;</span>
+<span class="nc" id="L71">	}</span>
+	public String getResponseStatus() {
+<span class="nc" id="L73">		return responseStatus;</span>
+	}
+	public void setResponseStatus(String responseStatus) {
+<span class="nc" id="L76">		this.responseStatus = responseStatus;</span>
+<span class="nc" id="L77">	}</span>
+	public String getResponseHeader() {
+<span class="nc" id="L79">		return responseHeader;</span>
+	}
+	public void setResponseHeader(String responseHeader) {
+<span class="nc" id="L82">		this.responseHeader = responseHeader;</span>
+<span class="nc" id="L83">	}</span>
+	public String getResponseBody() {
+<span class="nc" id="L85">		return responseBody;</span>
+	}
+	public void setResponseBody(String responseBody) {
+<span class="nc" id="L88">		this.responseBody = responseBody;</span>
+<span class="nc" id="L89">	}</span>
+	public String getResponseScenarioName() {
+<span class="nc" id="L91">		return responseScenarioName;</span>
+	}
+	public void setResponseScenarioName(String responseScenarioName) {
+<span class="nc" id="L94">		this.responseScenarioName = responseScenarioName;</span>
+<span class="nc" id="L95">	}</span>
+	public String getResponseScenarioTags() {
+<span class="nc" id="L97">		return responseScenarioTags;</span>
+	}
+	public void setResponseScenarioTags(String responseScenarioTags) {
+<span class="nc" id="L100">		this.responseScenarioTags = responseScenarioTags;</span>
+<span class="nc" id="L101">	}</span>
+
+}
+</pre><div class="footer"><span class="right">Created with <a href="http://www.jacoco.org/jacoco">JaCoCo</a> 0.8.1.201803210924</span></div></body></html>

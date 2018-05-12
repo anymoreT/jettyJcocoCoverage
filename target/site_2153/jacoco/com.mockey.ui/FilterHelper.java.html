@@ -1,0 +1,137 @@
+<?xml version="1.0" encoding="UTF-8"?><!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Strict//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-strict.dtd"><html xmlns="http://www.w3.org/1999/xhtml" lang="zh"><head><meta http-equiv="Content-Type" content="text/html;charset=UTF-8"/><link rel="stylesheet" href="../jacoco-resources/report.css" type="text/css"/><link rel="shortcut icon" href="../jacoco-resources/report.gif" type="image/gif"/><title>FilterHelper.java</title><link rel="stylesheet" href="../jacoco-resources/prettify.css" type="text/css"/><script type="text/javascript" src="../jacoco-resources/prettify.js"></script></head><body onload="window['PR_TAB_WIDTH']=4;prettyPrint()"><div class="breadcrumb" id="breadcrumb"><span class="info"><a href="../jacoco-sessions.html" class="el_session">Sessions</a></span><a href="../index.html" class="el_report">JaCoCo Ant Example</a> &gt; <a href="index.source.html" class="el_package">com.mockey.ui</a> &gt; <span class="el_source">FilterHelper.java</span></div><h1>FilterHelper.java</h1><pre class="source lang-java linenums">/*
+ * This file is part of Mockey, a tool for testing application 
+ * interactions over HTTP, with a focus on testing web services, 
+ * specifically web applications that consume XML, JSON, and HTML.
+ *  
+ * Copyright (C) 2009-2010  Authors:
+ * 
+ * chad.lafontaine (chad.lafontaine AT gmail DOT com)
+ * 
+ * This program is free software; you can redistribute it and/or
+ * modify it under the terms of the GNU General Public License
+ * as published by the Free Software Foundation; either version 2
+ * of the License, or (at your option) any later version.
+ * 
+ * This program is distributed in the hope that it will be useful,
+ * but WITHOUT ANY WARRANTY; without even the implied warranty of
+ * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+ * GNU General Public License for more details.
+ * 
+ * You should have received a copy of the GNU General Public License
+ * along with this program; if not, write to the Free Software
+ * Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301, USA.
+ *
+ */
+package com.mockey.ui;
+
+import java.util.ArrayList;
+import java.util.List;
+
+import com.mockey.model.Service;
+import com.mockey.model.ServicePlan;
+import com.mockey.storage.IMockeyStorage;
+
+/**
+ * Utility/helper class to help flag 'noise', possible problems in the setup.
+ * 
+ * @author clafonta
+ * 
+ */
+<span class="fc" id="L40">public class FilterHelper {</span>
+
+	/**
+	 * 
+	 * @param service
+	 * @param filterTag
+	 * @return
+	 */
+	public List&lt;Service&gt; getFlaggedServicesInfo(String tagFilter,
+			IMockeyStorage store) {
+
+<span class="nc" id="L51">		List&lt;Service&gt; serviceList = this.getFilteredServices(tagFilter, store);</span>
+
+<span class="nc bnc" id="L53" title="All 4 branches missed.">		if (tagFilter != null &amp;&amp; tagFilter.trim().length() &gt; 0) {</span>
+
+<span class="nc" id="L55">			List&lt;Service&gt; filteredList = new ArrayList&lt;Service&gt;();</span>
+<span class="nc bnc" id="L56" title="All 2 branches missed.">			for (Service tempService : store.getServices()) {</span>
+<span class="nc bnc" id="L57" title="All 2 branches missed.">				if (tempService.hasTag(tagFilter)) {</span>
+<span class="nc" id="L58">					filteredList.add(tempService);</span>
+				}
+<span class="nc" id="L60">			}</span>
+<span class="nc" id="L61">			serviceList = Util.orderAlphabeticallyByServiceName(filteredList);</span>
+
+<span class="nc" id="L63">		} else {</span>
+<span class="nc" id="L64">			serviceList = Util.orderAlphabeticallyByServiceName(store</span>
+<span class="nc" id="L65">					.getServices());</span>
+
+		}
+<span class="nc" id="L68">		return serviceList;</span>
+
+	}
+
+	/**
+	 * 
+	 * @param service
+	 * @param filterTag
+	 * @return Services with matching tag(s)
+	 */
+	public List&lt;Service&gt; getFilteredServices(String tagFilter,
+			IMockeyStorage store) {
+
+<span class="fc" id="L81">		List&lt;Service&gt; serviceList = null;</span>
+
+<span class="pc bpc" id="L83" title="2 of 4 branches missed.">		if (tagFilter != null &amp;&amp; tagFilter.trim().length() &gt; 0) {</span>
+
+<span class="nc" id="L85">			List&lt;Service&gt; filteredList = new ArrayList&lt;Service&gt;();</span>
+<span class="nc bnc" id="L86" title="All 2 branches missed.">			for (Service tempService : store.getServices()) {</span>
+<span class="nc bnc" id="L87" title="All 2 branches missed.">				if (tempService.hasTag(tagFilter)) {</span>
+<span class="nc" id="L88">					filteredList.add(tempService);</span>
+				}
+<span class="nc" id="L90">			}</span>
+<span class="nc" id="L91">			serviceList = Util.orderAlphabeticallyByServiceName(filteredList);</span>
+
+			//
+<span class="nc" id="L94">		} else {</span>
+<span class="fc" id="L95">			serviceList = Util.orderAlphabeticallyByServiceName(store</span>
+<span class="fc" id="L96">					.getServices());</span>
+
+		}
+<span class="fc" id="L99">		return serviceList;</span>
+
+	}
+
+	/**
+	 * 
+	 * @param service
+	 * @param filterTag
+	 * @return
+	 */
+	public List&lt;ServicePlan&gt; getFilteredServicePlans(String tagFilter,
+			IMockeyStorage store) {
+
+<span class="fc" id="L112">		List&lt;ServicePlan&gt; servicePlanList = null;</span>
+
+<span class="pc bpc" id="L114" title="2 of 4 branches missed.">		if (tagFilter != null &amp;&amp; tagFilter.trim().length() &gt; 0) {</span>
+
+<span class="nc" id="L116">			List&lt;ServicePlan&gt; filteredPlanList = new ArrayList&lt;ServicePlan&gt;();</span>
+<span class="nc bnc" id="L117" title="All 2 branches missed.">			for (ServicePlan tempServicePlan : store.getServicePlans()) {</span>
+<span class="nc bnc" id="L118" title="All 2 branches missed.">				if (tempServicePlan.hasTag(tagFilter)) {</span>
+<span class="nc" id="L119">					filteredPlanList.add(tempServicePlan);</span>
+				}
+<span class="nc" id="L121">			}</span>
+
+<span class="nc" id="L123">			servicePlanList = Util</span>
+<span class="nc" id="L124">					.orderAlphabeticallyByServicePlanName(filteredPlanList);</span>
+
+			//
+<span class="nc" id="L127">		} else {</span>
+
+<span class="fc" id="L129">			servicePlanList = Util.orderAlphabeticallyByServicePlanName(store</span>
+<span class="fc" id="L130">					.getServicePlans());</span>
+		}
+<span class="fc" id="L132">		return servicePlanList;</span>
+
+	}
+
+}
+</pre><div class="footer"><span class="right">Created with <a href="http://www.jacoco.org/jacoco">JaCoCo</a> 0.8.1.201803210924</span></div></body></html>

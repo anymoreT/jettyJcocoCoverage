@@ -1,0 +1,83 @@
+<?xml version="1.0" encoding="UTF-8"?><!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Strict//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-strict.dtd"><html xmlns="http://www.w3.org/1999/xhtml" lang="zh"><head><meta http-equiv="Content-Type" content="text/html;charset=UTF-8"/><link rel="stylesheet" href="../jacoco-resources/report.css" type="text/css"/><link rel="shortcut icon" href="../jacoco-resources/report.gif" type="image/gif"/><title>RequestInspectorAjaxServlet.java</title><link rel="stylesheet" href="../jacoco-resources/prettify.css" type="text/css"/><script type="text/javascript" src="../jacoco-resources/prettify.js"></script></head><body onload="window['PR_TAB_WIDTH']=4;prettyPrint()"><div class="breadcrumb" id="breadcrumb"><span class="info"><a href="../jacoco-sessions.html" class="el_session">Sessions</a></span><a href="../index.html" class="el_report">JaCoCo Ant Example</a> &gt; <a href="index.source.html" class="el_package">com.mockey.ui</a> &gt; <span class="el_source">RequestInspectorAjaxServlet.java</span></div><h1>RequestInspectorAjaxServlet.java</h1><pre class="source lang-java linenums">/*
+ * This file is part of Mockey, a tool for testing application 
+ * interactions over HTTP, with a focus on testing web services, 
+ * specifically web applications that consume XML, JSON, and HTML.
+ *  
+ * Copyright (C) 2012  Authors:
+ * 
+ * chad.lafontaine (chad.lafontaine AT gmail DOT com)
+ * 
+ * This program is free software; you can redistribute it and/or
+ * modify it under the terms of the GNU General Public License
+ * as published by the Free Software Foundation; either version 2
+ * of the License, or (at your option) any later version.
+ * 
+ * This program is distributed in the hope that it will be useful,
+ * but WITHOUT ANY WARRANTY; without even the implied warranty of
+ * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+ * GNU General Public License for more details.
+ * 
+ * You should have received a copy of the GNU General Public License
+ * along with this program; if not, write to the Free Software
+ * Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301, USA.
+ *
+ */
+package com.mockey.ui;
+
+import java.io.IOException;
+import java.io.PrintStream;
+
+import javax.servlet.ServletException;
+import javax.servlet.http.HttpServlet;
+import javax.servlet.http.HttpServletRequest;
+import javax.servlet.http.HttpServletResponse;
+
+import org.apache.log4j.Logger;
+import org.json.JSONArray;
+import org.json.JSONException;
+import org.json.JSONObject;
+
+import com.mockey.plugin.PluginStore;
+
+/**
+ * Returns JSON of the fulfilled request, designed to be consumed by an AJAX
+ * call.
+ * 
+ */
+<span class="nc" id="L47">public class RequestInspectorAjaxServlet extends HttpServlet {</span>
+
+	private static final long serialVersionUID = 4178219038104708097L;
+<span class="nc" id="L50">	private static Logger logger = Logger.getLogger(RequestInspectorAjaxServlet.class);</span>
+
+	/**
+     * 
+     */
+	public void service(HttpServletRequest req, HttpServletResponse resp) throws ServletException, IOException {
+
+<span class="nc" id="L57">		Long fulfilledRequestId = null;</span>
+<span class="nc" id="L58">		JSONObject jsonObject = new JSONObject();</span>
+<span class="nc" id="L59">		JSONArray array = new JSONArray();</span>
+		try {
+<span class="nc bnc" id="L61" title="All 2 branches missed.">			for (Class&lt;?&gt; item : PluginStore.getInstance().getRequestInspectorImplClassList()) {</span>
+<span class="nc" id="L62">				array.put(item.getName());</span>
+<span class="nc" id="L63">			}</span>
+<span class="nc" id="L64">			jsonObject.putOpt(&quot;request_inspectors&quot;, array);</span>
+
+<span class="nc" id="L66">		} catch (Exception e) {</span>
+			try {
+<span class="nc" id="L68">				jsonObject.put(&quot;error&quot;, &quot;&quot; + &quot;Sorry, history for this conversation (fulfilledRequestId=&quot;</span>
+						+ fulfilledRequestId + &quot;) is not available.&quot;);
+<span class="nc" id="L70">			} catch (JSONException e1) {</span>
+<span class="nc" id="L71">				logger.error(&quot;Unable to create JSON&quot;, e1);</span>
+<span class="nc" id="L72">			}</span>
+<span class="nc" id="L73">		}</span>
+
+<span class="nc" id="L75">		resp.setContentType(&quot;application/json&quot;);</span>
+
+<span class="nc" id="L77">		PrintStream out = new PrintStream(resp.getOutputStream());</span>
+
+<span class="nc" id="L79">		out.println(jsonObject.toString());</span>
+<span class="nc" id="L80">	}</span>
+
+}
+</pre><div class="footer"><span class="right">Created with <a href="http://www.jacoco.org/jacoco">JaCoCo</a> 0.8.1.201803210924</span></div></body></html>

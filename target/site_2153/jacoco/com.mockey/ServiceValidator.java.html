@@ -1,0 +1,141 @@
+<?xml version="1.0" encoding="UTF-8"?><!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Strict//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-strict.dtd"><html xmlns="http://www.w3.org/1999/xhtml" lang="zh"><head><meta http-equiv="Content-Type" content="text/html;charset=UTF-8"/><link rel="stylesheet" href="../jacoco-resources/report.css" type="text/css"/><link rel="shortcut icon" href="../jacoco-resources/report.gif" type="image/gif"/><title>ServiceValidator.java</title><link rel="stylesheet" href="../jacoco-resources/prettify.css" type="text/css"/><script type="text/javascript" src="../jacoco-resources/prettify.js"></script></head><body onload="window['PR_TAB_WIDTH']=4;prettyPrint()"><div class="breadcrumb" id="breadcrumb"><span class="info"><a href="../jacoco-sessions.html" class="el_session">Sessions</a></span><a href="../index.html" class="el_report">JaCoCo Ant Example</a> &gt; <a href="index.source.html" class="el_package">com.mockey</a> &gt; <span class="el_source">ServiceValidator.java</span></div><h1>ServiceValidator.java</h1><pre class="source lang-java linenums">/*
+ * This file is part of Mockey, a tool for testing application 
+ * interactions over HTTP, with a focus on testing web services, 
+ * specifically web applications that consume XML, JSON, and HTML.
+ *  
+ * Copyright (C) 2009-2010  Authors:
+ * 
+ * chad.lafontaine (chad.lafontaine AT gmail DOT com)
+ * neil.cronin (neil AT rackle DOT com) 
+ * lorin.kobashigawa (lkb AT kgawa DOT com)
+ * rob.meyer (rob AT bigdis DOT com)
+ * 
+ * This program is free software; you can redistribute it and/or
+ * modify it under the terms of the GNU General Public License
+ * as published by the Free Software Foundation; either version 2
+ * of the License, or (at your option) any later version.
+ * 
+ * This program is distributed in the hope that it will be useful,
+ * but WITHOUT ANY WARRANTY; without even the implied warranty of
+ * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+ * GNU General Public License for more details.
+ * 
+ * You should have received a copy of the GNU General Public License
+ * along with this program; if not, write to the Free Software
+ * Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301, USA.
+ *
+ */
+package com.mockey;
+
+import java.util.HashMap;
+import java.util.Map;
+
+import org.apache.log4j.Logger;
+import org.json.JSONException;
+import org.json.JSONObject;
+
+import com.mockey.model.Service;
+import com.mockey.model.Url;
+import com.mockey.storage.IMockeyStorage;
+import com.mockey.storage.StorageRegistry;
+
+/**
+ * Validator for contents of a MockServiceBean definition.
+ * 
+ * @author chad.lafontaine
+ * 
+ */
+<span class="nc" id="L48">public class ServiceValidator {</span>
+	/** Basic logger */
+<span class="fc" id="L50">	private static Logger logger = Logger.getLogger(ServiceValidator.class);</span>
+<span class="fc" id="L51">	private static IMockeyStorage store = StorageRegistry.MockeyStorage;</span>
+
+	/**
+	 * Return a mapping of input field names and error messages. If the mock
+	 * service state is valid, then an empty Map is returned.
+	 * 
+	 * @param ms
+	 * @return
+	 */
+	public static Map&lt;String, String&gt; validate(Service ms) {
+<span class="fc" id="L61">		Map&lt;String, String&gt; errorMap = new HashMap&lt;String, String&gt;();</span>
+
+<span class="pc bpc" id="L63" title="2 of 4 branches missed.">		if ((ms.getServiceName() == null) || (ms.getServiceName().trim().length() &lt; 1)</span>
+<span class="nc bnc" id="L64" title="All 2 branches missed.">				|| (ms.getServiceName().trim().length() &gt; 250)) {</span>
+<span class="fc" id="L65">			errorMap.put(&quot;serviceName&quot;, &quot;Service name must not be empty or greater than 250 chars.&quot;);</span>
+		}
+		
+		// Validate JSON format. 
+<span class="pc bpc" id="L69" title="2 of 4 branches missed.">		if(ms.getRequestInspectorJsonRules() !=null &amp;&amp; ms.getRequestInspectorJsonRules().trim().length()&gt;0)</span>
+		try {
+<span class="nc" id="L71">			new JSONObject(ms.getRequestInspectorJsonRules());</span>
+			
+<span class="nc" id="L73">		} catch (JSONException e1) {</span>
+<span class="nc" id="L74">			errorMap.put(&quot;requestInspectorJsonRules&quot;, &quot;Invalid JSON format. &quot;);</span>
+<span class="nc" id="L75">			logger.debug(&quot;Invalid JSON format for rules &quot; + e1.getMessage());</span>
+			
+<span class="nc" id="L77">		}</span>
+		
+
+		// This validation is important
+		// for bad URL checking, but
+		// prevents people from creating
+		// a simple Mockey mock up.
+		// E.g. http://localhost:8080/Mockey/service/dummy
+//		if (ms.getUrl() != null &amp;&amp; ms.getUrl().trim().length() &gt; 0) {
+//			URL aURL;
+//			try {
+//				aURL = new URL(ms.getUrl());
+//				// Let's make sure user doesn't have any REF or QUERY arguments
+//				// Why? Because Mockey tries to find match incoming request
+//				// to service Real and Mock URLs, and when people append
+//				// random parameters on the end of similar URL, it gets
+//				// hard to map URL X to URL X.
+//				if (aURL.getQuery() != null || aURL.getRef() != null) {
+//					errorMap
+//							.put(&quot;urlMsg&quot;,
+//									&quot;It looks like you have a well form URL but you can't have any QUERY or REFERENCE arguments.&quot;);
+//					return errorMap;
+//				}
+//
+//			} catch (MalformedURLException e) {
+//
+//				errorMap.put(&quot;urlMsg&quot;, &quot;It looks like you have a malformed URL: &quot; + e.getMessage());
+//
+//				return errorMap;
+//			}
+//		}
+		// Make sure there doesn't exist a service
+		// w/ the same non-empty real URL.
+		try {
+
+<span class="pc bpc" id="L112" title="1 of 2 branches missed.">			for (Service testService : store.getServices()) {</span>
+
+<span class="nc" id="L114">				Url firstMatch = testService.getFirstMatchingRealServiceUrl(ms);</span>
+<span class="nc bnc" id="L115" title="All 4 branches missed.">				if (firstMatch != null &amp;&amp; !testService.getId().equals(ms.getId())) {</span>
+
+<span class="nc" id="L117">					errorMap.put(&quot;serviceUrlMsg&quot;, &quot;One of your Real service URL entries is already managed by the '&quot;</span>
+<span class="nc" id="L118">							+ testService.getServiceName() + &quot;' service. Please choose another real URL pattern. &quot;);</span>
+<span class="nc" id="L119">					errorMap.put(&quot;serviceUrl&quot;, firstMatch.getFullUrl());</span>
+<span class="nc" id="L120">					break;</span>
+<span class="nc bnc" id="L121" title="All 4 branches missed.">				} else if (testService.getUrl() != null &amp;&amp; ms.getUrl() != null) {</span>
+<span class="nc bnc" id="L122" title="All 2 branches missed.">					if (testService.getUrl().trim().equalsIgnoreCase(ms.getUrl().trim())</span>
+<span class="nc bnc" id="L123" title="All 2 branches missed.">							&amp;&amp; !testService.getId().equals(ms.getId())) {</span>
+
+<span class="nc" id="L125">						errorMap.put(&quot;urlMsg&quot;, &quot;Your Mock service URL entry is already used by the '&quot;</span>
+<span class="nc" id="L126">								+ testService.getServiceName() + &quot;' service. Please choose another mock URL pattern. &quot;);</span>
+<span class="nc" id="L127">						errorMap.put(&quot;url&quot;, ms.getUrl().trim());</span>
+<span class="nc" id="L128">						break;</span>
+					}
+				}
+<span class="nc" id="L131">			}</span>
+
+<span class="nc" id="L133">		} catch (Exception e) {</span>
+<span class="nc" id="L134">			logger.error(&quot;Unable to verify if there are duplicate service URLs&quot;, e);</span>
+<span class="fc" id="L135">		}</span>
+
+<span class="fc" id="L137">		return errorMap;</span>
+	}
+	
+}
+</pre><div class="footer"><span class="right">Created with <a href="http://www.jacoco.org/jacoco">JaCoCo</a> 0.8.1.201803210924</span></div></body></html>

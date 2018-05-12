@@ -1,0 +1,327 @@
+<?xml version="1.0" encoding="UTF-8"?><!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Strict//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-strict.dtd"><html xmlns="http://www.w3.org/1999/xhtml" lang="zh"><head><meta http-equiv="Content-Type" content="text/html;charset=UTF-8"/><link rel="stylesheet" href="../jacoco-resources/report.css" type="text/css"/><link rel="shortcut icon" href="../jacoco-resources/report.gif" type="image/gif"/><title>UriTemplate.java</title><link rel="stylesheet" href="../jacoco-resources/prettify.css" type="text/css"/><script type="text/javascript" src="../jacoco-resources/prettify.js"></script></head><body onload="window['PR_TAB_WIDTH']=4;prettyPrint()"><div class="breadcrumb" id="breadcrumb"><span class="info"><a href="../jacoco-sessions.html" class="el_session">Sessions</a></span><a href="../index.html" class="el_report">JaCoCo Ant Example</a> &gt; <a href="index.source.html" class="el_package">com.mockey.model</a> &gt; <span class="el_source">UriTemplate.java</span></div><h1>UriTemplate.java</h1><pre class="source lang-java linenums">package com.mockey.model;
+
+/*
+ * Copyright 2002-2010 the original author or authors.
+ *
+ * Licensed under the Apache License, Version 2.0 (the &quot;License&quot;);
+ * you may not use this file except in compliance with the License.
+ * You may obtain a copy of the License at
+ *
+ *      http://www.apache.org/licenses/LICENSE-2.0
+ *
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an &quot;AS IS&quot; BASIS,
+ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ * See the License for the specific language governing permissions and
+ * limitations under the License.
+ */
+
+import java.io.UnsupportedEncodingException;
+import java.net.URI;
+import java.net.URISyntaxException;
+import java.util.Collections;
+import java.util.LinkedHashMap;
+import java.util.LinkedList;
+import java.util.List;
+import java.util.Map;
+import java.util.regex.Matcher;
+import java.util.regex.Pattern;
+
+/**
+ * Represents a URI template. An URI template is a URI-like String that
+ * contained variables marked of in braces (&lt;code&gt;{&lt;/code&gt;, &lt;code&gt;}&lt;/code&gt;),
+ * which can be expanded to produce a URI.
+ * 
+ * IMPORTANT: Case insensitive. 
+ * &lt;p&gt;
+ * See {@link #expand(Map)}, {@link #expand(Object[])}, and
+ * {@link #match(String)} for example usages.
+ * &lt;/p&gt;
+ * @author Arjen Poutsma
+ * @author Juergen Hoeller
+ * @since 3.0
+ * @see &lt;a href=&quot;http://bitworking.org/projects/URI-Templates/&quot;&gt;URI
+ *      Templates&lt;/a&gt;
+ */
+public class UriTemplate {
+
+	/** Captures URI template variable names. */
+<span class="nc" id="L49">	private static final Pattern NAMES_PATTERN = Pattern.compile(&quot;\\{([^/]+?)\\}&quot;);</span>
+
+	/** Replaces template variables in the URI template. */
+	private static final String VALUE_REGEX = &quot;(.*)&quot;;
+
+	private final List&lt;String&gt; variableNames;
+
+	private final Pattern matchPattern;
+
+	private final String uriTemplate;
+
+	/**
+	 * Construct a new {@link UriTemplate} with the given URI String.
+	 * 
+	 * @param uriTemplate
+	 *            the URI template string
+	 */
+<span class="nc" id="L66">	public UriTemplate(String uriTemplate) {</span>
+<span class="nc" id="L67">		Parser parser = new Parser(uriTemplate.toLowerCase());</span>
+<span class="nc" id="L68">		this.uriTemplate = uriTemplate.toLowerCase();</span>
+<span class="nc" id="L69">		this.variableNames = parser.getVariableNames();</span>
+<span class="nc" id="L70">		this.matchPattern = parser.getMatchPattern();</span>
+<span class="nc" id="L71">	}</span>
+
+	/**
+	 * Return the names of the variables in the template, in order.
+	 * 
+	 * @return the template variable names
+	 */
+	public List&lt;String&gt; getVariableNames() {
+<span class="nc" id="L79">		return this.variableNames;</span>
+	}
+
+	/**
+	 * Given the Map of variables, expands this template into a URI. The Map
+	 * keys represent variable names, the Map values variable values. The order
+	 * of variables is not significant.
+	 * &lt;p&gt;
+	 * Example:
+	 * 
+	 * &lt;pre&gt;
+	 * UriTemplate template = new UriTemplate(&amp;quot;http://example.com/hotels/{hotel}/bookings/{booking}&amp;quot;);
+	 * Map&amp;lt;String, String&amp;gt; uriVariables = new HashMap&amp;lt;String, String&amp;gt;();
+	 * uriVariables.put(&amp;quot;booking&amp;quot;, &amp;quot;42&amp;quot;);
+	 * uriVariables.put(&amp;quot;hotel&amp;quot;, &amp;quot;1&amp;quot;);
+	 * System.out.println(template.expand(uriVariables));
+	 * &lt;/pre&gt;
+	 * 
+	 * will print: &lt;blockquote&gt;
+	 * &lt;code&gt;http://example.com/hotels/1/bookings/42&lt;/code&gt;&lt;/blockquote&gt;
+	 * 
+	 * @param uriVariables
+	 *            the map of URI variables
+	 * @return the expanded URI
+	 * @throws IllegalArgumentException
+	 *             if &lt;code&gt;uriVariables&lt;/code&gt; is &lt;code&gt;null&lt;/code&gt;; or if it
+	 *             does not contain values for all the variable names
+	 */
+	public URI expand(Map&lt;String, ?&gt; uriVariables) {
+
+		// Assert.notNull(uriVariables, &quot;'uriVariables' must not be null&quot;);
+<span class="nc" id="L110">		Object[] values = new String[this.variableNames.size()];</span>
+<span class="nc bnc" id="L111" title="All 2 branches missed.">		for (int i = 0; i &lt; this.variableNames.size(); i++) {</span>
+<span class="nc" id="L112">			String name = this.variableNames.get(i);</span>
+<span class="nc bnc" id="L113" title="All 2 branches missed.">			if (!uriVariables.containsKey(name)) {</span>
+<span class="nc" id="L114">				throw new IllegalArgumentException(&quot;'uriVariables' Map has no value for '&quot; + name + &quot;'&quot;);</span>
+			}
+<span class="nc" id="L116">			values[i] = uriVariables.get(name);</span>
+		}
+<span class="nc" id="L118">		return expand(values);</span>
+	}
+
+	/**
+	 * Given an array of variables, expand this template into a full URI. The
+	 * array represent variable values. The order of variables is significant.
+	 * &lt;p&gt;
+	 * Example:
+	 * 
+	 * &lt;pre class=&quot;code&gt;
+	 * UriTemplate template = new
+	 * UriTemplate(&quot;http://example.com/hotels/{hotel}/bookings/{booking}&quot;); System.out.println(template.expand(&quot;1&quot;, &quot;42));
+	 * &lt;/pre&gt;
+	 * 
+	 * will print: &lt;blockquote&gt;
+	 * &lt;code&gt;http://example.com/hotels/1/bookings/42&lt;/code&gt;&lt;/blockquote&gt;
+	 * 
+	 * @param uriVariableValues
+	 *            the array of URI variables
+	 * @return the expanded URI
+	 * @throws IllegalArgumentException
+	 *             if &lt;code&gt;uriVariables&lt;/code&gt; is &lt;code&gt;null&lt;/code&gt;; or if it
+	 *             does not contain sufficient variables
+	 */
+	public URI expand(Object... uriVariableValues) {
+		// Assert.notNull(uriVariableValues,
+		// &quot;'uriVariableValues' must not be null&quot;);
+<span class="nc bnc" id="L145" title="All 2 branches missed.">		if (uriVariableValues.length != this.variableNames.size()) {</span>
+<span class="nc" id="L146">			throw new IllegalArgumentException(&quot;Invalid amount of variables values in [&quot; + this.uriTemplate</span>
+<span class="nc" id="L147">					+ &quot;]: expected &quot; + this.variableNames.size() + &quot;; got &quot; + uriVariableValues.length);</span>
+		}
+<span class="nc" id="L149">		Matcher matcher = NAMES_PATTERN.matcher(this.uriTemplate);</span>
+<span class="nc" id="L150">		StringBuffer buffer = new StringBuffer();</span>
+<span class="nc" id="L151">		int i = 0;</span>
+<span class="nc bnc" id="L152" title="All 2 branches missed.">		while (matcher.find()) {</span>
+<span class="nc" id="L153">			Object uriVariable = uriVariableValues[i++];</span>
+<span class="nc bnc" id="L154" title="All 2 branches missed.">			String replacement = Matcher.quoteReplacement(uriVariable != null ? uriVariable.toString() : &quot;&quot;);</span>
+<span class="nc" id="L155">			matcher.appendReplacement(buffer, replacement);</span>
+<span class="nc" id="L156">		}</span>
+<span class="nc" id="L157">		matcher.appendTail(buffer);</span>
+<span class="nc" id="L158">		return encodeUri(buffer.toString());</span>
+	}
+
+	/**
+	 * Indicate whether the given URI matches this template.
+	 * 
+	 * @param uri
+	 *            the URI to match to
+	 * @return &lt;code&gt;true&lt;/code&gt; if it matches; &lt;code&gt;false&lt;/code&gt; otherwise
+	 */
+	public boolean matches(String uri) {
+<span class="nc bnc" id="L169" title="All 2 branches missed.">		if (uri == null) {</span>
+<span class="nc" id="L170">			return false;</span>
+		}
+<span class="nc" id="L172">		Matcher matcher = this.matchPattern.matcher(uri);</span>
+<span class="nc" id="L173">		return matcher.matches();</span>
+	}
+
+	/**
+	 * Match the given URI to a map of variable values. Keys in the returned map
+	 * are variable names, values are variable values, as occurred in the given
+	 * URI.
+	 * &lt;p&gt;
+	 * Example:
+	 * 
+	 * &lt;pre class=&quot;code&quot;&gt;
+	 * UriTemplate template = new UriTemplate(&amp;quot;http://example.com/hotels/{hotel}/bookings/{booking}&amp;quot;);
+	 * System.out.println(template.match(&amp;quot;http://example.com/hotels/1/bookings/42&amp;quot;));
+	 * &lt;/pre&gt;
+	 * 
+	 * will print: &lt;blockquote&gt;&lt;code&gt;{hotel=1, booking=42}&lt;/code&gt;&lt;/blockquote&gt;
+	 * 
+	 * @param uri
+	 *            the URI to match to
+	 * @return a map of variable values
+	 */
+	public Map&lt;String, String&gt; match(String uri) {
+		// Assert.notNull(uri, &quot;'uri' must not be null&quot;);
+<span class="nc" id="L196">		Map&lt;String, String&gt; result = new LinkedHashMap&lt;String, String&gt;(this.variableNames.size());</span>
+
+<span class="nc" id="L198">		Matcher matcher = this.matchPattern.matcher(uri.toLowerCase());</span>
+<span class="nc bnc" id="L199" title="All 2 branches missed.">		if (matcher.find()) {</span>
+<span class="nc bnc" id="L200" title="All 2 branches missed.">			for (int i = 1; i &lt;= matcher.groupCount(); i++) {</span>
+<span class="nc" id="L201">				String name = this.variableNames.get(i - 1);</span>
+<span class="nc" id="L202">				String value = matcher.group(i);</span>
+				// CHECK for a 'forward slash'.
+<span class="nc" id="L204">				int indexOfSlash = value.indexOf('/');</span>
+<span class="nc bnc" id="L205" title="All 2 branches missed.">				if (indexOfSlash &gt; -1) {</span>
+					// We don't want SLASHES in a variable value. 
+					// For example: 
+					//
+					// http://id/23/otherid/23/test
+					// http://id/{ID}/test
+					//
+					// results in an error because {ID} has value '23/otherid/23'
+				} else {
+<span class="nc" id="L214">					result.put(name, value);</span>
+				}
+			}
+		}
+
+		// Final check: the number of 'variables' should match the number of
+		// 'results'.
+		// If YES, then return result map.
+		// Otherwise, return map of size 0.
+
+<span class="nc bnc" id="L224" title="All 2 branches missed.">		if (result.size() == this.variableNames.size()) {</span>
+<span class="nc" id="L225">			return result;</span>
+		} else {
+<span class="nc" id="L227">			return new LinkedHashMap&lt;String, String&gt;(0);</span>
+		}
+
+	}
+
+	@Override
+	public String toString() {
+<span class="nc" id="L234">		return this.uriTemplate;</span>
+	}
+
+	/**
+	 * Encodes the given String as URL.
+	 * 
+	 * &lt;p&gt;
+	 * Defaults to {@link UriUtils#encodeUri(String, String)}.
+	 * 
+	 * @param uri
+	 *            the URI to encode
+	 * @return the encoded URI
+	 */
+	protected URI encodeUri(String uri) {
+		try {
+<span class="nc" id="L249">			String encoded = new String(uri.getBytes(&quot;UTF-8&quot;), &quot;UTF-8&quot;);</span>
+<span class="nc" id="L250">			return new URI(encoded);</span>
+<span class="nc" id="L251">		} catch (UnsupportedEncodingException ex) {</span>
+			// should not happen, UTF-8 is always supported
+<span class="nc" id="L253">			throw new IllegalStateException(ex);</span>
+<span class="nc" id="L254">		} catch (URISyntaxException ex) {</span>
+<span class="nc" id="L255">			throw new IllegalArgumentException(&quot;Could not create URI from [&quot; + uri + &quot;]: &quot; + ex, ex);</span>
+		}
+	}
+
+	/**
+	 * Static inner class to parse uri template strings into a matching regular
+	 * expression.
+	 */
+	private static class Parser {
+
+<span class="nc" id="L265">		private final List&lt;String&gt; variableNames = new LinkedList&lt;String&gt;();</span>
+
+<span class="nc" id="L267">		private final StringBuilder patternBuilder = new StringBuilder();</span>
+
+<span class="nc" id="L269">		private Parser(String uriTemplate) {</span>
+			// Assert.hasText(uriTemplate, &quot;'uriTemplate' must not be null&quot;);
+<span class="nc" id="L271">			Matcher m = NAMES_PATTERN.matcher(uriTemplate);</span>
+<span class="nc" id="L272">			int end = 0;</span>
+<span class="nc bnc" id="L273" title="All 2 branches missed.">			while (m.find()) {</span>
+<span class="nc" id="L274">				this.patternBuilder.append(quote(uriTemplate, end, m.start()));</span>
+<span class="nc" id="L275">				this.patternBuilder.append(VALUE_REGEX);</span>
+<span class="nc" id="L276">				this.variableNames.add(m.group(1));</span>
+<span class="nc" id="L277">				end = m.end();</span>
+			}
+<span class="nc" id="L279">			this.patternBuilder.append(quote(uriTemplate, end, uriTemplate.length()));</span>
+<span class="nc" id="L280">			int lastIdx = this.patternBuilder.length() - 1;</span>
+<span class="nc bnc" id="L281" title="All 4 branches missed.">			if (lastIdx &gt;= 0 &amp;&amp; this.patternBuilder.charAt(lastIdx) == '/') {</span>
+<span class="nc" id="L282">				this.patternBuilder.deleteCharAt(lastIdx);</span>
+			}
+<span class="nc" id="L284">		}</span>
+
+		private String quote(String fullPath, int start, int end) {
+<span class="nc bnc" id="L287" title="All 2 branches missed.">			if (start == end) {</span>
+<span class="nc" id="L288">				return &quot;&quot;;</span>
+			}
+<span class="nc" id="L290">			return Pattern.quote(fullPath.substring(start, end));</span>
+		}
+
+		private List&lt;String&gt; getVariableNames() {
+<span class="nc" id="L294">			return Collections.unmodifiableList(this.variableNames);</span>
+		}
+
+		private Pattern getMatchPattern() {
+<span class="nc" id="L298">			return Pattern.compile(this.patternBuilder.toString());</span>
+		}
+	}
+
+	public static void main(String[] args) {
+		// UriTemplate template = new UriTemplate(&quot;http://feeling&quot;);
+		//
+		// if (template.toString().equalsIgnoreCase(&quot;http://feeling&quot;)) {
+		// System.out.println(&quot;Yes, we have a match.&quot;);
+		// } else {
+		// Map results = template.match(&quot;http://feeling&quot;);
+		// System.out.println(&quot;Result size: &quot; + results.size());
+		//
+		// }
+		
+		//TEST
+<span class="nc" id="L314">		UriTemplate template1 = new UriTemplate(&quot;http://id/{ID}/test&quot;);</span>
+<span class="nc" id="L315">		Map results1 = template1.match(&quot;http://id/23/otherid/23/test&quot;);</span>
+<span class="nc" id="L316">		System.out.println(&quot;Result size: &quot; + results1.size());</span>
+<span class="nc" id="L317">		System.out.println(&quot;Results: &quot; + results1);</span>
+		
+<span class="nc" id="L319">		UriTemplate template2 = new UriTemplate(&quot;http://id/{ID1}/otherId/{ID2}/test&quot;);</span>
+<span class="nc" id="L320">		Map results2 = template2.match(&quot;http://id/23/otherid/23/test&quot;);</span>
+<span class="nc" id="L321">		System.out.println(&quot;Result size: &quot; + results2.size());</span>
+<span class="nc" id="L322">		System.out.println(&quot;Results: &quot; + results2);</span>
+
+<span class="nc" id="L324">		System.out.println(&quot;Done&quot;);</span>
+<span class="nc" id="L325">	}</span>
+}
+</pre><div class="footer"><span class="right">Created with <a href="http://www.jacoco.org/jacoco">JaCoCo</a> 0.8.1.201803210924</span></div></body></html>

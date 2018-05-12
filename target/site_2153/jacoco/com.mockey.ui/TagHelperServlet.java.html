@@ -1,0 +1,212 @@
+<?xml version="1.0" encoding="UTF-8"?><!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Strict//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-strict.dtd"><html xmlns="http://www.w3.org/1999/xhtml" lang="zh"><head><meta http-equiv="Content-Type" content="text/html;charset=UTF-8"/><link rel="stylesheet" href="../jacoco-resources/report.css" type="text/css"/><link rel="shortcut icon" href="../jacoco-resources/report.gif" type="image/gif"/><title>TagHelperServlet.java</title><link rel="stylesheet" href="../jacoco-resources/prettify.css" type="text/css"/><script type="text/javascript" src="../jacoco-resources/prettify.js"></script></head><body onload="window['PR_TAB_WIDTH']=4;prettyPrint()"><div class="breadcrumb" id="breadcrumb"><span class="info"><a href="../jacoco-sessions.html" class="el_session">Sessions</a></span><a href="../index.html" class="el_report">JaCoCo Ant Example</a> &gt; <a href="index.source.html" class="el_package">com.mockey.ui</a> &gt; <span class="el_source">TagHelperServlet.java</span></div><h1>TagHelperServlet.java</h1><pre class="source lang-java linenums">/*
+ * This file is part of Mockey, a tool for testing application 
+ * interactions over HTTP, with a focus on testing web services, 
+ * specifically web applications that consume XML, JSON, and HTML.
+ *  
+ * Copyright (C) 2009-2010  Authors:
+ * 
+ * chad.lafontaine (chad.lafontaine AT gmail DOT com)
+ * neil.cronin (neil AT rackle DOT com) 
+ * lorin.kobashigawa (lkb AT kgawa DOT com)
+ * rob.meyer (rob AT bigdis DOT com)
+ * 
+ * This program is free software; you can redistribute it and/or
+ * modify it under the terms of the GNU General Public License
+ * as published by the Free Software Foundation; either version 2
+ * of the License, or (at your option) any later version.
+ * 
+ * This program is distributed in the hope that it will be useful,
+ * but WITHOUT ANY WARRANTY; without even the implied warranty of
+ * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+ * GNU General Public License for more details.
+ * 
+ * You should have received a copy of the GNU General Public License
+ * along with this program; if not, write to the Free Software
+ * Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301, USA.
+ *
+ */
+package com.mockey.ui;
+
+import java.io.IOException;
+import java.io.PrintStream;
+
+import javax.servlet.ServletException;
+import javax.servlet.http.HttpServlet;
+import javax.servlet.http.HttpServletRequest;
+import javax.servlet.http.HttpServletResponse;
+
+import org.apache.log4j.Logger;
+import org.json.JSONException;
+import org.json.JSONObject;
+
+import com.mockey.model.Scenario;
+import com.mockey.model.Service;
+import com.mockey.model.ServicePlan;
+import com.mockey.storage.IMockeyStorage;
+import com.mockey.storage.StorageRegistry;
+
+/**
+ * This is here to help manage Tags on Services.
+ * 
+ * @author chad.lafontaine
+ * 
+ */
+<span class="nc" id="L54">public class TagHelperServlet extends HttpServlet {</span>
+
+	/**
+	 * 
+	 */
+	private static final long serialVersionUID = -2146692704092245457L;
+<span class="nc" id="L60">	private static IMockeyStorage store = StorageRegistry.MockeyStorage;</span>
+<span class="nc" id="L61">	private static Logger logger = Logger.getLogger(TagHelperServlet.class);</span>
+	public static final String FILTER_TAG = &quot;FILTER_SESSION_TAG&quot;;
+
+	/**
+	 * Service does a few things, which includes:
+	 * 
+	 */
+	public void service(HttpServletRequest req, HttpServletResponse resp)
+			throws ServletException, IOException {
+
+<span class="nc" id="L71">		String serviceId = req.getParameter(&quot;serviceId&quot;);</span>
+<span class="nc" id="L72">		String servicePlanId = req.getParameter(&quot;servicePlanId&quot;);</span>
+<span class="nc" id="L73">		String scenarioId = req.getParameter(&quot;scenarioId&quot;);</span>
+<span class="nc" id="L74">		String action = req.getParameter(&quot;action&quot;);</span>
+<span class="nc" id="L75">		String tag = req.getParameter(&quot;tag&quot;);</span>
+
+<span class="nc" id="L77">		JSONObject jsonObject = new JSONObject();</span>
+		try {
+
+			// PERFORM ACTION (OPTIONAL)
+<span class="nc bnc" id="L81" title="All 2 branches missed.">			if (&quot;filter_tag_on&quot;.equals(action)) {</span>
+				// Redirect to Home and SET as session FILTER, your tags.
+<span class="nc" id="L83">				String currentTagJumble = store.getGlobalStateSystemFilterTag();</span>
+<span class="nc" id="L84">				StringBuilder updatedTagJumble = new StringBuilder();</span>
+<span class="nc bnc" id="L85" title="All 2 branches missed.">				if(currentTagJumble!=null) {</span>
+<span class="nc" id="L86">					boolean foundTag = false;</span>
+<span class="nc" id="L87">					String[] tagList = currentTagJumble.split(&quot;\\s+&quot;);</span>
+<span class="nc bnc" id="L88" title="All 2 branches missed.">					for(String tagItem : tagList){</span>
+<span class="nc bnc" id="L89" title="All 4 branches missed.">						if(tagItem!=null &amp;&amp; tagItem.trim().equalsIgnoreCase(tag)){</span>
+<span class="nc" id="L90">							foundTag = true;</span>
+						}else {
+<span class="nc" id="L92">							updatedTagJumble.append(tagItem + &quot; &quot;);</span>
+						}
+					}
+<span class="nc bnc" id="L95" title="All 2 branches missed.">					if(!foundTag){</span>
+<span class="nc" id="L96">						updatedTagJumble.append(tag + &quot; &quot;);</span>
+					}
+<span class="nc" id="L98">					store.setGlobalStateSystemFilterTag(updatedTagJumble.toString());</span>
+					
+<span class="nc" id="L100">				}else {</span>
+<span class="nc" id="L101">					store.setGlobalStateSystemFilterTag(tag);</span>
+				}
+
+
+
+				
+<span class="nc" id="L107">				jsonObject.put(&quot;success&quot;, &quot;Filter by tag is on.&quot;);</span>
+<span class="nc bnc" id="L108" title="All 2 branches missed.">			} else if (&quot;filter_tag_off&quot;.equals(action)) {</span>
+				// Redirect to Home and SET as session FILTER, your tags.
+<span class="nc" id="L110">				store.setGlobalStateSystemFilterTag(null);</span>
+<span class="nc" id="L111">				jsonObject.put(&quot;success&quot;, &quot;Filter by tag is off.&quot;);</span>
+<span class="nc bnc" id="L112" title="All 2 branches missed.">			} else if (&quot;filter_status&quot;.equals(action)) {</span>
+				// Redirect to Home and SET as session FILTER, your tags.
+<span class="nc" id="L114">				String filter = (String) req.getSession().getAttribute(</span>
+						FILTER_TAG);
+<span class="nc bnc" id="L116" title="All 4 branches missed.">				if (filter != null &amp;&amp; filter.trim().length() &gt; 0) {</span>
+<span class="nc" id="L117">					jsonObject.put(&quot;filter&quot;, filter.trim());</span>
+<span class="nc" id="L118">					jsonObject.put(&quot;status&quot;, &quot;on&quot;);</span>
+				} else {
+<span class="nc" id="L120">					jsonObject.put(&quot;filter&quot;, &quot;&quot;);</span>
+<span class="nc" id="L121">					jsonObject.put(&quot;status&quot;, &quot;off&quot;);</span>
+				}
+<span class="nc bnc" id="L123" title="All 2 branches missed.">			} else if (&quot;delete_tag_from_store&quot;.equals(action)) {</span>
+<span class="nc" id="L124">				store.deleteTagFromStore(tag);</span>
+<span class="nc" id="L125">				jsonObject.put(&quot;success&quot;, &quot;Deleted tag from all things.&quot;);</span>
+
+<span class="nc bnc" id="L127" title="All 2 branches missed.">			} else if (&quot;delete_tag_from_service&quot;.equals(action)) {</span>
+<span class="nc" id="L128">				Service service = store.getServiceById(new Long(serviceId));</span>
+
+<span class="nc" id="L130">				service.removeTagFromList(tag);</span>
+<span class="nc" id="L131">				store.saveOrUpdateService(service);</span>
+<span class="nc" id="L132">				jsonObject.put(&quot;success&quot;, &quot;Deleted tag from Service.&quot;);</span>
+
+<span class="nc bnc" id="L134" title="All 2 branches missed.">			} else if (&quot;delete_tag_from_service_plan&quot;.equals(action)) {</span>
+<span class="nc" id="L135">				ServicePlan servicePlan = store.getServicePlanById(new Long(</span>
+						servicePlanId));
+
+<span class="nc" id="L138">				servicePlan.removeTagFromList(tag);</span>
+<span class="nc" id="L139">				store.saveOrUpdateServicePlan(servicePlan);</span>
+
+<span class="nc" id="L141">				jsonObject.put(&quot;success&quot;, &quot;Deleted tag from Service Plan.&quot;);</span>
+
+<span class="nc bnc" id="L143" title="All 2 branches missed.">			} else if (&quot;delete_tag_from_scenario&quot;.equals(action)) {</span>
+<span class="nc" id="L144">				Service service = store.getServiceById(new Long(serviceId));</span>
+
+<span class="nc" id="L146">				Scenario scenario = service.getScenario(new Long(scenarioId));</span>
+<span class="nc" id="L147">				scenario.removeTagFromList(tag);</span>
+<span class="nc" id="L148">				service.saveOrUpdateScenario(scenario);</span>
+<span class="nc" id="L149">				store.saveOrUpdateService(service);</span>
+<span class="nc" id="L150">				jsonObject.put(&quot;success&quot;, &quot;Deleted tag from Scenario.&quot;);</span>
+
+<span class="nc bnc" id="L152" title="All 2 branches missed.">			} else if (&quot;update_service_tag&quot;.equals(action)) {</span>
+<span class="nc" id="L153">				Service service = store.getServiceById(new Long(serviceId));</span>
+
+<span class="nc" id="L155">				service.clearTagList();</span>
+<span class="nc" id="L156">				service.addTagToList(tag);</span>
+<span class="nc" id="L157">				store.saveOrUpdateService(service);</span>
+<span class="nc" id="L158">				jsonObject.put(&quot;success&quot;, &quot;Updated tag(s) for this Service.&quot;);</span>
+
+<span class="nc bnc" id="L160" title="All 2 branches missed.">			} else if (&quot;update_scenario_tag&quot;.equals(action)) {</span>
+<span class="nc" id="L161">				Service service = store.getServiceById(new Long(serviceId));</span>
+
+<span class="nc" id="L163">				Scenario scenario = service.getScenario(new Long(scenarioId));</span>
+<span class="nc" id="L164">				scenario.clearTagList();</span>
+<span class="nc" id="L165">				scenario.addTagToList(tag);</span>
+<span class="nc" id="L166">				service.saveOrUpdateScenario(scenario);</span>
+<span class="nc" id="L167">				store.saveOrUpdateService(service);</span>
+<span class="nc" id="L168">				jsonObject.put(&quot;success&quot;, &quot;Updated tag(s) for this Scenario.&quot;);</span>
+
+			}
+
+			// PRESENT STATE
+			//
+			// OK, now that things are up to date (if any action occurred),
+			// let's present the state in the JSON
+			// Why get the Service again? Because, we could have removed/edited
+			// the tag information from one of the steps above.
+<span class="nc bnc" id="L178" title="All 2 branches missed.">			if (serviceId != null) {</span>
+<span class="nc" id="L179">				Service service = store.getServiceById(new Long(serviceId));</span>
+<span class="nc" id="L180">				jsonObject.put(&quot;serviceId&quot;, &quot;&quot; + serviceId);</span>
+
+<span class="nc bnc" id="L182" title="All 2 branches missed.">				if (scenarioId != null) {</span>
+<span class="nc" id="L183">					Scenario scenario = service</span>
+<span class="nc" id="L184">							.getScenario(new Long(scenarioId));</span>
+<span class="nc" id="L185">					jsonObject.put(&quot;scenarioId&quot;, &quot;&quot; + scenario.getId());</span>
+<span class="nc" id="L186">					jsonObject.put(&quot;tag&quot;, &quot;&quot; + scenario.getTag());</span>
+<span class="nc" id="L187">				} else {</span>
+<span class="nc" id="L188">					jsonObject.put(&quot;tag&quot;, &quot;&quot; + service.getTag());</span>
+				}
+			}
+
+<span class="nc" id="L192">		} catch (Exception e) {</span>
+<span class="nc" id="L193">			logger.debug(&quot;Unable to manage tag '&quot; + tag + &quot;' with action '&quot;</span>
+<span class="nc" id="L194">					+ action + &quot;' :&quot; + e.getMessage());</span>
+			try {
+<span class="nc" id="L196">				jsonObject.put(&quot;error&quot;, &quot;&quot; + &quot;Sorry, not available.&quot;);</span>
+<span class="nc" id="L197">			} catch (JSONException e1) {</span>
+<span class="nc" id="L198">				logger.debug(&quot;What happended?&quot; + e1.getMessage());</span>
+<span class="nc" id="L199">			}</span>
+<span class="nc" id="L200">		}</span>
+
+<span class="nc" id="L202">		resp.setContentType(&quot;application/json&quot;);</span>
+
+<span class="nc" id="L204">		PrintStream out = new PrintStream(resp.getOutputStream());</span>
+
+<span class="nc" id="L206">		out.println(jsonObject.toString());</span>
+
+<span class="nc" id="L208">		return;</span>
+	}
+
+}
+</pre><div class="footer"><span class="right">Created with <a href="http://www.jacoco.org/jacoco">JaCoCo</a> 0.8.1.201803210924</span></div></body></html>

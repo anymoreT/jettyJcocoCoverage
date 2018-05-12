@@ -1,0 +1,176 @@
+<?xml version="1.0" encoding="UTF-8"?><!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Strict//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-strict.dtd"><html xmlns="http://www.w3.org/1999/xhtml" lang="zh"><head><meta http-equiv="Content-Type" content="text/html;charset=UTF-8"/><link rel="stylesheet" href="../jacoco-resources/report.css" type="text/css"/><link rel="shortcut icon" href="../jacoco-resources/report.gif" type="image/gif"/><title>InjectRealUrlPerServiceServlet.java</title><link rel="stylesheet" href="../jacoco-resources/prettify.css" type="text/css"/><script type="text/javascript" src="../jacoco-resources/prettify.js"></script></head><body onload="window['PR_TAB_WIDTH']=4;prettyPrint()"><div class="breadcrumb" id="breadcrumb"><span class="info"><a href="../jacoco-sessions.html" class="el_session">Sessions</a></span><a href="../index.html" class="el_report">JaCoCo Ant Example</a> &gt; <a href="index.source.html" class="el_package">com.mockey.ui</a> &gt; <span class="el_source">InjectRealUrlPerServiceServlet.java</span></div><h1>InjectRealUrlPerServiceServlet.java</h1><pre class="source lang-java linenums">/*
+ * This file is part of Mockey, a tool for testing application 
+ * interactions over HTTP, with a focus on testing web services, 
+ * specifically web applications that consume XML, JSON, and HTML.
+ *  
+ * Copyright (C) 2009-2010  Authors:
+ * 
+ * chad.lafontaine (chad.lafontaine AT gmail DOT com)
+ * neil.cronin (neil AT rackle DOT com) 
+ * lorin.kobashigawa (lkb AT kgawa DOT com)
+ * rob.meyer (rob AT bigdis DOT com)
+ * 
+ * This program is free software; you can redistribute it and/or
+ * modify it under the terms of the GNU General Public License
+ * as published by the Free Software Foundation; either version 2
+ * of the License, or (at your option) any later version.
+ * 
+ * This program is distributed in the hope that it will be useful,
+ * but WITHOUT ANY WARRANTY; without even the implied warranty of
+ * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+ * GNU General Public License for more details.
+ * 
+ * You should have received a copy of the GNU General Public License
+ * along with this program; if not, write to the Free Software
+ * Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301, USA.
+ *
+ */
+package com.mockey.ui;
+
+import java.io.IOException;
+import java.io.PrintWriter;
+import java.util.ArrayList;
+import java.util.List;
+
+import javax.servlet.RequestDispatcher;
+import javax.servlet.ServletException;
+import javax.servlet.http.HttpServlet;
+import javax.servlet.http.HttpServletRequest;
+import javax.servlet.http.HttpServletResponse;
+
+import org.json.JSONException;
+import org.json.JSONObject;
+
+import com.mockey.model.Service;
+import com.mockey.model.Url;
+import com.mockey.storage.IMockeyStorage;
+import com.mockey.storage.StorageRegistry;
+
+<span class="fc" id="L49">public class InjectRealUrlPerServiceServlet extends HttpServlet {</span>
+
+	/**
+	 * 
+	 */
+	private static final long serialVersionUID = -8696328817749243557L;
+<span class="fc" id="L55">	private static IMockeyStorage store = StorageRegistry.MockeyStorage;</span>
+
+	/**
+	 * 
+	 * 
+	 * @param req
+	 *            basic request
+	 * @param resp
+	 *            basic resp
+	 * @throws ServletException
+	 *             basic
+	 * @throws IOException
+	 *             basic
+	 */
+	public void doGet(HttpServletRequest req, HttpServletResponse resp)
+			throws ServletException, IOException {
+
+<span class="fc" id="L72">		RequestDispatcher dispatch = req</span>
+<span class="fc" id="L73">				.getRequestDispatcher(&quot;/inject_realurl.jsp&quot;);</span>
+<span class="fc" id="L74">		dispatch.forward(req, resp);</span>
+<span class="fc" id="L75">	}</span>
+
+	/**
+	 * Injects real URLs per service. For example, if real url is
+	 * 
+	 * &lt;pre&gt;
+	 * http://qa1.google.com/search
+	 * &lt;/pre&gt;
+	 * 
+	 * and match is
+	 * 
+	 * &lt;pre&gt;
+	 * http://qa3.google.com/
+	 * &lt;/pre&gt;
+	 * 
+	 * then this method builds URL as
+	 * 
+	 * &lt;pre&gt;
+	 * http://qa3.google.com/search
+	 * &lt;/pre&gt;
+	 * 
+	 * 
+	 * @param req
+	 *            basic request
+	 * @param resp
+	 *            basic resp
+	 * @throws ServletException
+	 *             basic
+	 * @throws IOException
+	 *             basic
+	 */
+	public void doPost(HttpServletRequest req, HttpServletResponse resp)
+			throws ServletException, IOException {
+
+<span class="fc" id="L109">		String matchPattern = req.getParameter(&quot;match&quot;);</span>
+<span class="fc" id="L110">		String[] replacementArray = req.getParameterValues(&quot;replacement[]&quot;);</span>
+<span class="fc" id="L111">		JSONObject successOrFail = new JSONObject();</span>
+<span class="pc bpc" id="L112" title="2 of 4 branches missed.">		if (matchPattern != null &amp;&amp; replacementArray != null) {</span>
+
+<span class="pc bpc" id="L114" title="1 of 2 branches missed.">			for (Long serviceId : store.getServiceIds()) {</span>
+<span class="nc" id="L115">				Service service = store.getServiceById(serviceId);</span>
+<span class="nc" id="L116">				List&lt;Url&gt; newUrlList = new ArrayList&lt;Url&gt;();</span>
+				// Build a list of real Url objects.
+<span class="nc bnc" id="L118" title="All 2 branches missed.">				for (Url realUrl : service.getRealServiceUrls()) {</span>
+<span class="nc bnc" id="L119" title="All 2 branches missed.">					for (String replacement : replacementArray) {</span>
+						// We don't want to inject empty string match
+<span class="nc bnc" id="L121" title="All 2 branches missed.">						if (replacement.trim().length() &gt; 0) {</span>
+<span class="nc" id="L122">							Url newUrl = new Url(realUrl.getFullUrl()</span>
+<span class="nc" id="L123">									.replaceAll(matchPattern, replacement));</span>
+<span class="nc bnc" id="L124" title="All 2 branches missed.">							if (!service.hasRealServiceUrl(newUrl)) {</span>
+<span class="nc" id="L125">								newUrlList.add(newUrl);</span>
+								// Note: you should not save or update
+								// the realServiceUrl or service while
+								// iterating through the list itself, or you'll
+								// get
+								// a java.util.ConcurrentModificationException
+								// Wait until 'after'
+							}
+						}
+					}
+<span class="nc" id="L135">				}</span>
+				// Save/update this new Url object list.
+<span class="nc bnc" id="L137" title="All 2 branches missed.">				for (Url newUrl : newUrlList) {</span>
+<span class="nc" id="L138">					service.saveOrUpdateRealServiceUrl(newUrl);</span>
+<span class="nc" id="L139">				}</span>
+
+				// Now update the service.
+<span class="nc" id="L142">				store.saveOrUpdateService(service);</span>
+<span class="nc" id="L143">			}</span>
+
+			try {
+<span class="fc" id="L146">				successOrFail.put(&quot;success&quot;, &quot;URL injecting complete.&quot;);</span>
+<span class="nc" id="L147">			} catch (JSONException e) {</span>
+				// TODO Auto-generated catch block
+<span class="nc" id="L149">				e.printStackTrace();</span>
+<span class="pc" id="L150">			}</span>
+		} else {
+			try {
+<span class="nc" id="L153">				successOrFail.put(&quot;fail&quot;,</span>
+						&quot;You didn't pass any match or inject URL arguments.  &quot;);
+<span class="nc" id="L155">			} catch (JSONException e) {</span>
+				// TODO Auto-generated catch block
+<span class="nc" id="L157">				e.printStackTrace();</span>
+<span class="nc" id="L158">			}</span>
+		}
+
+<span class="fc" id="L161">		JSONObject responseObject = new JSONObject();</span>
+		
+		try {
+<span class="fc" id="L164">			responseObject.put(&quot;result&quot;, successOrFail);</span>
+<span class="nc" id="L165">		} catch (JSONException e) {</span>
+			// TODO Auto-generated catch block
+<span class="nc" id="L167">			e.printStackTrace();</span>
+<span class="fc" id="L168">		}</span>
+<span class="fc" id="L169">		PrintWriter out = resp.getWriter();</span>
+<span class="fc" id="L170">		out.println(responseObject.toString());</span>
+<span class="fc" id="L171">		out.flush();</span>
+<span class="fc" id="L172">		out.close();</span>
+<span class="fc" id="L173">		return;</span>
+	}
+}
+</pre><div class="footer"><span class="right">Created with <a href="http://www.jacoco.org/jacoco">JaCoCo</a> 0.8.1.201803210924</span></div></body></html>

@@ -1,0 +1,217 @@
+<?xml version="1.0" encoding="UTF-8"?><!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Strict//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-strict.dtd"><html xmlns="http://www.w3.org/1999/xhtml" lang="zh"><head><meta http-equiv="Content-Type" content="text/html;charset=UTF-8"/><link rel="stylesheet" href="../jacoco-resources/report.css" type="text/css"/><link rel="shortcut icon" href="../jacoco-resources/report.gif" type="image/gif"/><title>ResponseServlet.java</title><link rel="stylesheet" href="../jacoco-resources/prettify.css" type="text/css"/><script type="text/javascript" src="../jacoco-resources/prettify.js"></script></head><body onload="window['PR_TAB_WIDTH']=4;prettyPrint()"><div class="breadcrumb" id="breadcrumb"><span class="info"><a href="../jacoco-sessions.html" class="el_session">Sessions</a></span><a href="../index.html" class="el_report">JaCoCo Ant Example</a> &gt; <a href="index.source.html" class="el_package">com.mockey.server</a> &gt; <span class="el_source">ResponseServlet.java</span></div><h1>ResponseServlet.java</h1><pre class="source lang-java linenums">/*
+ * This file is part of Mockey, a tool for testing application 
+ * interactions over HTTP, with a focus on testing web services, 
+ * specifically web applications that consume XML, JSON, and HTML.
+ *  
+ * Copyright (C) 2009-2010  Authors:
+ * 
+ * chad.lafontaine (chad.lafontaine AT gmail DOT com)
+ * neil.cronin (neil AT rackle DOT com) 
+ * lorin.kobashigawa (lkb AT kgawa DOT com)
+ * rob.meyer (rob AT bigdis DOT com)
+ * 
+ * This program is free software; you can redistribute it and/or
+ * modify it under the terms of the GNU General Public License
+ * as published by the Free Software Foundation; either version 2
+ * of the License, or (at your option) any later version.
+ * 
+ * This program is distributed in the hope that it will be useful,
+ * but WITHOUT ANY WARRANTY; without even the implied warranty of
+ * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+ * GNU General Public License for more details.
+ * 
+ * You should have received a copy of the GNU General Public License
+ * along with this program; if not, write to the Free Software
+ * Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301, USA.
+ *
+ */
+package com.mockey.server;
+
+import java.io.IOException;
+import java.io.PrintWriter;
+import java.io.UnsupportedEncodingException;
+
+import javax.servlet.ServletException;
+import javax.servlet.http.HttpServlet;
+import javax.servlet.http.HttpServletRequest;
+import javax.servlet.http.HttpServletResponse;
+
+import org.apache.http.Header;
+import org.apache.http.protocol.HTTP;
+import org.apache.log4j.Logger;
+
+import com.mockey.model.FulfilledClientRequest;
+import com.mockey.model.RequestFromClient;
+import com.mockey.model.ResponseFromService;
+import com.mockey.model.Service;
+import com.mockey.model.TwistInfo;
+import com.mockey.model.Url;
+import com.mockey.plugin.PluginStore;
+import com.mockey.plugin.RequestInspectionResult;
+import com.mockey.storage.IMockeyStorage;
+import com.mockey.storage.StorageRegistry;
+
+/**
+ * Responsible for serving mock responses. Based on configuration, returns
+ * desired content either from a source (Mockey being used as a proxy) or from a
+ * defined scenario.
+ * 
+ * @author chad.lafontaine
+ * 
+ */
+<span class="nc" id="L62">public class ResponseServlet extends HttpServlet {</span>
+
+	private static final long serialVersionUID = 8401356766354139506L;
+<span class="nc" id="L65">	private IMockeyStorage store = StorageRegistry.MockeyStorage;</span>
+<span class="nc" id="L66">	private Logger logger = Logger.getLogger(ResponseServlet.class);</span>
+
+	/**
+	 * Parses the caller's remote address, parses the URL, (the URI) then
+	 * determines the appropriate mock service for the definition of the
+	 * response. If the mock service type includes a request inspector, then it
+	 * will be processed.
+	 * 
+	 * @see com.mockey.model.Service#getRequestInspectorName()
+	 */
+	@SuppressWarnings(&quot;static-access&quot;)
+	public void service(HttpServletRequest originalHttpReqFromClient, HttpServletResponse resp)
+			throws ServletException, IOException {
+
+<span class="nc" id="L80">		String originalHttpReqURI = originalHttpReqFromClient.getRequestURI();</span>
+<span class="nc" id="L81">		String targetHttpReqURI = null;</span>
+<span class="nc" id="L82">		String contextRoot = originalHttpReqFromClient.getContextPath();</span>
+<span class="nc bnc" id="L83" title="All 2 branches missed.">		if (originalHttpReqURI.startsWith(contextRoot)) {</span>
+<span class="nc" id="L84">			originalHttpReqURI = originalHttpReqURI.substring(contextRoot.length(), originalHttpReqURI.length());</span>
+		}
+
+		// ************************************************************************
+		// STEP #1) Is URL TWISTING ON?
+		// ************************************************************************
+<span class="nc" id="L90">		targetHttpReqURI = originalHttpReqURI;</span>
+<span class="nc bnc" id="L91" title="All 2 branches missed.">		if (store.getUniversalTwistInfoId() != null) {</span>
+<span class="nc" id="L92">			TwistInfo twistInfo = store.getTwistInfoById(store.getUniversalTwistInfoId());</span>
+<span class="nc bnc" id="L93" title="All 2 branches missed.">			if (twistInfo != null) {</span>
+<span class="nc" id="L94">				logger.debug(&quot;URL twisting is enabled.&quot;);</span>
+<span class="nc" id="L95">				targetHttpReqURI = twistInfo.getTwistedValue(originalHttpReqURI);</span>
+			}
+		}
+
+<span class="nc" id="L99">		Url serviceUrl = new Url(targetHttpReqURI);</span>
+<span class="nc" id="L100">		Service service = store.getServiceByUrl(serviceUrl.getFullUrl());</span>
+		// ************************************************************************
+		// STEP #2) Process your original request.
+		// ************************************************************************
+<span class="nc" id="L104">		RequestFromClient request = new RequestFromClient(originalHttpReqFromClient);</span>
+
+		// ************************************************************************
+		// STEP #3) JAVA and JSON implemented Inspectors
+		// ************************************************************************
+
+<span class="nc" id="L110">		PluginStore pluginStore = PluginStore.getInstance();</span>
+<span class="nc" id="L111">		RequestInspectionResult inspectionMessage = pluginStore.processRequestInspectors(service, request);</span>
+
+		// ************************************************************************
+		// STEP #4) Get the Response (static,dynamic, or proxy).
+		// ************************************************************************
+<span class="nc" id="L116">		service.setHttpMethod(originalHttpReqFromClient.getMethod());</span>
+<span class="nc" id="L117">		ResponseFromService response = service.execute(request, serviceUrl);</span>
+
+		// ************************************************************************
+		// STEP #5) If twisting was enabled, let's be sure to set the original
+		// URL
+		// ************************************************************************
+<span class="nc bnc" id="L123" title="All 2 branches missed.">		if (!originalHttpReqURI.equalsIgnoreCase(targetHttpReqURI)) {</span>
+<span class="nc" id="L124">			response.setOriginalRequestUrlBeforeTwisting(new Url(originalHttpReqURI));</span>
+		}
+<span class="nc" id="L126">		logRequestAsFulfilled(service, request, response, originalHttpReqFromClient.getRemoteAddr(), inspectionMessage);</span>
+
+		try {
+<span class="nc" id="L129">			int hangTime = service.getHangTime();</span>
+<span class="nc bnc" id="L130" title="All 2 branches missed.">			if(response.getServiceScenarioHangTime() &gt;0){</span>
+				//Override the Service's value for sleep
+<span class="nc" id="L132">				hangTime = response.getServiceScenarioHangTime();</span>
+			}
+			// Wait for a X hang time seconds.
+<span class="nc" id="L135">			logger.debug(&quot;Waiting...&quot; + hangTime + &quot; miliseconds &quot;);</span>
+<span class="nc" id="L136">			Thread.currentThread().sleep(hangTime);</span>
+<span class="nc" id="L137">			logger.debug(&quot;Done Waiting&quot;);</span>
+<span class="nc" id="L138">		} catch (Exception e) {</span>
+			// Catch interrupt exception.
+			// Or not.
+<span class="nc" id="L141">		}</span>
+
+<span class="nc bnc" id="L143" title="All 2 branches missed.">		if (!(service.getServiceResponseType() == Service.SERVICE_RESPONSE_TYPE_PROXY)) {</span>
+<span class="nc bnc" id="L144" title="All 2 branches missed.">			if (response.getHeaders() != null) {</span>
+<span class="nc bnc" id="L145" title="All 2 branches missed.">				for (Header h : response.getHeaders()) {</span>
+<span class="nc" id="L146">					resp.setHeader(h.getName(), h.getValue());</span>
+<span class="nc bnc" id="L147" title="All 2 branches missed.">					if (h.getValue() != null) {</span>
+<span class="nc" id="L148">						int indexOfUTF = h.getValue().toLowerCase().indexOf(&quot;utf-8&quot;);</span>
+<span class="nc bnc" id="L149" title="All 2 branches missed.">						if (indexOfUTF &gt;= 0) {</span>
+
+							// Why do we do this?
+							// * We don't want to setup utf-8 for all things,
+							// hence we look for the User's scenario with
+							// explicit setting for header information, ex:
+							// 'Content-Type: text/json; charset=utf-8'
+							//
+							// * Setting headers should be sufficient, but
+							// apparently not as seen debugging with Jetty. I
+							// did not have this issue w/ Tomcat.
+<span class="nc" id="L160">							resp.setCharacterEncoding(HTTP.UTF_8);</span>
+						}
+					}
+
+				}
+
+			}
+
+			try {
+<span class="nc" id="L169">				resp.setStatus(response.getHttpResponseStatusCode());</span>
+<span class="nc" id="L170">			} catch (java.lang.IllegalArgumentException iae) {</span>
+<span class="nc" id="L171">				logger.debug(&quot;Unable to set the response status to '&quot; + response.getHttpResponseStatusCode() + &quot;'&quot;,</span>
+						iae);
+<span class="nc" id="L173">			}</span>
+
+<span class="nc" id="L175">			PrintWriter out = resp.getWriter();</span>
+<span class="nc" id="L176">			out.println(response.getBody());</span>
+<span class="nc" id="L177">			out.flush();</span>
+<span class="nc" id="L178">			out.close();</span>
+<span class="nc" id="L179">		} else {</span>
+			// RULE_FOR_HEADERS
+			try {
+<span class="nc" id="L182">				resp.setStatus(response.getHttpResponseStatusCode());</span>
+<span class="nc" id="L183">			} catch (java.lang.IllegalArgumentException iae) {</span>
+<span class="nc" id="L184">				logger.debug(&quot;Unable to set the response status to '&quot; + response.getHttpResponseStatusCode() + &quot;'&quot;,</span>
+						iae);
+<span class="nc" id="L186">			}</span>
+<span class="nc" id="L187">			response.writeToOutput(resp);</span>
+		}
+<span class="nc" id="L189">	}</span>
+
+	private void logRequestAsFulfilled(Service service, RequestFromClient request, ResponseFromService response,
+			String ip, RequestInspectionResult inspectionResult) throws UnsupportedEncodingException {
+<span class="nc" id="L193">		FulfilledClientRequest fcr = new FulfilledClientRequest();</span>
+		//fcr.setRawRequest((response.getRequestUrl() != null) ? response.getRequestUrl().getFullUrl() : &quot;&quot;);
+<span class="nc" id="L195">		fcr.setRawRequest(request.getRequestURL());</span>
+<span class="nc" id="L196">		fcr.setRequestorIP(ip);</span>
+<span class="nc" id="L197">		fcr.setServiceId(service.getId());</span>
+<span class="nc" id="L198">		fcr.setServiceName(service.getServiceName());</span>
+<span class="nc" id="L199">		fcr.setClientRequestBody(request.getBodyInfo());</span>
+<span class="nc" id="L200">		fcr.setClientRequestHeaders(request.getHeaderInfo());</span>
+<span class="nc" id="L201">		fcr.setClientRequestParameters(request.getParameterInfo());</span>
+<span class="nc" id="L202">		fcr.setResponseMessage(response);</span>
+<span class="nc" id="L203">		fcr.setScenarioName(response.getScenarioName());</span>
+<span class="nc" id="L204">		fcr.setClientRequestCookies(request.getCookieInfoAsString());// response.getRequestCookies());</span>
+<span class="nc" id="L205">		fcr.setClientResponseCookies(response.getResponseCookiesAsString());</span>
+
+<span class="nc" id="L207">		fcr.setServiceResponseType(service.getServiceResponseType());</span>
+<span class="nc bnc" id="L208" title="All 2 branches missed.">		if (response.getOriginalRequestUrlBeforeTwisting() != null) {</span>
+<span class="nc" id="L209">			fcr.setOriginalUrlBeforeTwisting(response.getOriginalRequestUrlBeforeTwisting().toString());</span>
+		}
+<span class="nc" id="L211">		fcr.setRequestInspectionResult(inspectionResult);</span>
+<span class="nc" id="L212">		fcr.setServiceTagsAsString(service.getTag());</span>
+<span class="nc" id="L213">		fcr.setScenarioTagsAsString(response.getScenarioTagsAsString());</span>
+<span class="nc" id="L214">		store.saveOrUpdateFulfilledClientRequest(fcr);</span>
+<span class="nc" id="L215">	}</span>
+}
+</pre><div class="footer"><span class="right">Created with <a href="http://www.jacoco.org/jacoco">JaCoCo</a> 0.8.1.201803210924</span></div></body></html>

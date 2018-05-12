@@ -1,0 +1,88 @@
+<?xml version="1.0" encoding="UTF-8"?><!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Strict//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-strict.dtd"><html xmlns="http://www.w3.org/1999/xhtml" lang="zh"><head><meta http-equiv="Content-Type" content="text/html;charset=UTF-8"/><link rel="stylesheet" href="../jacoco-resources/report.css" type="text/css"/><link rel="shortcut icon" href="../jacoco-resources/report.gif" type="image/gif"/><title>JsonValidators.java</title><link rel="stylesheet" href="../jacoco-resources/prettify.css" type="text/css"/><script type="text/javascript" src="../jacoco-resources/prettify.js"></script></head><body onload="window['PR_TAB_WIDTH']=4;prettyPrint()"><div class="breadcrumb" id="breadcrumb"><span class="info"><a href="../jacoco-sessions.html" class="el_session">Sessions</a></span><a href="../index.html" class="el_report">JaCoCo Ant Example</a> &gt; <a href="index.source.html" class="el_package">com.github.fge.jsonschema</a> &gt; <span class="el_source">JsonValidators.java</span></div><h1>JsonValidators.java</h1><pre class="source lang-java linenums">/*
+ * Copyright (c) 2013, Francis Galiegue &lt;fgaliegue@gmail.com&gt;
+ *
+ * This program is free software: you can redistribute it and/or modify
+ * it under the terms of the Lesser GNU General Public License as
+ * published by the Free Software Foundation, either version 3 of the
+ * License, or (at your option) any later version.
+ *
+ * This program is distributed in the hope that it will be useful,
+ * but WITHOUT ANY WARRANTY; without even the implied warranty of
+ * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+ * Lesser GNU General Public License for more details.
+ *
+ * You should have received a copy of the GNU General Public License
+ * along with this program.  If not, see &lt;http://www.gnu.org/licenses/&gt;.
+ */
+
+package com.github.fge.jsonschema;
+
+import com.github.fge.jsonschema.cfg.LoadingConfiguration;
+import com.github.fge.jsonschema.cfg.ValidationConfiguration;
+import com.github.fge.jsonschema.main.JsonSchemaFactory;
+import com.github.fge.jsonschema.main.JsonSchemaFactoryBuilder;
+import com.github.fge.jsonschema.main.JsonValidator;
+
+import static com.github.fge.jsonschema.load.Dereferencing.*;
+
+public final class JsonValidators
+{
+    private static final JsonValidator DRAFTV4_NO_ID;
+    private static final JsonValidator DRAFTV4_WITH_ID;
+    private static final JsonValidator DRAFTV3_NO_ID;
+    private static final JsonValidator DRAFTV3_WITH_ID;
+
+    /*
+     * In theory, we should build one factory each time someone wants to support
+     * &quot;id&quot;. But that is bloody expensive. So, no. What is more, the application
+     * is stateless.
+     */
+    static {
+        final JsonSchemaFactoryBuilder builder
+<span class="nc" id="L42">            = JsonSchemaFactory.newBuilder();</span>
+<span class="nc" id="L43">        LoadingConfiguration loadingCfg  = LoadingConfiguration.byDefault();</span>
+        ValidationConfiguration validationCfg
+<span class="nc" id="L45">            = ValidationConfiguration.byDefault();</span>
+
+        /*
+         * By default: draft v4, canonical dereferencing
+         */
+<span class="nc" id="L50">        DRAFTV4_NO_ID = builder.freeze().getValidator();</span>
+
+        /*
+         * Now with inline dereferencing
+         */
+<span class="nc" id="L55">        loadingCfg = loadingCfg.thaw().dereferencing(INLINE).freeze();</span>
+<span class="nc" id="L56">        builder.setLoadingConfiguration(loadingCfg);</span>
+<span class="nc" id="L57">        DRAFTV4_WITH_ID = builder.freeze().getValidator();</span>
+
+        /*
+         * Now with draft v3
+         */
+<span class="nc" id="L62">        validationCfg = validationCfg.thaw()</span>
+<span class="nc" id="L63">            .setDefaultVersion(SchemaVersion.DRAFTV3).freeze();</span>
+<span class="nc" id="L64">        builder.setValidationConfiguration(validationCfg);</span>
+<span class="nc" id="L65">        DRAFTV3_WITH_ID = builder.freeze().getValidator();</span>
+
+        /*
+         * Now with canonical dereferencing
+         */
+<span class="nc" id="L70">        loadingCfg = loadingCfg.thaw().dereferencing(CANONICAL).freeze();</span>
+<span class="nc" id="L71">        builder.setLoadingConfiguration(loadingCfg);</span>
+<span class="nc" id="L72">        DRAFTV3_NO_ID = builder.freeze().getValidator();</span>
+<span class="nc" id="L73">    }</span>
+
+    private JsonValidators()
+    {
+    }
+
+    public static JsonValidator withOptions(final boolean useDraftV3,
+        final boolean useId)
+    {
+<span class="nc bnc" id="L82" title="All 2 branches missed.">        if (useDraftV3)</span>
+<span class="nc bnc" id="L83" title="All 2 branches missed.">            return useId ? DRAFTV3_WITH_ID : DRAFTV3_NO_ID;</span>
+
+<span class="nc bnc" id="L85" title="All 2 branches missed.">        return useId ? DRAFTV4_WITH_ID : DRAFTV4_NO_ID;</span>
+    }
+}
+</pre><div class="footer"><span class="right">Created with <a href="http://www.jacoco.org/jacoco">JaCoCo</a> 0.8.1.201803210924</span></div></body></html>

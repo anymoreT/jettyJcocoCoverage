@@ -1,0 +1,225 @@
+<?xml version="1.0" encoding="UTF-8"?><!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Strict//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-strict.dtd"><html xmlns="http://www.w3.org/1999/xhtml" lang="zh"><head><meta http-equiv="Content-Type" content="text/html;charset=UTF-8"/><link rel="stylesheet" href="../jacoco-resources/report.css" type="text/css"/><link rel="shortcut icon" href="../jacoco-resources/report.gif" type="image/gif"/><title>JettyRunner.java</title><link rel="stylesheet" href="../jacoco-resources/prettify.css" type="text/css"/><script type="text/javascript" src="../jacoco-resources/prettify.js"></script></head><body onload="window['PR_TAB_WIDTH']=4;prettyPrint()"><div class="breadcrumb" id="breadcrumb"><span class="info"><a href="../jacoco-sessions.html" class="el_session">Sessions</a></span><a href="../index.html" class="el_report">JaCoCo Ant Example</a> &gt; <a href="index.source.html" class="el_package">com.mockey.runner</a> &gt; <span class="el_source">JettyRunner.java</span></div><h1>JettyRunner.java</h1><pre class="source lang-java linenums">/*
+ * This file is part of Mockey, a tool for testing application 
+ * interactions over HTTP, with a focus on testing web services, 
+ * specifically web applications that consume XML, JSON, and HTML.
+ *  
+ * Copyright (C) 2009-2010  Authors:
+ * 
+ * chad.lafontaine (chad.lafontaine AT gmail DOT com)
+ * neil.cronin (neil AT rackle DOT com) 
+ * lorin.kobashigawa (lkb AT kgawa DOT com)
+ * rob.meyer (rob AT bigdis DOT com)
+ * 
+ * This program is free software; you can redistribute it and/or
+ * modify it under the terms of the GNU General Public License
+ * as published by the Free Software Foundation; either version 2
+ * of the License, or (at your option) any later version.
+ * 
+ * This program is distributed in the hope that it will be useful,
+ * but WITHOUT ANY WARRANTY; without even the implied warranty of
+ * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+ * GNU General Public License for more details.
+ * 
+ * You should have received a copy of the GNU General Public License
+ * along with this program; if not, write to the Free Software
+ * Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301, USA.
+ *
+ */
+package com.mockey.runner;
+
+import java.io.File;
+import java.io.InputStream;
+import java.net.URL;
+import java.net.URLEncoder;
+import java.util.Properties;
+
+import org.apache.http.HttpEntity;
+import org.apache.http.HttpResponse;
+import org.apache.http.client.methods.HttpGet;
+import org.apache.http.impl.client.DefaultHttpClient;
+import org.apache.log4j.PropertyConfigurator;
+import org.eclipse.jetty.server.Server;
+import org.eclipse.jetty.server.handler.ContextHandlerCollection;
+import org.eclipse.jetty.webapp.Configuration;
+import org.eclipse.jetty.webapp.WebAppContext;
+
+import com.martiansoftware.jsap.FlaggedOption;
+import com.martiansoftware.jsap.JSAP;
+import com.martiansoftware.jsap.JSAPResult;
+import com.martiansoftware.jsap.SimpleJSAP;
+import com.martiansoftware.jsap.Switch;
+import com.mockey.storage.xml.MockeyXmlFileManager;
+import com.mockey.ui.StartUpServlet;
+
+<span class="nc" id="L54">public class JettyRunner {</span>
+	private static final String ARG_PORT = &quot;port&quot;;
+	private static final String HOMEURL = &quot;/home&quot;;
+
+	public static void main(String[] args) throws Exception {
+<span class="pc bpc" id="L59" title="1 of 2 branches missed.">		if (args == null) {</span>
+<span class="nc" id="L60">			args = new String[0];</span>
+		}
+
+		// Initialize the argument parser
+<span class="fc" id="L64">		SimpleJSAP jsap = new SimpleJSAP(&quot;java -jar Mockey.jar&quot;, &quot;Starts a Jetty server running Mockey&quot;);</span>
+<span class="fc" id="L65">		jsap.registerParameter(new FlaggedOption(ARG_PORT, JSAP.INTEGER_PARSER, &quot;8080&quot;, JSAP.NOT_REQUIRED, 'p',</span>
+				ARG_PORT, &quot;port to run Jetty on&quot;));
+
+
+<span class="fc" id="L69">		jsap.registerParameter(new FlaggedOption(BSC.FILE, JSAP.STRING_PARSER,</span>
+				MockeyXmlFileManager.MOCK_SERVICE_DEFINITION, JSAP.NOT_REQUIRED, 'f', BSC.FILE,
+				&quot;Relative path to a mockey-definitions file to initialize Mockey, relative to where you're starting Mockey&quot;));
+
+<span class="fc" id="L73">		jsap.registerParameter(new FlaggedOption(BSC.URL, JSAP.STRING_PARSER, &quot;&quot;, JSAP.NOT_REQUIRED, 'u', BSC.URL,</span>
+				&quot;URL to a mockey-definitions file to initialize Mockey&quot;));
+
+<span class="fc" id="L76">		jsap.registerParameter(new FlaggedOption(BSC.TRANSIENT, JSAP.BOOLEAN_PARSER, &quot;true&quot;, JSAP.NOT_REQUIRED, 't',</span>
+				BSC.TRANSIENT, &quot;Read only mode if set to true, no updates are made to the file system.&quot;));
+
+<span class="fc" id="L79">		jsap.registerParameter(new FlaggedOption(BSC.DEFINITION_LOCATION, JSAP.STRING_PARSER,</span>
+<span class="fc" id="L80">				System.getProperty(&quot;user.dir&quot;), JSAP.NOT_REQUIRED, 'l', BSC.DEFINITION_LOCATION,</span>
+				&quot;Absolute or relative path/location for Mockey to save it's definitions and configuration. By default, relative to where Mockey is started. &quot;));
+
+<span class="fc" id="L83">		jsap.registerParameter(</span>
+				new FlaggedOption(BSC.FILTERTAG, JSAP.STRING_PARSER, &quot;&quot;, JSAP.NOT_REQUIRED, 'F', BSC.FILTERTAG,
+						&quot;Filter tag for services and scenarios, useful for 'only use information with this tag'. &quot;));
+
+<span class="fc" id="L87">		jsap.registerParameter(new FlaggedOption(BSC.HEADLESS, JSAP.BOOLEAN_PARSER, &quot;false&quot;, JSAP.NOT_REQUIRED, 'H',</span>
+				BSC.HEADLESS,
+				&quot;Headless flag. Default is 'false'. Set to 'true' if you do not want Mockey to spawn a browser thread upon startup.&quot;));
+
+<span class="fc" id="L91">		jsap.registerParameter(new Switch(BSC.VERSION, 'v', BSC.VERSION,</span>
+				&quot;Prints out Mockey's version (semantic versioning http://semver.org/)&quot;));
+
+		// parse the command line options
+<span class="fc" id="L95">		JSAPResult config = jsap.parse(args);</span>
+
+		// Bail out if they asked for the --help
+<span class="pc bpc" id="L98" title="1 of 2 branches missed.">		if (jsap.messagePrinted()) {</span>
+<span class="nc" id="L99">			System.exit(1);</span>
+		}
+
+<span class="pc bpc" id="L102" title="1 of 2 branches missed.">		if (config.getBoolean(BSC.VERSION)) {</span>
+
+<span class="nc" id="L104">			String ver = JettyRunner.class.getPackage().getImplementationVersion();</span>
+<span class="nc" id="L105">			System.out.println(&quot;Version &quot; + ver);</span>
+<span class="nc" id="L106">			System.exit(1);</span>
+		}
+
+		// #1 ACTION: If user passed in a HOME REPO variable, then let's set
+		// this,
+		// overriding the System.getProperty value, if one existed.
+
+		// Check to see if user passed in a MOCKEY REPO HOME path.
+<span class="fc" id="L114">		String configurationPath = String.valueOf(config.getString(BSC.DEFINITION_LOCATION));</span>
+<span class="pc bpc" id="L115" title="1 of 2 branches missed.">		if (configurationPath != null) {</span>
+
+			// Set as a SYSTEM property.
+<span class="fc" id="L118">			File x = new File(configurationPath);</span>
+<span class="pc bpc" id="L119" title="2 of 4 branches missed.">			if (x.exists() &amp;&amp; !x.isDirectory()) {</span>
+<span class="nc" id="L120">				configurationPath = x.getParent();</span>
+			}
+<span class="fc" id="L122">			System.setProperty(MockeyXmlFileManager.SYSTEM_PROPERTY_MOCKEY_DEF_REPO_HOME, configurationPath);</span>
+		}
+
+		// #2 ACTION: Check if the user passed in a INITILIZATION file, which
+		// will give state to Mockey. If Mockey already has state, then this
+		// will merge this initialization file.
+<span class="fc" id="L128">		String file = String.valueOf(config.getString(BSC.FILE));</span>
+<span class="fc" id="L129">		MockeyXmlFileManager instance = MockeyXmlFileManager.getInstance();</span>
+<span class="pc bpc" id="L130" title="1 of 2 branches missed.">		if (!file.startsWith(File.separator + &quot;&quot;)) {</span>
+			// No absolute, so we try for a relative path.
+<span class="fc" id="L132">			file = instance.getBasePathFile().getAbsolutePath() + File.separator + file;</span>
+		}
+
+		// Construct the new arguments for jetty-runner
+<span class="fc" id="L136">		int port = config.getInt(ARG_PORT);</span>
+<span class="fc" id="L137">		boolean transientState = true;</span>
+
+		try {
+<span class="fc" id="L140">			transientState = config.getBoolean(BSC.TRANSIENT);</span>
+<span class="nc" id="L141">		} catch (Exception e) {</span>
+			//
+<span class="fc" id="L143">		}</span>
+
+		// Initialize Log4J file roller appender, which should
+<span class="fc" id="L146">		StartUpServlet.getDebugFile();</span>
+<span class="fc" id="L147">		InputStream log4jInputStream = Thread.currentThread().getContextClassLoader()</span>
+<span class="fc" id="L148">				.getResourceAsStream(&quot;WEB-INF/log4j.properties&quot;);</span>
+<span class="fc" id="L149">		Properties log4JProperties = new Properties();</span>
+<span class="fc" id="L150">		log4JProperties.load(log4jInputStream);</span>
+<span class="fc" id="L151">		PropertyConfigurator.configure(log4JProperties);</span>
+
+		// To solve: http://stackoverflow.com/questions/3861455/form-too-large-exception
+		// Tried everything else, but only this worked. 
+<span class="fc" id="L155">		System.setProperty(&quot;org.eclipse.jetty.server.Request.maxFormContentSize&quot;, &quot;500000000&quot;);</span>
+<span class="fc" id="L156">		Server server = new Server(port);</span>
+
+<span class="fc" id="L158">		WebAppContext webapp = new WebAppContext();</span>
+<span class="fc" id="L159">		webapp.setContextPath(&quot;/&quot;);</span>
+<span class="fc" id="L160">		webapp.setConfigurations(new Configuration[] { new PreCompiledJspConfiguration() });</span>
+
+<span class="fc" id="L162">		ClassPathResourceHandler resourceHandler = new ClassPathResourceHandler();</span>
+<span class="fc" id="L163">		resourceHandler.setContextPath(&quot;/&quot;);</span>
+
+<span class="fc" id="L165">		ContextHandlerCollection contexts = new ContextHandlerCollection();</span>
+<span class="fc" id="L166">		contexts.addHandler(resourceHandler);</span>
+
+<span class="fc" id="L168">		contexts.addHandler(webapp);</span>
+		
+
+<span class="fc" id="L171">		server.setHandler(contexts);</span>
+		
+
+<span class="fc" id="L174">		server.start();</span>
+
+<span class="fc" id="L176">		String url = String.valueOf(config.getString(BSC.URL));</span>
+<span class="fc" id="L177">		String filterTag = config.getString(BSC.FILTERTAG);</span>
+<span class="fc" id="L178">		String fTagParam = &quot;&quot;;</span>
+
+<span class="fc" id="L180">		boolean headless = config.getBoolean(BSC.HEADLESS);</span>
+<span class="pc bpc" id="L181" title="1 of 2 branches missed.">		if (filterTag != null) {</span>
+<span class="fc" id="L182">			fTagParam = &quot;&amp;&quot; + BSC.FILTERTAG + &quot;=&quot; + URLEncoder.encode(filterTag, &quot;UTF-8&quot;);</span>
+		}
+
+		// Startup displays a big message and URL redirects after x seconds.
+		// Snazzy.
+<span class="fc" id="L187">		String initUrl = HOMEURL;</span>
+		// BUT...if a file is defined, (which it *should*),
+		// then let's initialize with it instead.
+<span class="pc bpc" id="L190" title="2 of 4 branches missed.">		if (url != null &amp;&amp; url.trim().length() &gt; 0) {</span>
+<span class="nc" id="L191">			URLEncoder.encode(initUrl, &quot;UTF-8&quot;);</span>
+<span class="nc" id="L192">			initUrl = HOMEURL + &quot;?&quot; + BSC.ACTION + &quot;=&quot; + BSC.INIT + &quot;&amp;&quot; + BSC.TRANSIENT + &quot;=&quot; + transientState + &quot;&amp;&quot;</span>
+<span class="nc" id="L193">					+ BSC.URL + &quot;=&quot; + URLEncoder.encode(url, &quot;UTF-8&quot;) + fTagParam;</span>
+
+<span class="pc bpc" id="L195" title="2 of 4 branches missed.">		} else if (file != null &amp;&amp; file.trim().length() &gt; 0) {</span>
+<span class="fc" id="L196">			URLEncoder.encode(initUrl, &quot;UTF-8&quot;);</span>
+<span class="fc" id="L197">			initUrl = HOMEURL + &quot;?&quot; + BSC.ACTION + &quot;=&quot; + BSC.INIT + &quot;&amp;&quot; + BSC.TRANSIENT + &quot;=&quot; + transientState + &quot;&amp;&quot;</span>
+<span class="fc" id="L198">					+ BSC.FILE + &quot;=&quot; + URLEncoder.encode(file, &quot;UTF-8&quot;) + fTagParam;</span>
+		} else {
+<span class="nc" id="L200">			initUrl = HOMEURL + &quot;?&quot; + BSC.ACTION + &quot;=&quot; + BSC.INIT + &quot;&amp;&quot; + BSC.TRANSIENT + &quot;=&quot; + transientState + &quot;&amp;&quot;</span>
+<span class="nc" id="L201">					+ BSC.FILE + &quot;=&quot; + URLEncoder.encode(MockeyXmlFileManager.MOCK_SERVICE_DEFINITION, &quot;UTF-8&quot;)</span>
+					+ fTagParam;
+
+		}
+
+<span class="pc bpc" id="L206" title="1 of 2 branches missed.">		if (!headless) {</span>
+<span class="fc" id="L207">			new Thread(new BrowserThread(&quot;http://127.0.0.1&quot;, String.valueOf(port), initUrl, 0)).start();</span>
+<span class="nc" id="L208">			server.join();</span>
+		} else {
+<span class="nc" id="L210">			initializeMockey(new URL(&quot;http://127.0.0.1&quot; + &quot;:&quot; + String.valueOf(port) + initUrl));</span>
+		}
+<span class="nc" id="L212">	}</span>
+
+	// Initialize
+	private static void initializeMockey(URL initUrl) throws Exception {
+<span class="nc" id="L216">		DefaultHttpClient httpclient = new DefaultHttpClient();</span>
+<span class="nc" id="L217">		HttpGet httpget = new HttpGet(initUrl.toString());</span>
+<span class="nc" id="L218">		HttpResponse response = httpclient.execute(httpget);</span>
+<span class="nc" id="L219">		HttpEntity entity = response.getEntity();</span>
+<span class="nc" id="L220">		System.out.println(&quot;Initialized mockey with request: &quot; + initUrl.toString());</span>
+<span class="nc" id="L221">		System.out.println(&quot;Response: &quot; + entity.getContent());</span>
+<span class="nc" id="L222">	}</span>
+
+}
+</pre><div class="footer"><span class="right">Created with <a href="http://www.jacoco.org/jacoco">JaCoCo</a> 0.8.1.201803210924</span></div></body></html>

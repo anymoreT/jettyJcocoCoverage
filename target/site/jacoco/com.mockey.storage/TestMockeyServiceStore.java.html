@@ -1,0 +1,411 @@
+<?xml version="1.0" encoding="UTF-8"?><!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Strict//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-strict.dtd"><html xmlns="http://www.w3.org/1999/xhtml" lang="zh"><head><meta http-equiv="Content-Type" content="text/html;charset=UTF-8"/><link rel="stylesheet" href="../jacoco-resources/report.css" type="text/css"/><link rel="shortcut icon" href="../jacoco-resources/report.gif" type="image/gif"/><title>TestMockeyServiceStore.java</title><link rel="stylesheet" href="../jacoco-resources/prettify.css" type="text/css"/><script type="text/javascript" src="../jacoco-resources/prettify.js"></script></head><body onload="window['PR_TAB_WIDTH']=4;prettyPrint()"><div class="breadcrumb" id="breadcrumb"><span class="info"><a href="../jacoco-sessions.html" class="el_session">Sessions</a></span><a href="../index.html" class="el_report">JaCoCo Ant Example</a> &gt; <a href="index.source.html" class="el_package">com.mockey.storage</a> &gt; <span class="el_source">TestMockeyServiceStore.java</span></div><h1>TestMockeyServiceStore.java</h1><pre class="source lang-java linenums">/*
+ * This file is part of Mockey, a tool for testing application 
+ * interactions over HTTP, with a focus on testing web services, 
+ * specifically web applications that consume XML, JSON, and HTML.
+ *  
+ * Copyright (C) 2009-2010  Authors:
+ * 
+ * chad.lafontaine (chad.lafontaine AT gmail DOT com)
+ * neil.cronin (neil AT rackle DOT com) 
+ * lorin.kobashigawa (lkb AT kgawa DOT com)
+ * rob.meyer (rob AT bigdis DOT com)
+ * 
+ * This program is free software; you can redistribute it and/or
+ * modify it under the terms of the GNU General Public License
+ * as published by the Free Software Foundation; either version 2
+ * of the License, or (at your option) any later version.
+ * 
+ * This program is distributed in the hope that it will be useful,
+ * but WITHOUT ANY WARRANTY; without even the implied warranty of
+ * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+ * GNU General Public License for more details.
+ * 
+ * You should have received a copy of the GNU General Public License
+ * along with this program; if not, write to the Free Software
+ * Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301, USA.
+ *
+ */
+package com.mockey.storage;
+
+import java.util.ArrayList;
+import java.util.Collection;
+import java.util.List;
+import java.util.Set;
+
+import com.mockey.model.*;
+import com.mockey.plugin.IRequestInspector;
+
+<span class="nc" id="L38">public class TestMockeyServiceStore implements IMockeyStorage {</span>
+
+	public void deleteService(Service mockServiceBean) {
+
+<span class="nc" id="L42">	}</span>
+	
+	public Set&lt;TagItem&gt; getAllTagsFromStore() {
+<span class="nc" id="L45">		return null;</span>
+	}
+
+	public void deleteFulfilledClientRequestsFromIP(Long scenarioId) {
+
+<span class="nc" id="L50">	}</span>
+
+	public void deleteServicePlan(ServicePlan servicePlan) {
+
+<span class="nc" id="L54">	}</span>
+
+	public FulfilledClientRequest getFulfilledClientRequestsById(
+			Long fulfilledClientRequestId) {
+<span class="nc" id="L58">		return null;</span>
+	}
+
+	public void deleteFulfilledClientRequestsForService(Long serviceId) {
+
+<span class="nc" id="L63">	}</span>
+
+	public List&lt;FulfilledClientRequest&gt; getFulfilledClientRequests() {
+
+<span class="nc" id="L67">		return null;</span>
+	}
+
+	public Service getServiceById(Long serviceId) {
+
+<span class="nc" id="L72">		return null;</span>
+	}
+
+	public Service getServiceByUrl(String urlPath) {
+
+<span class="nc" id="L77">		return null;</span>
+	}
+
+	public ServicePlan getServicePlanById(Long servicePlanId) {
+
+<span class="nc" id="L82">		return null;</span>
+	}
+
+	public List&lt;ServicePlan&gt; getServicePlans() {
+
+<span class="nc" id="L87">		String SERVICENAME_A = &quot;happy path&quot;;</span>
+<span class="nc" id="L88">		String SCENARIO_A = &quot;123&quot;;</span>
+<span class="nc" id="L89">		String SCENARIO_B = &quot;456&quot;;</span>
+<span class="nc" id="L90">		List&lt;ServicePlan&gt; planList = new ArrayList&lt;ServicePlan&gt;();</span>
+<span class="nc" id="L91">		ServicePlan servicePlan = new ServicePlan();</span>
+<span class="nc" id="L92">		servicePlan.setId(new Long(1));</span>
+<span class="nc" id="L93">		servicePlan.setName(SERVICENAME_A);</span>
+<span class="nc" id="L94">		servicePlan</span>
+<span class="nc" id="L95">				.setDescription(&quot;Lorem ipsum dolor sit amet, consectetur adipiscing elit. &quot;);</span>
+<span class="nc" id="L96">		PlanItem planItem = new PlanItem();</span>
+<span class="nc" id="L97">		planItem.setServiceResponseType(Service.SERVICE_RESPONSE_TYPE_PROXY);</span>
+<span class="nc" id="L98">		planItem.setScenarioName(SCENARIO_A);</span>
+<span class="nc" id="L99">		planItem.setServiceName(SERVICENAME_A);</span>
+<span class="nc" id="L100">		servicePlan.addPlanItem(planItem);</span>
+
+<span class="nc" id="L102">		planItem = new PlanItem();</span>
+<span class="nc" id="L103">		planItem.setServiceResponseType(Service.SERVICE_RESPONSE_TYPE_PROXY);</span>
+<span class="nc" id="L104">		planItem.setScenarioName(SCENARIO_B);</span>
+<span class="nc" id="L105">		planItem.setServiceName(SERVICENAME_A);</span>
+<span class="nc" id="L106">		servicePlan.addPlanItem(planItem);</span>
+<span class="nc" id="L107">		planList.add(servicePlan);</span>
+
+<span class="nc" id="L109">		return planList;</span>
+	}
+
+	public List&lt;Service&gt; getServices() {
+<span class="nc" id="L113">		List&lt;Service&gt; services = new ArrayList&lt;Service&gt;();</span>
+<span class="nc" id="L114">		Service service = new Service();</span>
+<span class="nc" id="L115">		service.setServiceName(&quot;testname&quot;);</span>
+<span class="nc" id="L116">		service.setDescription(&quot;test description&quot;);</span>
+
+<span class="nc" id="L118">		Scenario scenario = new Scenario();</span>
+<span class="nc" id="L119">		scenario.setScenarioName(&quot;a&quot;);</span>
+<span class="nc" id="L120">		scenario.setRequestMessage(&quot;request message a&quot;);</span>
+<span class="nc" id="L121">		scenario.setResponseMessage(&quot;response message a&quot;);</span>
+<span class="nc" id="L122">		service.saveOrUpdateScenario(scenario);</span>
+<span class="nc" id="L123">		scenario = new Scenario();</span>
+<span class="nc" id="L124">		scenario.setScenarioName(&quot;b&quot;);</span>
+<span class="nc" id="L125">		scenario.setRequestMessage(&quot;request message b&quot;);</span>
+<span class="nc" id="L126">		scenario.setResponseMessage(&quot;response message b&quot;);</span>
+<span class="nc" id="L127">		service.saveOrUpdateScenario(scenario);</span>
+<span class="nc" id="L128">		services.add(service);</span>
+<span class="nc" id="L129">		Service service2 = new Service();</span>
+<span class="nc" id="L130">		service2.setServiceName(&quot;testname2&quot;);</span>
+<span class="nc" id="L131">		service2.setDescription(&quot;test description2&quot;);</span>
+
+<span class="nc" id="L133">		Scenario scenario2 = new Scenario();</span>
+<span class="nc" id="L134">		scenario2.setScenarioName(&quot;a&quot;);</span>
+<span class="nc" id="L135">		scenario2.setRequestMessage(&quot;request message a&quot;);</span>
+<span class="nc" id="L136">		scenario2.setResponseMessage(&quot;response message a&quot;);</span>
+<span class="nc" id="L137">		service2.saveOrUpdateScenario(scenario);</span>
+<span class="nc" id="L138">		scenario2 = new Scenario();</span>
+<span class="nc" id="L139">		scenario2.setScenarioName(&quot;b&quot;);</span>
+<span class="nc" id="L140">		scenario2.setRequestMessage(&quot;request message b&quot;);</span>
+<span class="nc" id="L141">		scenario2.setResponseMessage(&quot;response message b&quot;);</span>
+<span class="nc" id="L142">		service2.saveOrUpdateScenario(scenario);</span>
+<span class="nc" id="L143">		services.add(service2);</span>
+<span class="nc" id="L144">		return services;</span>
+	}
+
+	public ProxyServerModel getProxy() {
+
+<span class="nc" id="L149">		return null;</span>
+	}
+
+	public Service saveOrUpdateService(Service mockServiceBean) {
+
+<span class="nc" id="L154">		return null;</span>
+
+	}
+
+	public ServicePlan saveOrUpdateServicePlan(ServicePlan servicePlan) {
+
+<span class="nc" id="L160">		return null;</span>
+
+	}
+
+	public void setProxy(ProxyServerModel proxyInfoBean) {
+
+<span class="nc" id="L166">	}</span>
+
+	public Scenario getUniversalErrorScenario() {
+
+<span class="nc" id="L170">		return null;</span>
+	}
+
+	public void setUniversalErrorScenarioRef(Scenario scenario) {
+
+<span class="nc" id="L175">	}</span>
+
+	public void saveOrUpdateFulfilledClientRequest(
+			FulfilledClientRequest requestResponseX) {
+
+<span class="nc" id="L180">	}</span>
+
+	public void deleteEverything() {
+
+<span class="nc" id="L184">	}</span>
+
+	public List&lt;String&gt; uniqueClientIPs() {
+
+<span class="nc" id="L188">		return null;</span>
+	}
+
+	public List&lt;String&gt; uniqueClientIPsForService(Long serviceId) {
+
+<span class="nc" id="L193">		return null;</span>
+	}
+
+	public List&lt;FulfilledClientRequest&gt; getFulfilledClientRequestsForService(
+			Long serviceId) {
+
+<span class="nc" id="L199">		return null;</span>
+	}
+
+	public List&lt;FulfilledClientRequest&gt; getFulfilledClientRequestsFromIP(
+			String ip) {
+
+<span class="nc" id="L205">		return null;</span>
+	}
+
+	public List&lt;FulfilledClientRequest&gt; getFulfilledClientRequestsFromIPForService(
+			String ip, Long serviceId) {
+
+<span class="nc" id="L211">		return null;</span>
+	}
+
+	public void deleteFulfilledClientRequests() {
+
+<span class="nc" id="L216">	}</span>
+
+	public void deleteFulfilledClientRequestsFromIPForService(String ip,
+			Long serviceId) {
+
+<span class="nc" id="L221">	}</span>
+
+	public void deleteFulfilledClientRequestById(Long fulfilledRequestID) {
+
+<span class="nc" id="L225">	}</span>
+
+	public List&lt;FulfilledClientRequest&gt; getFulfilledClientRequest(
+			List&lt;String&gt; filterArguments) {
+
+<span class="nc" id="L230">		return null;</span>
+	}
+
+	public List&lt;FulfilledClientRequest&gt; getFulfilledClientRequest(
+			Collection&lt;String&gt; filterArguments) {
+
+<span class="nc" id="L236">		return null;</span>
+	}
+
+	public List&lt;Long&gt; getServiceIds() {
+
+<span class="nc" id="L241">		return null;</span>
+	}
+
+	public ServicePlan getServicePlanByName(String servicePlanName) {
+
+<span class="nc" id="L246">		return null;</span>
+	}
+
+	public List&lt;TwistInfo&gt; getTwistInfoList() {
+
+<span class="nc" id="L251">		return null;</span>
+	}
+
+	public TwistInfo getTwistInfoById(Long id) {
+
+<span class="nc" id="L256">		return null;</span>
+	}
+
+	public TwistInfo getTwistInfoByName(String name) {
+
+<span class="nc" id="L261">		return null;</span>
+	}
+
+	public TwistInfo saveOrUpdateTwistInfo(TwistInfo twistInfo) {
+
+<span class="nc" id="L266">		return null;</span>
+	}
+
+	public void deleteTwistInfo(TwistInfo twistInfo) {
+
+<span class="nc" id="L271">	}</span>
+
+	public Long getUniversalTwistInfoId() {
+
+<span class="nc" id="L275">		return null;</span>
+
+	}
+
+	public void setUniversalTwistInfoId(Long twistInfoId) {
+
+<span class="nc" id="L281">	}</span>
+
+	public Long getUniversalErrorScenarioId() {
+
+<span class="nc" id="L285">		return null;</span>
+	}
+
+	public Long getUniversalErrorServiceId() {
+
+<span class="nc" id="L290">		return null;</span>
+	}
+
+	public Service getServiceByName(String serviceName) {
+
+<span class="nc" id="L295">		return null;</span>
+	}
+
+	public List&lt;ServiceRef&gt; getServiceRefs() {
+
+<span class="nc" id="L300">		return null;</span>
+	}
+
+	public ServiceRef saveOrUpdateServiceRef(ServiceRef serviceRef) {
+
+<span class="nc" id="L305">		return null;</span>
+	}
+
+	public void setReadOnlyMode(Boolean transientState) {
+
+<span class="nc" id="L310">	}</span>
+
+	public Boolean getReadOnlyMode() {
+
+<span class="nc" id="L314">		return null;</span>
+	}
+
+	public ScenarioRef getUniversalErrorScenarioRef() {
+<span class="nc" id="L318">		return null;</span>
+	}
+
+	public void deleteTagFromStore(String tag) {
+		// TODO Auto-generated method stub
+<span class="nc" id="L323">	}</span>
+
+	public String getGlobalStateSystemFilterTag() {
+		// TODO Auto-generated method stub
+<span class="nc" id="L327">		return null;</span>
+	}
+
+	public void setGlobalStateSystemFilterTag(String tag) {
+
+<span class="nc" id="L332">	}</span>
+
+	public List&lt;IRequestInspector&gt; getRequestInspectorList() {
+		// TODO Auto-generated method stub
+<span class="nc" id="L336">		return null;</span>
+	}
+
+	public void saveOrUpdateService(IRequestInspector requestInspector) {
+		// TODO Auto-generated method stub
+
+<span class="nc" id="L342">	}</span>
+
+	public void saveOrUpdateIRequestInspector(IRequestInspector arg) {
+		// TODO Auto-generated method stub
+
+<span class="nc" id="L347">	}</span>
+
+	public IRequestInspector getRequestInspectorByClassName(String newParam) {
+		// TODO Auto-generated method stub
+<span class="nc" id="L351">		return null;</span>
+	}
+
+	public IRequestInspector getRequestInspectorByClass(Class&lt;?&gt; clazz) {
+		// TODO Auto-generated method stub
+<span class="nc" id="L356">		return null;</span>
+	}
+
+	public void updateServicePlansWithNewScenarioName(Long serviceId,
+			String oldScenarioName, String newScenarioName) {
+		// TODO Auto-generated method stub
+<span class="nc" id="L362">	}</span>
+
+	public void updateServicePlansWithNewServiceName(String oldServiceName,
+			String newServiceName) {
+		// TODO Auto-generated method stub
+<span class="nc" id="L367">	}</span>
+
+	@Override
+	public void setUniversalErrorScenarioRef(ScenarioRef scenario) {
+		// TODO Auto-generated method stub
+
+<span class="nc" id="L373">	}</span>
+
+	@Override
+	public Service duplicateService(Service service) {
+		// TODO Auto-generated method stub
+<span class="nc" id="L378">		return null;</span>
+	}
+
+	@Override
+	public String getDefaultServicePlanId() {
+		// TODO Auto-generated method stub
+<span class="nc" id="L384">		return null;</span>
+	}
+
+	@Override
+	public Long getDefaultServicePlanIdAsLong() {
+		// TODO Auto-generated method stub
+<span class="nc" id="L390">		return null;</span>
+	}
+
+	@Override
+	public void setDefaultServicePlanId(String v) {
+		// TODO Auto-generated method stub
+		
+<span class="nc" id="L397">	}</span>
+
+	@Override
+	public void setServicePlan(ServicePlan servicePlan) {
+		// TODO Auto-generated method stub
+		
+<span class="nc" id="L403">	}</span>
+
+	@Override
+	public Long getTimeOfCreation() {
+		// TODO Auto-generated method stub
+<span class="nc" id="L408">		return null;</span>
+	}
+}
+</pre><div class="footer"><span class="right">Created with <a href="http://www.jacoco.org/jacoco">JaCoCo</a> 0.8.1.201803210924</span></div></body></html>

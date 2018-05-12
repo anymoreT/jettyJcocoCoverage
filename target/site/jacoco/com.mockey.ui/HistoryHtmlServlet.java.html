@@ -1,0 +1,164 @@
+<?xml version="1.0" encoding="UTF-8"?><!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Strict//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-strict.dtd"><html xmlns="http://www.w3.org/1999/xhtml" lang="zh"><head><meta http-equiv="Content-Type" content="text/html;charset=UTF-8"/><link rel="stylesheet" href="../jacoco-resources/report.css" type="text/css"/><link rel="shortcut icon" href="../jacoco-resources/report.gif" type="image/gif"/><title>HistoryHtmlServlet.java</title><link rel="stylesheet" href="../jacoco-resources/prettify.css" type="text/css"/><script type="text/javascript" src="../jacoco-resources/prettify.js"></script></head><body onload="window['PR_TAB_WIDTH']=4;prettyPrint()"><div class="breadcrumb" id="breadcrumb"><span class="info"><a href="../jacoco-sessions.html" class="el_session">Sessions</a></span><a href="../index.html" class="el_report">JaCoCo Ant Example</a> &gt; <a href="index.source.html" class="el_package">com.mockey.ui</a> &gt; <span class="el_source">HistoryHtmlServlet.java</span></div><h1>HistoryHtmlServlet.java</h1><pre class="source lang-java linenums">/*
+ * This file is part of Mockey, a tool for testing application 
+ * interactions over HTTP, with a focus on testing web services, 
+ * specifically web applications that consume XML, JSON, and HTML.
+ *  
+ * Copyright (C) 2009-2010  Authors:
+ * 
+ * chad.lafontaine (chad.lafontaine AT gmail DOT com)
+ * neil.cronin (neil AT rackle DOT com) 
+ * lorin.kobashigawa (lkb AT kgawa DOT com)
+ * rob.meyer (rob AT bigdis DOT com)
+ * 
+ * This program is free software; you can redistribute it and/or
+ * modify it under the terms of the GNU General Public License
+ * as published by the Free Software Foundation; either version 2
+ * of the License, or (at your option) any later version.
+ * 
+ * This program is distributed in the hope that it will be useful,
+ * but WITHOUT ANY WARRANTY; without even the implied warranty of
+ * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+ * GNU General Public License for more details.
+ * 
+ * You should have received a copy of the GNU General Public License
+ * along with this program; if not, write to the Free Software
+ * Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301, USA.
+ *
+ */
+package com.mockey.ui;
+
+import java.io.IOException;
+import java.io.PrintStream;
+import java.net.URLEncoder;
+
+import javax.servlet.ServletException;
+import javax.servlet.http.HttpServlet;
+import javax.servlet.http.HttpServletRequest;
+import javax.servlet.http.HttpServletResponse;
+
+import org.apache.commons.lang.StringEscapeUtils;
+
+import com.mockey.model.FulfilledClientRequest;
+import com.mockey.model.Url;
+import com.mockey.storage.IMockeyStorage;
+import com.mockey.storage.StorageRegistry;
+
+/**
+ * Returns an HTML form of the fulfilled request, designed to be consumed by an
+ * AJAX call.
+ * 
+ */
+<span class="nc" id="L51">public class HistoryHtmlServlet extends HttpServlet {</span>
+
+    private static final long serialVersionUID = 9089211154525468963L;
+<span class="nc" id="L54">    private static IMockeyStorage store = StorageRegistry.MockeyStorage;</span>
+
+    /**
+     * 
+     */
+    public void service(HttpServletRequest req, HttpServletResponse resp) throws ServletException, IOException {
+
+<span class="nc" id="L61">        StringBuffer returnHTML = new StringBuffer();</span>
+
+<span class="nc" id="L63">        Long fulfilledRequestId = null;</span>
+        try {
+
+<span class="nc" id="L66">            fulfilledRequestId = new Long(req.getParameter(&quot;fulfilledRequestId&quot;));</span>
+<span class="nc" id="L67">            FulfilledClientRequest fCRequest = store.getFulfilledClientRequestsById(fulfilledRequestId);</span>
+<span class="nc" id="L68">            String contextRootScenarioURL = Url.getAbsoluteURL(req, &quot;/scenario&quot;); </span>
+            
+<span class="nc" id="L70">            returnHTML.append(&quot;&lt;script type=\&quot;text/javascript\&quot;&gt;&quot;);</span>
+<span class="nc" id="L71">            returnHTML.append(&quot;$(document).ready(function() {&quot;);</span>
+<span class="nc" id="L72">            returnHTML.append(&quot;    $('textarea.resizable:not(.processed)').TextAreaResizer();&quot;);</span>
+<span class="nc" id="L73">            returnHTML.append(&quot;    $('iframe.resizable:not(.processed)').TextAreaResizer();&quot;);</span>
+<span class="nc" id="L74">            returnHTML.append(&quot;});&quot;);</span>
+<span class="nc" id="L75">            returnHTML.append(&quot;&lt;/script&gt;&quot;);</span>
+<span class="nc" id="L76">            returnHTML.append(&quot;&lt;table class=\&quot;history\&quot; width=\&quot;100%\&quot;&gt;&quot;);</span>
+<span class="nc" id="L77">            returnHTML.append(&quot;     &lt;tbody&gt;&quot;);</span>
+<span class="nc" id="L78">            returnHTML.append(&quot;&lt;tr&gt;&quot;);</span>
+<span class="nc" id="L79">            returnHTML.append(&quot;&lt;td&gt;&quot;);</span>
+<span class="nc" id="L80">            returnHTML.append(&quot;&lt;div class=\&quot;conflict_message\&quot;&gt;&quot;);</span>
+<span class="nc" id="L81">            String doitagainUrl = Url.getAbsoluteURL(req, &quot;/doitagain&quot;); </span>
+<span class="nc" id="L82">            returnHTML.append(&quot;&lt;form id=\&quot;child\&quot; action=\&quot;&quot;+doitagainUrl+&quot;\&quot; method=\&quot;post\&quot; style=\&quot;background-color:#FFD7D7\&quot; &gt;&quot;);</span>
+<span class="nc" id="L83">            returnHTML.append(&quot;&lt;input type=\&quot;hidden\&quot; name=\&quot;fulfilledClientRequestId\&quot; value=\&quot;&quot;+fCRequest.getId()+&quot;\&quot; /&gt;&quot;);</span>
+<span class="nc" id="L84">            returnHTML.append(&quot;&lt;h2&gt;Request:&lt;/h2&gt;&quot;);</span>
+<span class="nc" id="L85">            returnHTML.append(&quot;&lt;p&gt;&lt;h4&gt;&quot; + fCRequest.getRawRequest() + &quot;&lt;/h4&gt;&lt;/p&gt;&quot;);</span>
+<span class="nc" id="L86">            returnHTML.append(&quot;&lt;p&gt;Header (pipe delimited)&lt;/p&gt;&quot;);</span>
+<span class="nc" id="L87">            returnHTML.append(&quot;&lt;p&gt;&lt;textarea class=\&quot;resizable\&quot; name=\&quot;requestHeader\&quot; rows=\&quot;5\&quot; cols=\&quot;100%\&quot;&gt;&quot;</span>
+<span class="nc" id="L88">                    + fCRequest.getClientRequestHeaders() + &quot;&lt;/textarea&gt;&lt;/p&gt;&quot;);</span>
+<span class="nc" id="L89">            returnHTML.append(&quot;&lt;p&gt;Parameters (pipe delimited)&lt;/p&gt;&quot;);</span>
+<span class="nc" id="L90">            returnHTML.append(&quot;&lt;p&gt;&lt;textarea class=\&quot;resizable\&quot; name=\&quot;requestParameters\&quot; rows=\&quot;5\&quot; cols=\&quot;100%\&quot;&gt;&quot;</span>
+<span class="nc" id="L91">                    + fCRequest.getClientRequestParameters() + &quot;&lt;/textarea&gt;&lt;/p&gt;&quot;);</span>
+<span class="nc" id="L92">            returnHTML.append(&quot;&lt;p&gt;Body&lt;/p&gt;&quot;);</span>
+<span class="nc" id="L93">            returnHTML.append(&quot;&lt;p&gt;&lt;textarea class=\&quot;resizable\&quot; name=\&quot;requestBody\&quot; rows=\&quot;10\&quot; &gt;&quot;</span>
+<span class="nc" id="L94">                    + fCRequest.getClientRequestBody() + &quot;&lt;/textarea&gt;&lt;/p&gt;&quot;);</span>
+<span class="nc" id="L95">            returnHTML.append(&quot;&lt;input type=\&quot;submit\&quot; name=\&quot;NewParameters\&quot; value=\&quot;Send This Again\&quot; class=\&quot;button\&quot; /&gt;&quot;);</span>
+<span class="nc" id="L96">            returnHTML.append(&quot; This will build a request with the body, parameters, and header information above. &quot;);</span>
+<span class="nc" id="L97">            returnHTML.append(&quot;&lt;/form&gt;&quot;);</span>
+<span class="nc" id="L98">            returnHTML.append(&quot;&lt;/div&gt;&quot;);</span>
+<span class="nc" id="L99">            returnHTML.append(&quot;&lt;/td&gt;&quot;);</span>
+<span class="nc" id="L100">            returnHTML.append(&quot;&lt;/tr&gt;&quot;);</span>
+<span class="nc" id="L101">            returnHTML.append(&quot; &lt;tr&gt;&quot;);</span>
+<span class="nc" id="L102">            returnHTML.append(&quot;&lt;td &gt;&quot;);</span>
+<span class="nc" id="L103">            returnHTML.append(&quot;&lt;form id=\&quot;child\&quot; action=\&quot;&quot; + contextRootScenarioURL + &quot;\&quot; method=\&quot;post\&quot;&gt;&quot;);</span>
+<span class="nc" id="L104">            returnHTML.append(&quot;&lt;input type=\&quot;hidden\&quot; name=\&quot;actionTypeGetFlag\&quot; value=\&quot;true\&quot; /&gt;&quot;);</span>
+<span class="nc" id="L105">            returnHTML</span>
+<span class="nc" id="L106">                    .append(&quot;&lt;input type=\&quot;hidden\&quot; name=\&quot;serviceId\&quot; value=\&quot;&quot; + fCRequest.getServiceId() + &quot;\&quot; /&gt;&quot;);</span>
+<span class="nc" id="L107">            returnHTML.append(&quot;&lt;div id=\&quot;scenario&quot; + fCRequest.getId()</span>
+                    + &quot;\&quot; class=\&quot;addition_message mockeyResponse\&quot;&gt;&quot;);
+<span class="nc" id="L109">            returnHTML.append(&quot;&lt;h2&gt;Response: &lt;/h2&gt;&quot;);</span>
+<span class="nc" id="L110">            returnHTML.append(&quot;&lt;p&gt;Status&lt;/p&gt;&quot;);</span>
+<span class="nc" id="L111">            returnHTML.append(&quot;&lt;p&gt;&quot;);</span>
+<span class="nc" id="L112">            returnHTML.append(&quot;    &lt;textarea class=\&quot;resizable\&quot; name=\&quot;responseStatus\&quot; rows=\&quot;1\&quot; &gt;&quot;</span>
+<span class="nc" id="L113">                    + fCRequest.getResponseMessage().getHttpResponseStatusCode() + &quot;&lt;/textarea&gt;&quot;);</span>
+<span class="nc" id="L114">            returnHTML.append(&quot;&lt;/p&gt;&quot;);</span>
+<span class="nc" id="L115">            returnHTML.append(&quot;&lt;p&gt;Header&lt;/p&gt;&quot;);</span>
+<span class="nc" id="L116">            returnHTML.append(&quot;&lt;p&gt;&quot;);</span>
+<span class="nc" id="L117">            returnHTML.append(&quot;&lt;textarea class=\&quot;resizable\&quot; name=\&quot;responseHeader\&quot; rows=\&quot;10\&quot; &gt;&quot;</span>
+<span class="nc" id="L118">                    + fCRequest.getResponseMessage().getHeaderInfo() + &quot;&lt;/textarea&gt;&quot;);</span>
+<span class="nc" id="L119">            returnHTML.append(&quot;&lt;/p&gt;&quot;);</span>
+<span class="nc" id="L120">            returnHTML.append(&quot;&lt;p&gt;Body&lt;/p&gt;&quot;);</span>
+<span class="nc" id="L121">            returnHTML.append(&quot;&lt;p&gt;&quot;);</span>
+<span class="nc" id="L122">            returnHTML</span>
+<span class="nc" id="L123">                    .append(&quot;&lt;textarea style=\&quot;margin-top: 0px;\&quot; name=\&quot;responseMessage\&quot; class=\&quot;resizable responseContent\&quot; rows=\&quot;10\&quot; &gt;&quot;</span>
+<span class="nc" id="L124">                            + StringEscapeUtils.escapeXml(fCRequest.getResponseMessage().getBody()) + &quot;&lt;/textarea&gt;&quot;);</span>
+<span class="nc" id="L125">            returnHTML.append(&quot;&lt;/p&gt;&quot;);</span>
+<span class="nc" id="L126">            returnHTML.append(&quot;&lt;p&gt;&quot;);</span>
+<span class="nc" id="L127">            returnHTML.append(&quot;&lt;input type=\&quot;submit\&quot; name=\&quot;Save\&quot; value=\&quot;Save Response as a Scenario\&quot; /&gt;&quot;);</span>
+<span class="nc" id="L128">            String inspectFulfilledRequestURL = Url.getAbsoluteURL(req, &quot;/inspect&quot;); </span>
+<span class="nc" id="L129">            returnHTML.append(&quot; View response body as: &quot;);</span>
+<span class="nc" id="L130">            returnHTML.append(&quot;&lt;a href=\&quot;&quot; + inspectFulfilledRequestURL + &quot;?content_type=text/xml;&amp;fulfilledRequestId=&quot;</span>
+                    + fulfilledRequestId + &quot;\&quot;&gt;XML&lt;/a&gt; &quot;);
+<span class="nc" id="L132">            returnHTML.append(&quot;&lt;a href=\&quot;&quot; + inspectFulfilledRequestURL</span>
+                    + &quot;?content_type=text/plain;&amp;fulfilledRequestId=&quot; + fulfilledRequestId + &quot;\&quot;&gt;Plain&lt;/a&gt; &quot;);
+<span class="nc" id="L134">            returnHTML.append(&quot;&lt;a href=\&quot;&quot; + inspectFulfilledRequestURL + &quot;?content_type=text/css;&amp;fulfilledRequestId=&quot;</span>
+                    + fulfilledRequestId + &quot;\&quot;&gt;CSS&lt;/a&gt; &quot;);
+<span class="nc" id="L136">            returnHTML.append(&quot;&lt;a href=\&quot;&quot; + inspectFulfilledRequestURL</span>
+                    + &quot;?content_type=application/json;&amp;fulfilledRequestId=&quot; + fulfilledRequestId + &quot;\&quot;&gt;JSON&lt;/a&gt; &quot;);
+<span class="nc" id="L138">            String encoded = URLEncoder.encode(&quot;text/html;charset=utf-8&quot;, &quot;utf-8&quot;);</span>
+<span class="nc" id="L139">            returnHTML.append(&quot;&lt;a href=\&quot;&quot; + inspectFulfilledRequestURL + &quot;?content_type=&quot; + encoded</span>
+                    + &quot;&amp;fulfilledRequestId=&quot; + fulfilledRequestId + &quot;\&quot;&gt;HTML&lt;/a&gt; &quot;);
+<span class="nc" id="L141">            returnHTML.append(&quot;&lt;/p&gt;&quot;);</span>
+<span class="nc" id="L142">            returnHTML.append(&quot;&lt;/form&gt;&quot;);</span>
+<span class="nc" id="L143">            returnHTML.append(&quot;&lt;/div&gt;&quot;);</span>
+<span class="nc" id="L144">            returnHTML.append(&quot;&lt;/td&gt;&quot;);</span>
+<span class="nc" id="L145">            returnHTML.append(&quot;&lt;/tr&gt;&quot;);</span>
+<span class="nc" id="L146">            returnHTML.append(&quot;&lt;/tbody&gt;&quot;);</span>
+<span class="nc" id="L147">            returnHTML.append(&quot;&lt;/table&gt;&quot;);</span>
+            
+
+            //
+
+<span class="nc" id="L152">        } catch (Exception e) {</span>
+<span class="nc" id="L153">            returnHTML.append(&quot;Sorry, history for this request is not available.&quot;);</span>
+<span class="nc" id="L154">        }</span>
+
+<span class="nc" id="L156">        resp.setContentType(&quot;text/html&quot;);</span>
+
+<span class="nc" id="L158">        PrintStream out = new PrintStream(resp.getOutputStream());</span>
+
+<span class="nc" id="L160">        out.println(returnHTML.toString());</span>
+<span class="nc" id="L161">    }</span>
+
+}
+</pre><div class="footer"><span class="right">Created with <a href="http://www.jacoco.org/jacoco">JaCoCo</a> 0.8.1.201803210924</span></div></body></html>

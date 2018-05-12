@@ -1,0 +1,84 @@
+<?xml version="1.0" encoding="UTF-8"?><!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Strict//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-strict.dtd"><html xmlns="http://www.w3.org/1999/xhtml" lang="zh"><head><meta http-equiv="Content-Type" content="text/html;charset=UTF-8"/><link rel="stylesheet" href="../jacoco-resources/report.css" type="text/css"/><link rel="shortcut icon" href="../jacoco-resources/report.gif" type="image/gif"/><title>XMLGeneratorSupport.java</title><link rel="stylesheet" href="../jacoco-resources/prettify.css" type="text/css"/><script type="text/javascript" src="../jacoco-resources/prettify.js"></script></head><body onload="window['PR_TAB_WIDTH']=4;prettyPrint()"><div class="breadcrumb" id="breadcrumb"><span class="info"><a href="../jacoco-sessions.html" class="el_session">Sessions</a></span><a href="../index.html" class="el_report">JaCoCo Ant Example</a> &gt; <a href="index.source.html" class="el_package">com.mockey.storage.xml</a> &gt; <span class="el_source">XMLGeneratorSupport.java</span></div><h1>XMLGeneratorSupport.java</h1><pre class="source lang-java linenums">/*
+ * This file is part of Mockey, a tool for testing application 
+ * interactions over HTTP, with a focus on testing web services, 
+ * specifically web applications that consume XML, JSON, and HTML.
+ *  
+ * Copyright (C) 2009-2010  Authors:
+ * 
+ * chad.lafontaine (chad.lafontaine AT gmail DOT com)
+ * neil.cronin (neil AT rackle DOT com) 
+ * lorin.kobashigawa (lkb AT kgawa DOT com)
+ * rob.meyer (rob AT bigdis DOT com)
+ * 
+ * This program is free software; you can redistribute it and/or
+ * modify it under the terms of the GNU General Public License
+ * as published by the Free Software Foundation; either version 2
+ * of the License, or (at your option) any later version.
+ * 
+ * This program is distributed in the hope that it will be useful,
+ * but WITHOUT ANY WARRANTY; without even the implied warranty of
+ * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+ * GNU General Public License for more details.
+ * 
+ * You should have received a copy of the GNU General Public License
+ * along with this program; if not, write to the Free Software
+ * Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301, USA.
+ *
+ */
+package com.mockey.storage.xml;
+
+import java.text.SimpleDateFormat;
+
+import org.w3c.dom.Document;
+import org.w3c.dom.Element;
+import org.w3c.dom.Text;
+
+<span class="fc" id="L36">class XmlGeneratorSupport {</span>
+	/**
+	 * A &lt;code&gt;SimpleDateFormat&lt;/code&gt; used to represent ISO 8601 dates and
+	 * times.
+	 */
+<span class="fc" id="L41">	protected static final SimpleDateFormat DATE_TIME_FORMAT = new SimpleDateFormat(&quot;yyyy-MM-dd'T'HH:mm:ss&quot;);</span>
+
+	/**
+	 * A &lt;code&gt;SimpleDateFormat&lt;/code&gt; used to represent ISO 8601 dates. This
+	 * format does &lt;b&gt;not&lt;/b&gt; display the time.
+	 */
+<span class="fc" id="L47">	protected static final SimpleDateFormat DATE_ONLY_FORMAT = new SimpleDateFormat(&quot;yyyy-MM-dd&quot;);</span>
+
+	/**
+	 * Sets the given element attribute to the specified value.
+	 * 
+	 * @param element
+	 *            the element containing the attribute to set
+	 * @param name
+	 *            the name of the attribute to set
+	 * @param value
+	 *            the value to set the attribute to; if &lt;code&gt;null&lt;/code&gt;,
+	 *            then the attribute is not set
+	 */
+	public void setAttribute(Element element, String name, String value) {
+<span class="pc bpc" id="L61" title="1 of 2 branches missed.">		if (value != null) {</span>
+<span class="fc" id="L62">			element.setAttribute(name, value);</span>
+		}
+<span class="fc" id="L64">	}</span>
+
+	/**
+	 * Sets the given element text to be specified to text.
+	 * 
+	 * @param document
+	 *            the parent document used to create a text node.
+	 * @param element
+	 *            the element containing the text to set
+	 * @param text
+	 *            the text to be contained in the element; if &lt;code&gt;null&lt;/code&gt;,
+	 *            then no text is provided.
+	 */
+	public void setText(Document document, Element element, String text) {
+<span class="nc bnc" id="L78" title="All 2 branches missed.">		if (text != null) {</span>
+<span class="nc" id="L79">			Text textNode = document.createTextNode(text);</span>
+<span class="nc" id="L80">			element.appendChild(textNode);</span>
+		}
+<span class="nc" id="L82">	}</span>
+}
+</pre><div class="footer"><span class="right">Created with <a href="http://www.jacoco.org/jacoco">JaCoCo</a> 0.8.1.201803210924</span></div></body></html>

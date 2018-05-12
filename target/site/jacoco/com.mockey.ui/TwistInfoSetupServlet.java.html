@@ -1,0 +1,202 @@
+<?xml version="1.0" encoding="UTF-8"?><!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Strict//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-strict.dtd"><html xmlns="http://www.w3.org/1999/xhtml" lang="zh"><head><meta http-equiv="Content-Type" content="text/html;charset=UTF-8"/><link rel="stylesheet" href="../jacoco-resources/report.css" type="text/css"/><link rel="shortcut icon" href="../jacoco-resources/report.gif" type="image/gif"/><title>TwistInfoSetupServlet.java</title><link rel="stylesheet" href="../jacoco-resources/prettify.css" type="text/css"/><script type="text/javascript" src="../jacoco-resources/prettify.js"></script></head><body onload="window['PR_TAB_WIDTH']=4;prettyPrint()"><div class="breadcrumb" id="breadcrumb"><span class="info"><a href="../jacoco-sessions.html" class="el_session">Sessions</a></span><a href="../index.html" class="el_report">JaCoCo Ant Example</a> &gt; <a href="index.source.html" class="el_package">com.mockey.ui</a> &gt; <span class="el_source">TwistInfoSetupServlet.java</span></div><h1>TwistInfoSetupServlet.java</h1><pre class="source lang-java linenums">/*
+ * This file is part of Mockey, a tool for testing application 
+ * interactions over HTTP, with a focus on testing web services, 
+ * specifically web applications that consume XML, JSON, and HTML.
+ *  
+ * Copyright (C) 2009-2010  Authors:
+ * 
+ * chad.lafontaine (chad.lafontaine AT gmail DOT com)
+ * neil.cronin (neil AT rackle DOT com) 
+ * lorin.kobashigawa (lkb AT kgawa DOT com)
+ * rob.meyer (rob AT bigdis DOT com)
+ * 
+ * This program is free software; you can redistribute it and/or
+ * modify it under the terms of the GNU General Public License
+ * as published by the Free Software Foundation; either version 2
+ * of the License, or (at your option) any later version.
+ * 
+ * This program is distributed in the hope that it will be useful,
+ * but WITHOUT ANY WARRANTY; without even the implied warranty of
+ * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+ * GNU General Public License for more details.
+ * 
+ * You should have received a copy of the GNU General Public License
+ * along with this program; if not, write to the Free Software
+ * Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301, USA.
+ *
+ */
+package com.mockey.ui;
+
+import java.io.IOException;
+import java.io.PrintWriter;
+import java.util.ArrayList;
+import java.util.List;
+
+import javax.servlet.RequestDispatcher;
+import javax.servlet.ServletException;
+import javax.servlet.http.HttpServlet;
+import javax.servlet.http.HttpServletRequest;
+import javax.servlet.http.HttpServletResponse;
+
+import org.json.JSONException;
+import org.json.JSONObject;
+
+import com.mockey.model.TwistInfo;
+import com.mockey.storage.IMockeyStorage;
+import com.mockey.storage.StorageRegistry;
+
+<span class="nc" id="L48">public class TwistInfoSetupServlet extends HttpServlet implements TwistInfoConfigurationAPI {</span>
+
+	/**
+	 * 
+	 */
+	private static final long serialVersionUID = 2685147086312954142L;
+<span class="nc" id="L54">	private static IMockeyStorage store = StorageRegistry.MockeyStorage;</span>
+
+	
+
+	/**
+	 * Handles the following activities for &lt;code&gt;TwistInfo&lt;/code&gt;
+	 * 
+	 */
+	public void doGet(HttpServletRequest req, HttpServletResponse resp) throws ServletException, IOException {
+
+<span class="nc" id="L64">		List&lt;TwistInfo&gt; twistInfoList = store.getTwistInfoList();</span>
+<span class="nc" id="L65">		String responseType = req.getParameter(&quot;response-type&quot;);</span>
+		// If type is JSON, then respond with JSON
+		// Otherwise, direct to JSP
+
+<span class="nc bnc" id="L69" title="All 2 branches missed.">		if (PARAMETER_KEY_RESPONSE_TYPE_VALUE_JSON.equalsIgnoreCase(responseType)) {</span>
+			// ***********************
+			// BEGIN - JSON response
+			// ***********************
+<span class="nc" id="L73">			resp.setContentType(&quot;application/json&quot;);</span>
+<span class="nc" id="L74">			PrintWriter out = resp.getWriter();</span>
+			try {
+<span class="nc" id="L76">				JSONObject jsonResponseObject = new JSONObject();</span>
+<span class="nc" id="L77">				JSONObject jsonObject = null; // new JSONObject();</span>
+<span class="nc bnc" id="L78" title="All 2 branches missed.">				for (TwistInfo twistInfo : twistInfoList) {</span>
+<span class="nc" id="L79">					jsonObject = new JSONObject();</span>
+<span class="nc" id="L80">					jsonObject.put(&quot;id&quot;, &quot;&quot; + twistInfo.getId());</span>
+<span class="nc" id="L81">					jsonObject.put(&quot;name&quot;, twistInfo.getName());</span>
+<span class="nc bnc" id="L82" title="All 2 branches missed.">					for (PatternPair patternPair : twistInfo.getPatternPairList()) {</span>
+<span class="nc" id="L83">						JSONObject ppObj = new JSONObject();</span>
+<span class="nc" id="L84">						ppObj.put(&quot;origination&quot;, patternPair.getOrigination());</span>
+<span class="nc" id="L85">						ppObj.put(&quot;destination&quot;, patternPair.getDestination());</span>
+<span class="nc" id="L86">						jsonObject.append(&quot;pattern-pair-list&quot;, ppObj);</span>
+<span class="nc" id="L87">					}</span>
+<span class="nc" id="L88">				}</span>
+
+<span class="nc" id="L90">				jsonResponseObject.put(&quot;result&quot;, jsonObject);</span>
+<span class="nc" id="L91">				out.println(jsonResponseObject.toString());</span>
+
+<span class="nc" id="L93">			} catch (JSONException jsonException) {</span>
+<span class="nc" id="L94">				throw new ServletException(jsonException);</span>
+<span class="nc" id="L95">			}</span>
+
+<span class="nc" id="L97">			out.flush();</span>
+<span class="nc" id="L98">			out.close();</span>
+<span class="nc" id="L99">			return;</span>
+			// ***********************
+			// END - JSON response
+			// ***********************
+
+		} else {
+<span class="nc" id="L105">			req.setAttribute(&quot;twistInfoList&quot;, twistInfoList);</span>
+<span class="nc" id="L106">			req.setAttribute(&quot;twistInfoIdEnabled&quot;, store.getUniversalTwistInfoId());</span>
+<span class="nc" id="L107">			RequestDispatcher dispatch = req.getRequestDispatcher(&quot;/twistinfo_setup.jsp&quot;);</span>
+<span class="nc" id="L108">			dispatch.forward(req, resp);</span>
+<span class="nc" id="L109">			return;</span>
+		}
+
+	}
+
+	/**
+	 * Handles the following activities for &lt;code&gt;TwistInfo&lt;/code&gt;
+	 * 
+	 */
+	public void doPost(HttpServletRequest req, HttpServletResponse resp) throws ServletException, IOException {
+
+		// ***********************
+		// 1. If type is JSON, then respond with JSON
+		// 2. Otherwise, dispatch to JSP
+		// 3. Create/delete/update TwistInfo
+		// ***********************
+
+		// ***********************
+		// INITIALIZAION
+		// ***********************
+
+<span class="nc" id="L130">		Long twistInfoId = null;</span>
+<span class="nc" id="L131">		TwistInfo twistInfo = null;</span>
+		try {
+<span class="nc" id="L133">			twistInfoId = new Long(req.getParameter(PARAMETER_KEY_TWIST_ID));</span>
+<span class="nc" id="L134">			twistInfo = store.getTwistInfoById(twistInfoId);</span>
+<span class="nc" id="L135">		} catch (Exception e) {</span>
+			// Do nothing. If the value doesn't exist,
+			// then we'll create a new TwistInfo
+<span class="nc" id="L138">		}</span>
+
+<span class="nc bnc" id="L140" title="All 2 branches missed.">		if (twistInfo == null) {</span>
+<span class="nc" id="L141">			twistInfo = new TwistInfo();</span>
+		}
+		// ***********************
+		// DATA HANDLING
+		// ***********************
+<span class="nc" id="L146">		String name = req.getParameter(PARAMETER_KEY_TWIST_NAME);</span>
+		
+<span class="nc bnc" id="L148" title="All 4 branches missed.">		if (name == null || name.trim().length() == 0) {</span>
+<span class="nc" id="L149">			name = &quot;TwistInfo (auto-generated)&quot;;</span>
+		}
+<span class="nc" id="L151">		String[] originationArguments = req.getParameterValues(PARAMETER_KEY_TWIST_ORIGINATION_LIST);</span>
+<span class="nc" id="L152">		String[] destinationArguments = req.getParameterValues(PARAMETER_KEY_TWIST_DESTINATION_LIST);</span>
+		// Remove any existing TwistInfo patterns.
+<span class="nc" id="L154">		twistInfo.setPatternPairList(new ArrayList&lt;PatternPair&gt;());</span>
+<span class="nc bnc" id="L155" title="All 6 branches missed.">		if ((originationArguments != null &amp;&amp; destinationArguments != null)</span>
+				&amp;&amp; (originationArguments.length == destinationArguments.length)) {
+<span class="nc bnc" id="L157" title="All 2 branches missed.">			for (int i = 0; i &lt; originationArguments.length; i++) {</span>
+<span class="nc" id="L158">				twistInfo.addPatternPair(new PatternPair(originationArguments[i], destinationArguments[i]));</span>
+			}
+		}
+
+<span class="nc" id="L162">		twistInfo.setName(name);</span>
+<span class="nc" id="L163">		twistInfo = store.saveOrUpdateTwistInfo(twistInfo);</span>
+		
+		// ***********************
+		// RESPONSE - in JSON or JSP
+		// ***********************
+<span class="nc" id="L168">		String responseType = req.getParameter(PARAMETER_KEY_RESPONSE_TYPE);</span>
+<span class="nc bnc" id="L169" title="All 2 branches missed.">		if (PARAMETER_KEY_RESPONSE_TYPE_VALUE_JSON.equalsIgnoreCase(responseType)) {</span>
+			// BUILD JSON response
+<span class="nc" id="L171">			resp.setContentType(&quot;application/json&quot;);</span>
+<span class="nc" id="L172">			PrintWriter out = resp.getWriter();</span>
+			try {
+<span class="nc" id="L174">				JSONObject jsonResponseObject = new JSONObject();</span>
+<span class="nc" id="L175">				JSONObject jsonObject = new JSONObject();</span>
+<span class="nc" id="L176">				jsonObject.put(&quot;success&quot;, &quot;Twist updated&quot;);</span>
+<span class="nc" id="L177">				jsonObject.put(&quot;id&quot;, &quot;&quot;+twistInfo.getId());</span>
+<span class="nc" id="L178">				jsonObject.put(&quot;name&quot;, twistInfo.getName());</span>
+
+<span class="nc" id="L180">				jsonResponseObject.put(&quot;result&quot;, jsonObject);</span>
+<span class="nc" id="L181">				out.println(jsonResponseObject.toString());</span>
+
+<span class="nc" id="L183">			} catch (JSONException jsonException) {</span>
+<span class="nc" id="L184">				throw new ServletException(jsonException);</span>
+<span class="nc" id="L185">			}</span>
+
+<span class="nc" id="L187">			out.flush();</span>
+<span class="nc" id="L188">			out.close();</span>
+<span class="nc" id="L189">			return;</span>
+		} else {
+<span class="nc" id="L191">			List&lt;TwistInfo&gt; twistInfoList = store.getTwistInfoList();</span>
+<span class="nc" id="L192">			req.setAttribute(&quot;twistInfoList&quot;, twistInfoList);</span>
+<span class="nc" id="L193">			req.setAttribute(&quot;twistInfoIdEnabled&quot;, store.getUniversalTwistInfoId());</span>
+
+<span class="nc" id="L195">			RequestDispatcher dispatch = req.getRequestDispatcher(&quot;/twistinfo_setup.jsp&quot;);</span>
+<span class="nc" id="L196">			dispatch.forward(req, resp);</span>
+<span class="nc" id="L197">			return;</span>
+		}
+
+	}
+}
+</pre><div class="footer"><span class="right">Created with <a href="http://www.jacoco.org/jacoco">JaCoCo</a> 0.8.1.201803210924</span></div></body></html>

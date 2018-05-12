@@ -1,0 +1,166 @@
+<?xml version="1.0" encoding="UTF-8"?><!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Strict//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-strict.dtd"><html xmlns="http://www.w3.org/1999/xhtml" lang="zh"><head><meta http-equiv="Content-Type" content="text/html;charset=UTF-8"/><link rel="stylesheet" href="../jacoco-resources/report.css" type="text/css"/><link rel="shortcut icon" href="../jacoco-resources/report.gif" type="image/gif"/><title>OrderedMap.java</title><link rel="stylesheet" href="../jacoco-resources/prettify.css" type="text/css"/><script type="text/javascript" src="../jacoco-resources/prettify.js"></script></head><body onload="window['PR_TAB_WIDTH']=4;prettyPrint()"><div class="breadcrumb" id="breadcrumb"><span class="info"><a href="../jacoco-sessions.html" class="el_session">Sessions</a></span><a href="../index.html" class="el_report">JaCoCo Ant Example</a> &gt; <a href="index.source.html" class="el_package">com.mockey</a> &gt; <span class="el_source">OrderedMap.java</span></div><h1>OrderedMap.java</h1><pre class="source lang-java linenums">/*
+ * This file is part of Mockey, a tool for testing application 
+ * interactions over HTTP, with a focus on testing web services, 
+ * specifically web applications that consume XML, JSON, and HTML.
+ *  
+ * Copyright (C) 2009-2010  Authors:
+ * 
+ * chad.lafontaine (chad.lafontaine AT gmail DOT com)
+ * neil.cronin (neil AT rackle DOT com) 
+ * lorin.kobashigawa (lkb AT kgawa DOT com)
+ * rob.meyer (rob AT bigdis DOT com)
+ * 
+ * This program is free software; you can redistribute it and/or
+ * modify it under the terms of the GNU General Public License
+ * as published by the Free Software Foundation; either version 2
+ * of the License, or (at your option) any later version.
+ * 
+ * This program is distributed in the hope that it will be useful,
+ * but WITHOUT ANY WARRANTY; without even the implied warranty of
+ * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+ * GNU General Public License for more details.
+ * 
+ * You should have received a copy of the GNU General Public License
+ * along with this program; if not, write to the Free Software
+ * Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301, USA.
+ *
+ */
+package com.mockey;
+
+import java.util.ArrayList;
+import java.util.concurrent.ConcurrentHashMap;
+import java.util.List;
+import java.util.Map;
+
+import com.mockey.model.PersistableItem;
+
+/**
+ * Keeps an ordered map of items, with a key of an number based on 'when defined
+ * and added to this object'. Sort of like an auto-incrementing column in a db.
+ * &lt;p&gt;
+ * So:
+ * &lt;p&gt;
+ * &lt;code&gt;
+ * OrderedMap&lt;MyObj&gt; myMap = new OrderedMap&lt;MyObj&gt;();&lt;br&gt;
+ * 0 == myMap.save(new MyObj()).getId();&lt;br&gt;
+ * 1 == myMap.save(new MyObj()).getId();&lt;br&gt;
+ * 2 == myMap.save(new MyObj()).getId();&lt;br&gt;
+ * &lt;/code&gt;
+ * 
+ * @author chad.lafontaine
+ * 
+ */
+<span class="fc" id="L53">public class OrderedMap&lt;T extends PersistableItem&gt; extends ConcurrentHashMap&lt;Long, T&gt; implements Map&lt;Long, T&gt; {</span>
+
+    private static final long serialVersionUID = -1654150132938363942L;
+<span class="fc" id="L56">    private Integer maxSize = null;</span>
+
+    
+    /**
+     * Will save item. If maximum size of this Map is set (non-null, positive),
+     * this method will purge the oldest value, the value with the smallest key
+     * value.
+     * 
+     * @param item
+     * @return item saved, with ID set.
+     * @see #getMaxSize()
+     */
+    public PersistableItem save(T item) {
+
+<span class="pc bpc" id="L70" title="1 of 2 branches missed.">        if (item != null) {</span>
+<span class="fc bfc" id="L71" title="All 2 branches covered.">            if (item.getId() != null) {</span>
+<span class="fc" id="L72">                this.put(item.getId(), item);</span>
+            } else {
+<span class="fc" id="L74">                Long nextNumber = this.getNextValue();</span>
+<span class="fc" id="L75">                item.setId(nextNumber);</span>
+<span class="fc" id="L76">                this.put(nextNumber, item);</span>
+            }
+        }
+
+<span class="pc bpc" id="L80" title="3 of 4 branches missed.">        if (this.maxSize != null &amp;&amp; this.maxSize &gt; 0) {</span>
+
+<span class="nc bnc" id="L82" title="All 2 branches missed.">            while (this.size() &gt; this.maxSize) {</span>
+<span class="nc" id="L83">                Long removeMe = getSmallestValue();</span>
+<span class="nc" id="L84">                this.remove(removeMe);</span>
+<span class="nc" id="L85">            }</span>
+
+        }
+<span class="fc" id="L88">        return item;</span>
+    }
+
+    public T get(Object key) {
+<span class="fc bfc" id="L92" title="All 2 branches covered.">      if (key == null) {</span>
+<span class="fc" id="L93">        return null;</span>
+      }
+<span class="fc" id="L95">      return super.get(key);</span>
+    }
+
+    private Long getSmallestValue() {
+<span class="nc" id="L99">        Long smallestValue = null;</span>
+<span class="nc bnc" id="L100" title="All 2 branches missed.">        for (Long key : this.keySet()) {</span>
+<span class="nc bnc" id="L101" title="All 2 branches missed.">            if (smallestValue == null) {</span>
+<span class="nc" id="L102">                smallestValue = key;</span>
+<span class="nc bnc" id="L103" title="All 2 branches missed.">            } else if (key &lt; smallestValue) {</span>
+<span class="nc" id="L104">                smallestValue = key;</span>
+            }
+
+<span class="nc" id="L107">        }</span>
+<span class="nc" id="L108">        return smallestValue;</span>
+    }
+
+    private Long getNextValue() {
+<span class="fc" id="L112">        Long nextValue = new Long(0);</span>
+<span class="fc bfc" id="L113" title="All 2 branches covered.">        for (Long key : this.keySet()) {</span>
+<span class="pc bpc" id="L114" title="1 of 2 branches missed.">            if (key &gt; nextValue) {</span>
+<span class="fc" id="L115">                nextValue = key;</span>
+            }
+<span class="fc" id="L117">        }</span>
+<span class="fc" id="L118">        nextValue = new Long(nextValue.longValue() + 1);</span>
+<span class="fc" id="L119">        return nextValue;</span>
+    }
+
+    public List&lt;T&gt; getOrderedList() {
+
+<span class="fc" id="L124">        List&lt;Long&gt; orderedListOfKeys = new ArrayList&lt;Long&gt;();</span>
+<span class="fc bfc" id="L125" title="All 2 branches covered.">        for (Long key : this.keySet()) {</span>
+<span class="fc" id="L126">            int index = 0;</span>
+<span class="fc bfc" id="L127" title="All 2 branches covered.">            for (Long current : orderedListOfKeys) {</span>
+<span class="pc bpc" id="L128" title="1 of 2 branches missed.">                if (current &gt; key) {</span>
+<span class="nc" id="L129">                    break;</span>
+                }
+<span class="fc" id="L131">                index++;</span>
+<span class="fc" id="L132">            }</span>
+<span class="fc" id="L133">            orderedListOfKeys.add(index, key);</span>
+<span class="fc" id="L134">        }</span>
+
+        // Ordered key list.
+<span class="fc" id="L137">        List&lt;T&gt; orderedListOfValues = new ArrayList&lt;T&gt;();</span>
+<span class="fc bfc" id="L138" title="All 2 branches covered.">        for (Long key : orderedListOfKeys) {</span>
+<span class="fc" id="L139">            orderedListOfValues.add(this.get(key));</span>
+<span class="fc" id="L140">        }</span>
+
+<span class="fc" id="L142">        return orderedListOfValues;</span>
+    }
+
+    /**
+     * 
+     * @param maxSize
+     * @see #getMaxSize()
+     */
+    public void setMaxSize(Integer maxSize) {
+<span class="nc" id="L151">        this.maxSize = maxSize;</span>
+<span class="nc" id="L152">    }</span>
+
+    /**
+     * Maximum number of &lt;code&gt;PersistableItem&lt;/code&gt; allowed in this ordered
+     * map. Once this map has reached its limit, if set, it takes a first-in,
+     * first-out (FIFO) persistence approach, purging the oldest object.
+     * 
+     * @return null if not set (no size limit), otherwise returns the maximum
+     *         size value.
+     */
+    public Integer getMaxSize() {
+<span class="nc" id="L163">        return maxSize;</span>
+    }
+}
+</pre><div class="footer"><span class="right">Created with <a href="http://www.jacoco.org/jacoco">JaCoCo</a> 0.8.1.201803210924</span></div></body></html>

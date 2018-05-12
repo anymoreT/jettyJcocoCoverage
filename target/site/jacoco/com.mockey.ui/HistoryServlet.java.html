@@ -1,0 +1,125 @@
+<?xml version="1.0" encoding="UTF-8"?><!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Strict//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-strict.dtd"><html xmlns="http://www.w3.org/1999/xhtml" lang="zh"><head><meta http-equiv="Content-Type" content="text/html;charset=UTF-8"/><link rel="stylesheet" href="../jacoco-resources/report.css" type="text/css"/><link rel="shortcut icon" href="../jacoco-resources/report.gif" type="image/gif"/><title>HistoryServlet.java</title><link rel="stylesheet" href="../jacoco-resources/prettify.css" type="text/css"/><script type="text/javascript" src="../jacoco-resources/prettify.js"></script></head><body onload="window['PR_TAB_WIDTH']=4;prettyPrint()"><div class="breadcrumb" id="breadcrumb"><span class="info"><a href="../jacoco-sessions.html" class="el_session">Sessions</a></span><a href="../index.html" class="el_report">JaCoCo Ant Example</a> &gt; <a href="index.source.html" class="el_package">com.mockey.ui</a> &gt; <span class="el_source">HistoryServlet.java</span></div><h1>HistoryServlet.java</h1><pre class="source lang-java linenums">/*
+ * This file is part of Mockey, a tool for testing application 
+ * interactions over HTTP, with a focus on testing web services, 
+ * specifically web applications that consume XML, JSON, and HTML.
+ *  
+ * Copyright (C) 2009-2010  Authors:
+ * 
+ * chad.lafontaine (chad.lafontaine AT gmail DOT com)
+ * neil.cronin (neil AT rackle DOT com) 
+ * lorin.kobashigawa (lkb AT kgawa DOT com)
+ * rob.meyer (rob AT bigdis DOT com)
+ * 
+ * This program is free software; you can redistribute it and/or
+ * modify it under the terms of the GNU General Public License
+ * as published by the Free Software Foundation; either version 2
+ * of the License, or (at your option) any later version.
+ * 
+ * This program is distributed in the hope that it will be useful,
+ * but WITHOUT ANY WARRANTY; without even the implied warranty of
+ * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+ * GNU General Public License for more details.
+ * 
+ * You should have received a copy of the GNU General Public License
+ * along with this program; if not, write to the Free Software
+ * Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301, USA.
+ *
+ */
+package com.mockey.ui;
+
+import java.io.IOException;
+import java.util.List;
+
+import javax.servlet.RequestDispatcher;
+import javax.servlet.ServletException;
+import javax.servlet.http.HttpServlet;
+import javax.servlet.http.HttpServletRequest;
+import javax.servlet.http.HttpServletResponse;
+
+import org.apache.log4j.Logger;
+
+import com.mockey.model.FulfilledClientRequest;
+import com.mockey.model.HistoryFilter;
+import com.mockey.model.Url;
+import com.mockey.storage.IMockeyStorage;
+import com.mockey.storage.StorageRegistry;
+
+/**
+ * &lt;code&gt;HistoryServlet&lt;/code&gt; produces a list of fulfilled requests and
+ * responses (history). Moreover, this servlet accepts String tokens to filter
+ * the end list.
+ * 
+ * 
+ * @author Chad Lafontaine (chad.lafontaine)
+ */
+<span class="nc" id="L55">public class HistoryServlet extends HttpServlet {</span>
+
+    private static final long serialVersionUID = -2255013290808524662L;
+<span class="nc" id="L58">    private static final Logger logger = Logger.getLogger(HistoryServlet.class);</span>
+    private static final String HISTORY_FILTER = &quot;historyFilter&quot;;
+
+<span class="nc" id="L61">    private static IMockeyStorage store = StorageRegistry.MockeyStorage;</span>
+
+    /**
+     * 
+     */
+    public void service(HttpServletRequest req, HttpServletResponse resp) throws ServletException, IOException {
+
+<span class="nc" id="L68">        String[] filterTokens = req.getParameterValues(&quot;token&quot;);</span>
+<span class="nc" id="L69">        HistoryFilter historyFilter = (HistoryFilter) req.getSession().getAttribute(HISTORY_FILTER);</span>
+<span class="nc bnc" id="L70" title="All 2 branches missed.">        if (historyFilter == null) {</span>
+<span class="nc" id="L71">            historyFilter = new HistoryFilter();</span>
+
+        }
+
+<span class="nc" id="L75">        String action = req.getParameter(&quot;action&quot;);</span>
+
+<span class="nc bnc" id="L77" title="All 4 branches missed.">        if (action != null &amp;&amp; &quot;delete_all&quot;.equals(action)) {</span>
+<span class="nc" id="L78">            store.deleteFulfilledClientRequests();</span>
+            // don't allow reloads to re-delete.
+<span class="nc" id="L80">            String absolutePath = Url.getAbsoluteURL(req, &quot;/history&quot;);</span>
+<span class="nc" id="L81">            resp.sendRedirect(absolutePath); </span>
+<span class="nc" id="L82">            return;</span>
+<span class="nc bnc" id="L83" title="All 4 branches missed.">        } else if (action != null &amp;&amp; &quot;delete&quot;.equals(action)) {</span>
+<span class="nc" id="L84">            String fulfilledRequestId = req.getParameter(&quot;fulfilledRequestId&quot;);</span>
+            try {
+<span class="nc" id="L86">                store.deleteFulfilledClientRequestById(new Long(fulfilledRequestId));</span>
+<span class="nc" id="L87">            } catch (Exception e) {</span>
+<span class="nc" id="L88">                logger.error(&quot;Unable to delete fulfilled request with id:&quot; + fulfilledRequestId, e);</span>
+<span class="nc" id="L89">            }</span>
+            // Ajax used in page, so don't return anything
+<span class="nc" id="L91">            return;</span>
+
+<span class="nc bnc" id="L93" title="All 4 branches missed.">        }  else if (action != null &amp;&amp; &quot;tag&quot;.equals(action)) {</span>
+<span class="nc" id="L94">            String fulfilledRequestId = req.getParameter(&quot;fulfilledRequestId&quot;);</span>
+            
+            try {
+<span class="nc" id="L97">            	FulfilledClientRequest ffcr = store.getFulfilledClientRequestsById(new Long(fulfilledRequestId));</span>
+<span class="nc bnc" id="L98" title="All 2 branches missed.">            	if(ffcr.getComment()!=null){</span>
+<span class="nc" id="L99">            		ffcr.setComment(null);</span>
+            	}else {
+<span class="nc" id="L101">            	    ffcr.setComment(&quot;tagged&quot;);</span>
+            	}
+<span class="nc" id="L103">            	store.saveOrUpdateFulfilledClientRequest(ffcr);</span>
+<span class="nc" id="L104">            } catch (Exception e) {</span>
+<span class="nc" id="L105">                logger.error(&quot;Unable to tag history of a fulfilled request with id:&quot; + fulfilledRequestId, e);</span>
+<span class="nc" id="L106">            }</span>
+            // Ajax used in page, so don't return anything
+<span class="nc" id="L108">            return;</span>
+
+<span class="nc bnc" id="L110" title="All 4 branches missed.">        } else if (action != null &amp;&amp; &quot;remove_token&quot;.equals(action)) {</span>
+<span class="nc" id="L111">            historyFilter.deleteTokens(filterTokens);</span>
+<span class="nc bnc" id="L112" title="All 4 branches missed.">        } else if (action != null &amp;&amp; &quot;remove_all_tokens&quot;.equals(action)) {</span>
+<span class="nc" id="L113">            historyFilter = new HistoryFilter();</span>
+        } else {
+
+<span class="nc" id="L116">            historyFilter.addTokens(filterTokens);</span>
+        }
+<span class="nc" id="L118">        List&lt;FulfilledClientRequest&gt; fulfilledRequests = store.getFulfilledClientRequest(historyFilter.getTokens());</span>
+<span class="nc" id="L119">        req.setAttribute(&quot;requests&quot;, fulfilledRequests);</span>
+<span class="nc" id="L120">        req.getSession().setAttribute(HISTORY_FILTER, historyFilter);</span>
+<span class="nc" id="L121">        RequestDispatcher dispatch = req.getRequestDispatcher(&quot;/history.jsp&quot;);</span>
+<span class="nc" id="L122">        dispatch.forward(req, resp);</span>
+<span class="nc" id="L123">    }</span>
+}
+</pre><div class="footer"><span class="right">Created with <a href="http://www.jacoco.org/jacoco">JaCoCo</a> 0.8.1.201803210924</span></div></body></html>

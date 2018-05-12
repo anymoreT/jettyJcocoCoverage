@@ -1,0 +1,136 @@
+<?xml version="1.0" encoding="UTF-8"?><!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Strict//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-strict.dtd"><html xmlns="http://www.w3.org/1999/xhtml" lang="zh"><head><meta http-equiv="Content-Type" content="text/html;charset=UTF-8"/><link rel="stylesheet" href="../jacoco-resources/report.css" type="text/css"/><link rel="shortcut icon" href="../jacoco-resources/report.gif" type="image/gif"/><title>ServicePlan.java</title><link rel="stylesheet" href="../jacoco-resources/prettify.css" type="text/css"/><script type="text/javascript" src="../jacoco-resources/prettify.js"></script></head><body onload="window['PR_TAB_WIDTH']=4;prettyPrint()"><div class="breadcrumb" id="breadcrumb"><span class="info"><a href="../jacoco-sessions.html" class="el_session">Sessions</a></span><a href="../index.html" class="el_report">JaCoCo Ant Example</a> &gt; <a href="index.source.html" class="el_package">com.mockey.model</a> &gt; <span class="el_source">ServicePlan.java</span></div><h1>ServicePlan.java</h1><pre class="source lang-java linenums">/*
+ * This file is part of Mockey, a tool for testing application 
+ * interactions over HTTP, with a focus on testing web services, 
+ * specifically web applications that consume XML, JSON, and HTML.
+ *  
+ * Copyright (C) 2009-2010  Authors:
+ * 
+ * chad.lafontaine (chad.lafontaine AT gmail DOT com)
+ * neil.cronin (neil AT rackle DOT com) 
+ * lorin.kobashigawa (lkb AT kgawa DOT com)
+ * rob.meyer (rob AT bigdis DOT com)
+ * 
+ * This program is free software; you can redistribute it and/or
+ * modify it under the terms of the GNU General Public License
+ * as published by the Free Software Foundation; either version 2
+ * of the License, or (at your option) any later version.
+ * 
+ * This program is distributed in the hope that it will be useful,
+ * but WITHOUT ANY WARRANTY; without even the implied warranty of
+ * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+ * GNU General Public License for more details.
+ * 
+ * You should have received a copy of the GNU General Public License
+ * along with this program; if not, write to the Free Software
+ * Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301, USA.
+ *
+ */
+package com.mockey.model;
+
+import java.util.List;
+
+import com.mockey.OrderedMap;
+
+/**
+ * A Mock Service Plan is a set of desired scenarios. When selected, a plan will
+ * enable a specific scenario per service. For example, a plan called 'Happy
+ * Path' would enable the desired scenario per service to satisfy this story:
+ * &quot;User logs in, views account, and checks their in-box&quot;, while a plan called
+ * 'Notify User' would enable the desired scenario per service to satisfy &quot;user
+ * logged in and is presented a notification'.
+ * 
+ * @author chad.lafontaine
+ * 
+ */
+<span class="nc" id="L45">public class ServicePlan extends StatusCheck implements PersistableItem {</span>
+	private Long id;
+	private String name;
+	private String description;
+<span class="nc" id="L49">	private Boolean transientState = new Boolean(false);</span>
+<span class="nc" id="L50">	private OrderedMap&lt;PlanItem&gt; planItemStore = new OrderedMap&lt;PlanItem&gt;();</span>
+
+	public Long getId() {
+<span class="nc" id="L53">		return id;</span>
+	}
+
+	public void setId(Long id) {
+<span class="nc" id="L57">		this.id = id;</span>
+<span class="nc" id="L58">	}</span>
+
+	public String getName() {
+<span class="nc" id="L61">		return name;</span>
+	}
+
+	public void setName(String name) {
+<span class="nc" id="L65">		this.name = name;</span>
+<span class="nc" id="L66">	}</span>
+
+	public String getDescription() {
+<span class="nc" id="L69">		return description;</span>
+	}
+
+	public void setDescription(String description) {
+<span class="nc" id="L73">		this.description = description;</span>
+<span class="nc" id="L74">	}</span>
+
+	public List&lt;PlanItem&gt; getPlanItemList() {
+<span class="nc" id="L77">		return this.planItemStore.getOrderedList();</span>
+	}
+
+	/**
+	 * Clears the ServicePlan state, and updates with all plan items.
+	 * 
+	 * @param planItemList
+	 */
+	public void setPlanItemList(List&lt;PlanItem&gt; planItemList) {
+<span class="nc" id="L86">		this.planItemStore = new OrderedMap&lt;PlanItem&gt;();</span>
+<span class="nc bnc" id="L87" title="All 2 branches missed.">		for (PlanItem pI : planItemList) {</span>
+<span class="nc" id="L88">			pI.setId(null);</span>
+<span class="nc" id="L89">			this.planItemStore.save(pI);</span>
+<span class="nc" id="L90">		}</span>
+<span class="nc" id="L91">	}</span>
+
+	/**
+	 * If plan item has an ID, then it will be updated. 
+	 * @param planItem
+	 */
+	public void addPlanItem(PlanItem planItem) {
+<span class="nc" id="L98">		planItemStore.save(planItem);</span>
+<span class="nc" id="L99">	}</span>
+
+	public void setTransientState(Boolean transientState) {
+<span class="nc" id="L102">		this.transientState = transientState;</span>
+<span class="nc" id="L103">	}</span>
+
+	public Boolean getTransientState() {
+<span class="nc" id="L106">		return transientState;</span>
+	}
+
+	/**
+	 * Helper method to check if this Service Plan manages a Service with a
+	 * matching name.
+	 * 
+	 * @return
+	 */
+	public boolean hasServiceWithMatchingName(String serviceName) {
+<span class="nc" id="L116">		boolean foundMatch = false;</span>
+<span class="nc bnc" id="L117" title="All 2 branches missed.">		for (PlanItem pi : this.getPlanItemList()) {</span>
+<span class="nc bnc" id="L118" title="All 2 branches missed.">			if (pi.getServiceName() != null</span>
+<span class="nc bnc" id="L119" title="All 2 branches missed.">					&amp;&amp; pi.getServiceName().equals(serviceName)) {</span>
+<span class="nc" id="L120">				foundMatch = true;</span>
+<span class="nc" id="L121">				break;</span>
+			}
+
+<span class="nc" id="L124">		}</span>
+<span class="nc" id="L125">		return foundMatch;</span>
+	}
+
+	@Override
+	public String toString() {
+<span class="nc" id="L130">		return &quot;ServicePlan [id=&quot; + id + &quot;, name=&quot; + name + &quot;, description=&quot; + description + &quot;, transientState=&quot;</span>
+				+ transientState + &quot;, planItemStore=&quot; + planItemStore + &quot;]&quot;;
+	}
+	
+	
+}
+</pre><div class="footer"><span class="right">Created with <a href="http://www.jacoco.org/jacoco">JaCoCo</a> 0.8.1.201803210924</span></div></body></html>

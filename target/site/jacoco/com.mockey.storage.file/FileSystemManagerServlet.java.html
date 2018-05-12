@@ -1,0 +1,97 @@
+<?xml version="1.0" encoding="UTF-8"?><!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Strict//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-strict.dtd"><html xmlns="http://www.w3.org/1999/xhtml" lang="zh"><head><meta http-equiv="Content-Type" content="text/html;charset=UTF-8"/><link rel="stylesheet" href="../jacoco-resources/report.css" type="text/css"/><link rel="shortcut icon" href="../jacoco-resources/report.gif" type="image/gif"/><title>FileSystemManagerServlet.java</title><link rel="stylesheet" href="../jacoco-resources/prettify.css" type="text/css"/><script type="text/javascript" src="../jacoco-resources/prettify.js"></script></head><body onload="window['PR_TAB_WIDTH']=4;prettyPrint()"><div class="breadcrumb" id="breadcrumb"><span class="info"><a href="../jacoco-sessions.html" class="el_session">Sessions</a></span><a href="../index.html" class="el_report">JaCoCo Ant Example</a> &gt; <a href="index.source.html" class="el_package">com.mockey.storage.file</a> &gt; <span class="el_source">FileSystemManagerServlet.java</span></div><h1>FileSystemManagerServlet.java</h1><pre class="source lang-java linenums">/*
+d * This file is part of Mockey, a tool for testing application 
+ * interactions over HTTP, with a focus on testing web services, 
+ * specifically web applications that consume XML, JSON, and HTML.
+ *  
+ * Copyright (C) 2009-2010  Authors:
+ * 
+ * chad.lafontaine (chad.lafontaine AT gmail DOT com)
+ * 
+ * This program is free software; you can redistribute it and/or
+ * modify it under the terms of the GNU General Public License
+ * as published by the Free Software Foundation; either version 2
+ * of the License, or (at your option) any later version.
+ * 
+ * This program is distributed in the hope that it will be useful,
+ * but WITHOUT ANY WARRANTY; without even the implied warranty of
+ * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+ * GNU General Public License for more details.
+ * 
+ * You should have received a copy of the GNU General Public License
+ * along with this program; if not, write to the Free Software
+ * Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301, USA.
+ *
+ */
+package com.mockey.storage.file;
+
+import java.io.BufferedOutputStream;
+import java.io.File;
+import java.io.FileInputStream;
+import java.io.IOException;
+
+import javax.activation.MimetypesFileTypeMap;
+import javax.servlet.RequestDispatcher;
+import javax.servlet.ServletException;
+import javax.servlet.http.HttpServlet;
+import javax.servlet.http.HttpServletRequest;
+import javax.servlet.http.HttpServletResponse;
+
+<span class="nc" id="L39">public class FileSystemManagerServlet extends HttpServlet {</span>
+
+	private static final long serialVersionUID = -7334916323927032682L;
+
+	/**
+	 * This service
+	 */
+	public void doGet(HttpServletRequest req, HttpServletResponse resp)
+			throws ServletException, IOException {
+
+<span class="nc" id="L49">		FileSystemManager fsm = new FileSystemManager();</span>
+
+<span class="nc" id="L51">		FileInfo[] imageList = fsm.getImageFileList();</span>
+
+<span class="nc" id="L53">		String fileName = req.getParameter(&quot;filename&quot;);</span>
+		
+
+<span class="nc bnc" id="L56" title="All 2 branches missed.">		if (fileName != null) {</span>
+
+			try {
+
+<span class="nc" id="L60">				BufferedOutputStream bos = new BufferedOutputStream(</span>
+<span class="nc" id="L61">						resp.getOutputStream());</span>
+<span class="nc" id="L62">				File fileToWriteOut = null;</span>
+
+<span class="nc" id="L64">				fileToWriteOut = fsm.getImageFile(fileName);</span>
+
+<span class="nc" id="L66">				resp.setContentType(new MimetypesFileTypeMap()</span>
+<span class="nc" id="L67">						.getContentType(fileToWriteOut));</span>
+<span class="nc" id="L68">				resp.setHeader(&quot;Content-disposition&quot;, &quot;attachment; filename=&quot;</span>
+						+ fileName);
+<span class="nc" id="L70">				FileInputStream fis = new FileInputStream(fileToWriteOut);</span>
+
+				int len;
+<span class="nc" id="L73">				byte[] buf = new byte[1024];</span>
+
+<span class="nc bnc" id="L75" title="All 2 branches missed.">				while ((len = fis.read(buf)) &gt; 0) {</span>
+<span class="nc" id="L76">					bos.write(buf, 0, len);</span>
+				}
+
+<span class="nc" id="L79">				bos.close();</span>
+
+<span class="nc" id="L81">				return;</span>
+<span class="nc" id="L82">			} catch (Exception e) {</span>
+				// do the following in a finally block:
+<span class="nc" id="L84">			}</span>
+
+		} else {
+
+<span class="nc" id="L88">			RequestDispatcher dispatch = req</span>
+<span class="nc" id="L89">					.getRequestDispatcher(&quot;filesysteminfo.jsp&quot;);</span>
+<span class="nc" id="L90">			req.setAttribute(&quot;imageList&quot;, imageList);</span>
+			
+<span class="nc" id="L92">			dispatch.forward(req, resp);</span>
+		}
+<span class="nc" id="L94">	}</span>
+
+}
+</pre><div class="footer"><span class="right">Created with <a href="http://www.jacoco.org/jacoco">JaCoCo</a> 0.8.1.201803210924</span></div></body></html>

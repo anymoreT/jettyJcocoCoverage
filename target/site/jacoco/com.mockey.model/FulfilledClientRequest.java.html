@@ -1,0 +1,240 @@
+<?xml version="1.0" encoding="UTF-8"?><!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Strict//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-strict.dtd"><html xmlns="http://www.w3.org/1999/xhtml" lang="zh"><head><meta http-equiv="Content-Type" content="text/html;charset=UTF-8"/><link rel="stylesheet" href="../jacoco-resources/report.css" type="text/css"/><link rel="shortcut icon" href="../jacoco-resources/report.gif" type="image/gif"/><title>FulfilledClientRequest.java</title><link rel="stylesheet" href="../jacoco-resources/prettify.css" type="text/css"/><script type="text/javascript" src="../jacoco-resources/prettify.js"></script></head><body onload="window['PR_TAB_WIDTH']=4;prettyPrint()"><div class="breadcrumb" id="breadcrumb"><span class="info"><a href="../jacoco-sessions.html" class="el_session">Sessions</a></span><a href="../index.html" class="el_report">JaCoCo Ant Example</a> &gt; <a href="index.source.html" class="el_package">com.mockey.model</a> &gt; <span class="el_source">FulfilledClientRequest.java</span></div><h1>FulfilledClientRequest.java</h1><pre class="source lang-java linenums">/*
+ * This file is part of Mockey, a tool for testing application 
+ * interactions over HTTP, with a focus on testing web services, 
+ * specifically web applications that consume XML, JSON, and HTML.
+ *  
+ * Copyright (C) 2009-2010  Authors:
+ * 
+ * chad.lafontaine (chad.lafontaine AT gmail DOT com)
+ * neil.cronin (neil AT rackle DOT com) 
+ * lorin.kobashigawa (lkb AT kgawa DOT com)
+ * rob.meyer (rob AT bigdis DOT com)
+ * 
+ * This program is free software; you can redistribute it and/or
+ * modify it under the terms of the GNU General Public License
+ * as published by the Free Software Foundation; either version 2
+ * of the License, or (at your option) any later version.
+ * 
+ * This program is distributed in the hope that it will be useful,
+ * but WITHOUT ANY WARRANTY; without even the implied warranty of
+ * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+ * GNU General Public License for more details.
+ * 
+ * You should have received a copy of the GNU General Public License
+ * along with this program; if not, write to the Free Software
+ * Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301, USA.
+ *
+ */
+package com.mockey.model;
+
+import java.util.Date;
+
+import com.mockey.plugin.RequestInspectionResult;
+
+/**
+ * Represents the snap-shot of what-just-happened between the Client and Server,
+ * response may be a mock scenario/service definition or a real response from
+ * the server.
+ * 
+ * @author chad.lafontaine
+ * 
+ */
+<span class="nc" id="L42">public class FulfilledClientRequest implements PersistableItem {</span>
+
+<span class="nc" id="L44">	private Long id = null;</span>
+<span class="nc" id="L45">	private Long serviceId = null;</span>
+<span class="nc" id="L46">	private String serviceName = null;</span>
+<span class="nc" id="L47">	private String scenarioName = null;</span>
+<span class="nc" id="L48">	private String serviceTagsAsString = null;</span>
+<span class="nc" id="L49">	private String scenarioTagsAsString = null;</span>
+<span class="nc" id="L50">	private String clientRequestBody = null;</span>
+<span class="nc" id="L51">	private String clientRequestHeaders = null;</span>
+<span class="nc" id="L52">	private String clientRequestParameters = null;</span>
+<span class="nc" id="L53">	private String clientRequestCookies = null;</span>
+<span class="nc" id="L54">	private String clientResponseCookies = null;</span>
+<span class="nc" id="L55">	private String requestorIP = null;</span>
+<span class="nc" id="L56">	private String rawRequest = null;</span>
+<span class="nc" id="L57">	private String comment = null;</span>
+<span class="nc" id="L58">	private String originalUrlBeforeTwisting = null;</span>
+<span class="nc" id="L59">	private int serviceResponseType = -1;</span>
+	private ResponseFromService responseMessage;
+	private RequestInspectionResult requestInspectionResult;
+<span class="nc" id="L62">	private Date time = new Date();</span>
+
+	/**
+	 * Value of the response type, defining Static, Dynamic, or Proxy response.
+	 * 
+	 * @return non-negative value if set.
+	 * @see com.mockey.model.Service#getServiceResponseType()
+	 */
+	public int getServiceResponseType() {
+<span class="nc" id="L71">		return serviceResponseType;</span>
+	}
+
+	/**
+	 * 
+	 * @param serviceResponseType
+	 * @see com.mockey.model.Service#getServiceResponseType()
+	 */
+	public void setServiceResponseType(int serviceResponseType) {
+<span class="nc" id="L80">		this.serviceResponseType = serviceResponseType;</span>
+<span class="nc" id="L81">	}</span>
+
+	/**
+	 * 
+	 * @return optional comment about this request.
+	 */
+	public String getComment() {
+<span class="nc" id="L88">		return comment;</span>
+	}
+
+	public void setComment(String comment) {
+<span class="nc" id="L92">		this.comment = comment;</span>
+<span class="nc" id="L93">	}</span>
+
+	/**
+	 * @return the rawRequest
+	 */
+	public String getRawRequest() {
+<span class="nc" id="L99">		return rawRequest;</span>
+	}
+
+	/**
+	 * @param rawRequest
+	 *            the rawRequest to set
+	 */
+	public void setRawRequest(String rawRequest) {
+<span class="nc" id="L107">		this.rawRequest = rawRequest;</span>
+<span class="nc" id="L108">	}</span>
+
+	public Date getTime() {
+<span class="nc" id="L111">		return time;</span>
+	}
+
+	public String getRequestorIP() {
+<span class="nc" id="L115">		return requestorIP;</span>
+	}
+
+	public void setRequestorIP(String ip) {
+<span class="nc" id="L119">		String requestIp = ip;</span>
+		// on macs sometimes localhost resolves to the IPV6 format IP
+<span class="nc bnc" id="L121" title="All 2 branches missed.">		if (requestIp.startsWith(&quot;0:0:0:0&quot;)) {</span>
+<span class="nc" id="L122">			requestIp = &quot;127.0.0.1&quot;;</span>
+		}
+<span class="nc" id="L124">		this.requestorIP = requestIp;</span>
+<span class="nc" id="L125">	}</span>
+
+	public String getClientRequestBody() {
+<span class="nc" id="L128">		return clientRequestBody;</span>
+	}
+
+	public void setClientRequestBody(String clientRequestBody) {
+<span class="nc" id="L132">		this.clientRequestBody = clientRequestBody;</span>
+<span class="nc" id="L133">	}</span>
+
+	public String getClientRequestHeaders() {
+<span class="nc" id="L136">		return clientRequestHeaders;</span>
+	}
+
+	public void setClientRequestHeaders(String clientRequestHeaders) {
+<span class="nc" id="L140">		this.clientRequestHeaders = clientRequestHeaders;</span>
+<span class="nc" id="L141">	}</span>
+
+	public String getClientRequestParameters() {
+<span class="nc" id="L144">		return clientRequestParameters;</span>
+	}
+
+	public void setClientRequestParameters(String clientRequestParameters) {
+<span class="nc" id="L148">		this.clientRequestParameters = clientRequestParameters;</span>
+<span class="nc" id="L149">	}</span>
+
+	public Long getServiceId() {
+<span class="nc" id="L152">		return serviceId;</span>
+	}
+
+	public void setServiceId(Long serviceId) {
+<span class="nc" id="L156">		this.serviceId = serviceId;</span>
+<span class="nc" id="L157">	}</span>
+
+	public ResponseFromService getResponseMessage() {
+<span class="nc" id="L160">		return responseMessage;</span>
+	}
+
+	public void setResponseMessage(ResponseFromService response) {
+<span class="nc" id="L164">		this.responseMessage = response;</span>
+<span class="nc" id="L165">	}</span>
+
+	public Long getId() {
+<span class="nc" id="L168">		return id;</span>
+	}
+
+	public void setId(Long id) {
+<span class="nc" id="L172">		this.id = id;</span>
+<span class="nc" id="L173">	}</span>
+
+	public void setServiceName(String serviceName) {
+<span class="nc" id="L176">		this.serviceName = serviceName;</span>
+<span class="nc" id="L177">	}</span>
+
+	public String getServiceName() {
+<span class="nc" id="L180">		return serviceName;</span>
+	}
+
+	public void setOriginalUrlBeforeTwisting(String originalUrlBeforeTwisting) {
+<span class="nc" id="L184">		this.originalUrlBeforeTwisting = originalUrlBeforeTwisting;</span>
+<span class="nc" id="L185">	}</span>
+
+	public String getOriginalUrlBeforeTwisting() {
+<span class="nc" id="L188">		return originalUrlBeforeTwisting;</span>
+	}
+
+	public void setClientRequestCookies(String clientRequestCookies) {
+<span class="nc" id="L192">		this.clientRequestCookies = clientRequestCookies;</span>
+<span class="nc" id="L193">	}</span>
+
+	public String getClientRequestCookies() {
+<span class="nc" id="L196">		return clientRequestCookies;</span>
+	}
+
+	public void setClientResponseCookies(String clientResponseCookies) {
+<span class="nc" id="L200">		this.clientResponseCookies = clientResponseCookies;</span>
+<span class="nc" id="L201">	}</span>
+
+	public String getClientResponseCookies() {
+<span class="nc" id="L204">		return clientResponseCookies;</span>
+	}
+
+	public RequestInspectionResult getRequestInspectionResult() {
+<span class="nc" id="L208">		return requestInspectionResult;</span>
+	}
+
+	public void setRequestInspectionResult(RequestInspectionResult requestInspectionResult) {
+<span class="nc" id="L212">		this.requestInspectionResult = requestInspectionResult;</span>
+<span class="nc" id="L213">	}</span>
+
+	public String getScenarioName() {
+<span class="nc" id="L216">		return scenarioName;</span>
+	}
+
+	public void setScenarioName(String scenarioName) {
+<span class="nc" id="L220">		this.scenarioName = scenarioName;</span>
+<span class="nc" id="L221">	}</span>
+	
+	public String getServiceTagsAsString() {
+<span class="nc" id="L224">		return serviceTagsAsString;</span>
+	}
+
+	public void setServiceTagsAsString(String serviceTagsAsString) {
+<span class="nc" id="L228">		this.serviceTagsAsString = serviceTagsAsString;</span>
+<span class="nc" id="L229">	}</span>
+
+	public String getScenarioTagsAsString() {
+<span class="nc" id="L232">		return scenarioTagsAsString;</span>
+	}
+
+	public void setScenarioTagsAsString(String scenarioTagsAsString) {
+<span class="nc" id="L236">		this.scenarioTagsAsString = scenarioTagsAsString;</span>
+<span class="nc" id="L237">	}</span>
+
+}
+</pre><div class="footer"><span class="right">Created with <a href="http://www.jacoco.org/jacoco">JaCoCo</a> 0.8.1.201803210924</span></div></body></html>

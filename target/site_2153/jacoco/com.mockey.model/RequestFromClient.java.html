@@ -1,0 +1,472 @@
+<?xml version="1.0" encoding="UTF-8"?><!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Strict//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-strict.dtd"><html xmlns="http://www.w3.org/1999/xhtml" lang="zh"><head><meta http-equiv="Content-Type" content="text/html;charset=UTF-8"/><link rel="stylesheet" href="../jacoco-resources/report.css" type="text/css"/><link rel="shortcut icon" href="../jacoco-resources/report.gif" type="image/gif"/><title>RequestFromClient.java</title><link rel="stylesheet" href="../jacoco-resources/prettify.css" type="text/css"/><script type="text/javascript" src="../jacoco-resources/prettify.js"></script></head><body onload="window['PR_TAB_WIDTH']=4;prettyPrint()"><div class="breadcrumb" id="breadcrumb"><span class="info"><a href="../jacoco-sessions.html" class="el_session">Sessions</a></span><a href="../index.html" class="el_report">JaCoCo Ant Example</a> &gt; <a href="index.source.html" class="el_package">com.mockey.model</a> &gt; <span class="el_source">RequestFromClient.java</span></div><h1>RequestFromClient.java</h1><pre class="source lang-java linenums">/*
+ * This file is part of Mockey, a tool for testing application 
+ * interactions over HTTP, with a focus on testing web services, 
+ * specifically web applications that consume XML, JSON, and HTML.
+ *  
+ * Copyright (C) 2009-2010  Authors:
+ * 
+ * chad.lafontaine (chad.lafontaine AT gmail DOT com)
+ * neil.cronin (neil AT rackle DOT com) 
+ * lorin.kobashigawa (lkb AT kgawa DOT com)
+ * rob.meyer (rob AT bigdis DOT com)
+ * 
+ * This program is free software; you can redistribute it and/or
+ * modify it under the terms of the GNU General Public License
+ * as published by the Free Software Foundation; either version 2
+ * of the License, or (at your option) any later version.
+ * 
+ * This program is distributed in the hope that it will be useful,
+ * but WITHOUT ANY WARRANTY; without even the implied warranty of
+ * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+ * GNU General Public License for more details.
+ * 
+ * You should have received a copy of the GNU General Public License
+ * along with this program; if not, write to the Free Software
+ * Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301, USA.
+ *
+ */
+package com.mockey.model;
+
+import java.io.IOException;
+import java.io.InputStream;
+import java.io.UnsupportedEncodingException;
+import java.net.URI;
+import java.net.URISyntaxException;
+import java.net.URLEncoder;
+import java.util.ArrayList;
+import java.util.Date;
+import java.util.Enumeration;
+import java.util.HashMap;
+import java.util.List;
+import java.util.Map;
+
+import javax.servlet.http.HttpServletRequest;
+
+import org.apache.commons.logging.Log;
+import org.apache.commons.logging.LogFactory;
+import org.apache.http.HttpEntity;
+import org.apache.http.HttpHost;
+import org.apache.http.HttpRequest;
+import org.apache.http.NameValuePair;
+import org.apache.http.client.entity.UrlEncodedFormEntity;
+import org.apache.http.client.methods.HttpGet;
+import org.apache.http.client.methods.HttpPost;
+import org.apache.http.client.params.ClientPNames;
+import org.apache.http.client.utils.URIUtils;
+import org.apache.http.cookie.Cookie;
+import org.apache.http.entity.StringEntity;
+import org.apache.http.impl.cookie.BasicClientCookie;
+import org.apache.http.message.BasicNameValuePair;
+import org.apache.http.protocol.HTTP;
+
+/**
+ * Wraps httpServletRequest and parses out the information we're looking for.
+ */
+public class RequestFromClient {
+
+	/**
+	 * We will ignore the accept-encoding for now to avoid dealing with GZIP
+	 * responses if we decide to accept GZIP'ed data later, here is an example
+	 * of how to un-gzip it:
+	 * 
+	 * &lt;pre&gt;
+	 * http://svn.apache.org/repos/asf/httpcomponents/httpclient/trunk/httpclient/src/examples/org/apache/http/examples/client/ClientGZipContentCompression.java
+	 * &lt;/pre&gt;
+	 * 
+	 */
+<span class="nc" id="L77">	public static final String[] HEADERS_TO_IGNORE = { &quot;content-length&quot;,</span>
+			&quot;host&quot;, &quot;accept-encoding&quot;, &quot;cookie&quot; };
+
+<span class="nc" id="L80">	private Log log = LogFactory.getLog(RequestFromClient.class);</span>
+<span class="nc" id="L81">	private List&lt;Cookie&gt; httpClientCookies = new ArrayList&lt;Cookie&gt;();</span>
+<span class="nc" id="L82">	private Map&lt;String, String[]&gt; parameters = new HashMap&lt;String, String[]&gt;();</span>
+<span class="nc" id="L83">	private Map&lt;String, List&lt;String&gt;&gt; headers = new HashMap&lt;String, List&lt;String&gt;&gt;();</span>
+	private String requestBody;
+	private String method;
+	private String fullURL;
+
+	/**
+	 * Initialization will extract Headers, Body, Parameters, and Cookies from
+	 * the raw HTTP request. Note: This class will &lt;i&gt;_ignore_&lt;/i&gt; some header
+	 * information. See &lt;code&gt;HEADERS_TO_IGNORE&lt;/code&gt;
+	 * 
+	 * @param rawRequest
+	 */
+<span class="nc" id="L95">	public RequestFromClient(HttpServletRequest rawRequest) {</span>
+		try {
+<span class="nc" id="L97">			rawRequest.setCharacterEncoding(HTTP.ISO_8859_1); // &quot;UTF-8&quot;);</span>
+
+<span class="nc" id="L99">		} catch (UnsupportedEncodingException e) {</span>
+<span class="nc" id="L100">			e.printStackTrace();</span>
+<span class="nc" id="L101">		}</span>
+<span class="nc" id="L102">		this.method = rawRequest.getMethod();</span>
+<span class="nc" id="L103">		this.fullURL = rawRequest.getRequestURL().toString();</span>
+<span class="nc" id="L104">		parseRequestHeaders(rawRequest);</span>
+<span class="nc" id="L105">		parseRequestBody(rawRequest);</span>
+<span class="nc" id="L106">		parseParameters(rawRequest);</span>
+<span class="nc" id="L107">		parseCookies(rawRequest);</span>
+<span class="nc" id="L108">	}</span>
+
+	public List&lt;Cookie&gt; getHttpClientCookies() {
+<span class="nc" id="L111">		return this.httpClientCookies;</span>
+	}
+
+	public String getRequestURL() {
+<span class="nc" id="L115">		return this.fullURL;</span>
+	}
+
+	/**
+	 * Copy all necessary data from the request into a POST to the new server
+	 * 
+	 * @param serviceBean
+	 *            the path on the server to POST to
+	 * @return A fully populated HttpRequest object
+	 * @throws URISyntaxException
+	 * @throws UnsupportedEncodingException
+	 */
+	public HttpRequest postToRealServer(Url url) throws URISyntaxException,
+			UnsupportedEncodingException {
+		// TODO: Cleanup the logic to handle creating a GET vs POST
+		HttpRequest request;
+<span class="nc" id="L131">		String urlQuery = this.buildParameterRequest();</span>
+<span class="nc bnc" id="L132" title="All 2 branches missed.">		if (urlQuery.length() == 0) {</span>
+			// If the query is empty, pass a null query to URIUtils.createURI(),
+			// as an empty string
+			// causes URIUtils.createURI() to append a ? to the URI.
+<span class="nc" id="L136">			urlQuery = null;</span>
+		}
+<span class="nc" id="L138">		URI uri = URIUtils.createURI(url.getScheme(), url.getHost(), -1,</span>
+<span class="nc" id="L139">				url.getPath(), urlQuery, null);</span>
+
+<span class="nc bnc" id="L141" title="All 2 branches missed.">		if ((&quot;GET&quot;).equalsIgnoreCase(this.method)) {</span>
+<span class="nc" id="L142">			request = new HttpGet(uri);</span>
+		} else {
+<span class="nc" id="L144">			HttpPost post = new HttpPost(uri);</span>
+
+			// copy the request body we received into the POST
+<span class="nc" id="L147">			post.setEntity(constructHttpPostBody());</span>
+<span class="nc" id="L148">			request = post;</span>
+
+		}
+
+		// copy the headers into the request to the real server
+<span class="nc bnc" id="L153" title="All 2 branches missed.">		for (Map.Entry&lt;String, List&lt;String&gt;&gt; stringListEntry : headers</span>
+<span class="nc" id="L154">				.entrySet()) {</span>
+<span class="nc" id="L155">			String name = stringListEntry.getKey();</span>
+
+			// ignore certain headers that httpclient will generate for us
+<span class="nc bnc" id="L158" title="All 2 branches missed.">			if (shouldIncludeHeader(name)) {</span>
+<span class="nc bnc" id="L159" title="All 2 branches missed.">				for (String value : stringListEntry.getValue()) {</span>
+<span class="nc" id="L160">					request.addHeader(name, value);</span>
+<span class="nc" id="L161">				}</span>
+			}
+<span class="nc" id="L163">		}</span>
+
+		/*
+		 * If the port is the default one for the scheme, force HttpClient to
+		 * not set it in the Host header. By default, HttpClient always
+		 * specifies the port in the Host header, even if it's the default one -
+		 * e.g., &quot;Host: www.amazon.com:443&quot;. Some web servers do not like that.
+		 */
+<span class="nc bnc" id="L171" title="All 2 branches missed.">		if (url.isDefaultPort()) {</span>
+<span class="nc" id="L172">			request.getParams().setParameter(ClientPNames.VIRTUAL_HOST,</span>
+<span class="nc" id="L173">					new HttpHost(url.getHost()));</span>
+		}
+
+<span class="nc" id="L176">		return request;</span>
+	}
+
+	private boolean shouldIncludeHeader(String name) {
+<span class="nc bnc" id="L180" title="All 2 branches missed.">		for (String header : HEADERS_TO_IGNORE) {</span>
+<span class="nc bnc" id="L181" title="All 2 branches missed.">			if (header.equalsIgnoreCase(name)) {</span>
+<span class="nc" id="L182">				return false;</span>
+			}
+		}
+<span class="nc" id="L185">		return true;</span>
+	}
+
+	/**
+	 * Parameter key and value(s).
+	 * 
+	 * @return
+	 */
+	public Map&lt;String, String[]&gt; getParameters() {
+<span class="nc" id="L194">		return this.parameters;</span>
+	}
+
+	/**
+	 * 
+	 * @return All the parameters as a URL encoded string
+	 * @throws UnsupportedEncodingException
+	 */
+	public String buildParameterRequest() throws UnsupportedEncodingException {
+<span class="nc" id="L203">		StringBuffer requestMsg = new StringBuffer();</span>
+		// Checking for this case: /someurl?wsdl
+<span class="nc" id="L205">		boolean first = true;</span>
+<span class="nc bnc" id="L206" title="All 2 branches missed.">		for (String key : parameters.keySet()) {</span>
+<span class="nc" id="L207">			String[] values = parameters.get(key);</span>
+
+<span class="nc bnc" id="L209" title="All 2 branches missed.">			if (!first) {</span>
+<span class="nc" id="L210">				requestMsg.append(&quot;&amp;&quot;);</span>
+			}
+<span class="nc bnc" id="L212" title="All 4 branches missed.">			if (values != null &amp;&amp; values.length &gt; 0) {</span>
+<span class="nc bnc" id="L213" title="All 2 branches missed.">				for (String value : values) {</span>
+<span class="nc bnc" id="L214" title="All 2 branches missed.">					if (value.trim().length() &gt; 0) {</span>
+<span class="nc" id="L215">						requestMsg.append(URLEncoder.encode(key, HTTP.UTF_8))</span>
+<span class="nc" id="L216">								.append(&quot;=&quot;)</span>
+<span class="nc" id="L217">								.append(URLEncoder.encode(value, HTTP.UTF_8));</span>
+					} else {
+<span class="nc" id="L219">						requestMsg.append(URLEncoder.encode(key, HTTP.UTF_8));</span>
+					}
+				}
+			}
+<span class="nc bnc" id="L223" title="All 2 branches missed.">			if (first) {</span>
+<span class="nc" id="L224">				first = false;</span>
+			}
+
+<span class="nc" id="L227">		}</span>
+<span class="nc" id="L228">		return requestMsg.toString();</span>
+	}
+
+	private void parseRequestHeaders(HttpServletRequest rawRequest) {
+
+		// Put header information coming from client.
+<span class="nc" id="L234">		Enumeration&lt;String&gt; e = rawRequest.getHeaderNames();</span>
+
+<span class="nc bnc" id="L236" title="All 2 branches missed.">		while (e.hasMoreElements()) {</span>
+<span class="nc" id="L237">			String name = (String) e.nextElement();</span>
+			// Let's ignore some headers
+<span class="nc bnc" id="L239" title="All 2 branches missed.">			if (this.shouldIncludeHeader(name)) {</span>
+<span class="nc" id="L240">				List&lt;String&gt; values = new ArrayList&lt;String&gt;();</span>
+<span class="nc" id="L241">				Enumeration&lt;String&gt; eValues = rawRequest.getHeaders(name);</span>
+
+<span class="nc bnc" id="L243" title="All 2 branches missed.">				while (eValues.hasMoreElements()) {</span>
+<span class="nc" id="L244">					String value = (String) eValues.nextElement();</span>
+<span class="nc" id="L245">					values.add(value);</span>
+<span class="nc" id="L246">				}</span>
+
+<span class="nc" id="L248">				headers.put(name, values);</span>
+			}
+<span class="nc" id="L250">		}</span>
+		// Override header information to prevent CACHING
+		// As of 4/29/2011, updated Apache HttpClient. Result was the
+		// following:
+		// Testing with MAMP (Apache 2.0.63), I was seeing
+		// this parameter being sent by Browsers Firefox 4 and
+		// and Chrome 9, but NOT Safari 5.
+		// To prevent caching, removing this attribute.
+<span class="nc" id="L258">		e = rawRequest.getHeaderNames();</span>
+<span class="nc" id="L259">		List&lt;String&gt; p = new ArrayList&lt;String&gt;();</span>
+<span class="nc" id="L260">		p.add(&quot;Fri, 13 May 2006 23:54:18 GMT&quot;);</span>
+<span class="nc bnc" id="L261" title="All 2 branches missed.">		while (e.hasMoreElements()) {</span>
+<span class="nc" id="L262">			String name = (String) e.nextElement();</span>
+
+<span class="nc bnc" id="L264" title="All 2 branches missed.">			if (&quot;if-none-match&quot;.equalsIgnoreCase(name)) {</span>
+<span class="nc" id="L265">				headers.remove(name);</span>
+<span class="nc bnc" id="L266" title="All 2 branches missed.">			} else if (&quot;If-modified-Since&quot;.equalsIgnoreCase(name)) {</span>
+<span class="nc" id="L267">				headers.put(name, p);</span>
+			}
+
+<span class="nc" id="L270">		}</span>
+
+<span class="nc" id="L272">	}</span>
+
+	/**
+	 * an org.apache.commons.httpclient.Cookie is NOT a
+	 * javax.servlet.http.Cookie - and it looks like the two don't map onto each
+	 * other without data loss...
+	 * */
+
+	private void parseCookies(HttpServletRequest rawRequest) {
+<span class="nc" id="L281">		javax.servlet.http.Cookie[] cookies = rawRequest.getCookies();</span>
+<span class="nc bnc" id="L282" title="All 2 branches missed.">		if (cookies != null) {</span>
+			// ******************
+			// This doesn't seem right.
+			// We have to map javax Cookies to httpclient Cookies?!?!
+			//
+			// ******************
+<span class="nc bnc" id="L288" title="All 2 branches missed.">			for (int i = 0; i &lt; cookies.length; i++) {</span>
+<span class="nc" id="L289">				javax.servlet.http.Cookie c = cookies[i];</span>
+<span class="nc" id="L290">				String domain = c.getDomain();</span>
+<span class="nc bnc" id="L291" title="All 2 branches missed.">				if (domain == null) {</span>
+<span class="nc" id="L292">					domain = rawRequest.getServerName();</span>
+				}
+<span class="nc" id="L294">				String cpath = c.getPath();</span>
+<span class="nc bnc" id="L295" title="All 2 branches missed.">				if (cpath == null) {</span>
+<span class="nc" id="L296">					cpath = rawRequest.getContextPath();</span>
+				}
+				// Commented out; too much noise.
+				// log.info(&quot;Cookie from client: &quot; + c.getName() + &quot; = &quot; +
+				// c.getValue());
+<span class="nc" id="L301">				BasicClientCookie basicClientCookie = new BasicClientCookie(</span>
+<span class="nc" id="L302">						c.getName(), c.getValue());</span>
+<span class="nc" id="L303">				basicClientCookie.setDomain(domain);</span>
+<span class="nc bnc" id="L304" title="All 2 branches missed.">				if (c.getMaxAge() &gt; -1) {</span>
+<span class="nc" id="L305">					int seconds = c.getMaxAge();</span>
+<span class="nc" id="L306">					long currentTime = System.currentTimeMillis();</span>
+<span class="nc" id="L307">					Date expiryDate = new Date(currentTime + (seconds * 1000));</span>
+<span class="nc" id="L308">					basicClientCookie.setExpiryDate(expiryDate);</span>
+				}
+<span class="nc" id="L310">				this.httpClientCookies.add(basicClientCookie);</span>
+			}
+		}
+
+<span class="nc" id="L314">	}</span>
+
+	private void parseRequestBody(HttpServletRequest rawRequest) {
+
+		try {
+<span class="nc" id="L319">			InputStream is = rawRequest.getInputStream();</span>
+<span class="nc" id="L320">			byte[] buffer = new byte[1024];</span>
+<span class="nc" id="L321">			StringBuilder sb = new StringBuilder();</span>
+
+			try {
+				for (;;) {
+<span class="nc" id="L325">					int bytesRead = is.read(buffer);</span>
+<span class="nc bnc" id="L326" title="All 2 branches missed.">					if (bytesRead == -1) {</span>
+<span class="nc" id="L327">						break;</span>
+					}
+<span class="nc" id="L329">					sb.append(new String(buffer, 0, bytesRead));</span>
+<span class="nc" id="L330">				}</span>
+<span class="nc" id="L331">			} catch (IOException e) {</span>
+<span class="nc" id="L332">				e.printStackTrace();</span>
+			} finally {
+				try {
+<span class="nc" id="L335">					is.close();</span>
+<span class="nc" id="L336">				} catch (IOException e) {</span>
+<span class="nc" id="L337">					e.printStackTrace();</span>
+<span class="nc" id="L338">				}</span>
+			}
+<span class="nc" id="L340">			requestBody = sb.toString();</span>
+
+<span class="nc" id="L342">		} catch (IOException e) {</span>
+<span class="nc" id="L343">			log.error(&quot;Unable to parse body from incoming request&quot;, e);</span>
+<span class="nc" id="L344">		}</span>
+
+<span class="nc" id="L346">	}</span>
+
+	private void parseParameters(HttpServletRequest rawRequest) {
+<span class="nc" id="L349">		parameters = rawRequest.getParameterMap();</span>
+<span class="nc" id="L350">	}</span>
+
+	/**
+	 * 
+	 * @return readeable string output of header
+	 */
+	public String getHeaderInfo() {
+<span class="nc" id="L357">		StringBuffer buf = new StringBuffer();</span>
+
+<span class="nc bnc" id="L359" title="All 2 branches missed.">		for (String headerName : headers.keySet()) {</span>
+<span class="nc" id="L360">			buf.append(headerName + &quot;\n&quot;);</span>
+<span class="nc bnc" id="L361" title="All 2 branches missed.">			for (String headerValue : headers.get(headerName)) {</span>
+<span class="nc" id="L362">				buf.append(&quot;    &quot; + headerValue + &quot;\n&quot;);</span>
+<span class="nc" id="L363">			}</span>
+<span class="nc" id="L364">		}</span>
+<span class="nc" id="L365">		return buf.toString();</span>
+	}
+
+	/**
+	 * 
+	 * @return 
+	 */
+	public Map&lt;String, String[]&gt; getHeaderInfoAsMap() {
+
+<span class="nc" id="L374">		Map&lt;String, String[]&gt; headerMap = new HashMap&lt;String, String[]&gt;();</span>
+
+<span class="nc bnc" id="L376" title="All 2 branches missed.">		for (String headerName : headers.keySet()) {</span>
+<span class="nc" id="L377">			List&lt;String&gt; arg = headers.get(headerName);</span>
+<span class="nc" id="L378">			headerMap.put(headerName, arg.toArray(new String[arg.size()]));</span>
+
+<span class="nc" id="L380">		}</span>
+<span class="nc" id="L381">		return headerMap;</span>
+	}
+
+	public String getMethod() {
+<span class="nc" id="L385">		return this.method;</span>
+	}
+
+	public String getCookieInfoAsString() {
+<span class="nc" id="L389">		StringBuffer buf = new StringBuffer();</span>
+
+<span class="nc bnc" id="L391" title="All 2 branches missed.">		for (Cookie cookie : this.httpClientCookies) {</span>
+
+<span class="nc" id="L393">			buf.append(cookie.toString() + &quot;\n\n&quot;);</span>
+<span class="nc" id="L394">		}</span>
+
+<span class="nc" id="L396">		return buf.toString();</span>
+	}
+
+	private HttpEntity constructHttpPostBody() {
+
+		HttpEntity body;
+		try {
+<span class="nc bnc" id="L403" title="All 2 branches missed.">			if (requestBody != null) {</span>
+<span class="nc" id="L404">				body = new StringEntity(requestBody);</span>
+			} else {
+<span class="nc" id="L406">				List&lt;NameValuePair&gt; parameters = new ArrayList&lt;NameValuePair&gt;();</span>
+<span class="nc bnc" id="L407" title="All 2 branches missed.">				for (Map.Entry&lt;String, String[]&gt; entry : this.parameters</span>
+<span class="nc" id="L408">						.entrySet()) {</span>
+<span class="nc bnc" id="L409" title="All 2 branches missed.">					for (String value : entry.getValue()) {</span>
+<span class="nc" id="L410">						parameters.add(new BasicNameValuePair(entry.getKey(),</span>
+								value));
+					}
+<span class="nc" id="L413">				}</span>
+<span class="nc" id="L414">				body = new UrlEncodedFormEntity(parameters, HTTP.ISO_8859_1); // .UTF_8);</span>
+			}
+
+<span class="nc" id="L417">		} catch (UnsupportedEncodingException e) {</span>
+<span class="nc" id="L418">			throw new IllegalStateException(</span>
+					&quot;Unable to generate a POST from the incoming request&quot;, e);
+<span class="nc" id="L420">		}</span>
+
+<span class="nc" id="L422">		return body;</span>
+
+	}
+
+	/**
+	 * 
+	 * @return - true if incoming request is posting a body
+	 */
+	public boolean hasPostBody() {
+<span class="nc bnc" id="L431" title="All 4 branches missed.">		return requestBody != null &amp;&amp; requestBody.trim().length() &gt; 0;</span>
+	}
+
+	/**
+	 * 
+	 * @return the body content of this request.
+	 */
+	public String getBodyInfo() {
+<span class="nc" id="L439">		return requestBody;</span>
+	}
+
+	/**
+	 * 
+	 * @return the parameters of this request
+	 */
+	public String getParameterInfo() {
+<span class="nc" id="L447">		StringBuilder builder = new StringBuilder();</span>
+<span class="nc bnc" id="L448" title="All 2 branches missed.">		for (Map.Entry&lt;String, String[]&gt; entry : parameters.entrySet()) {</span>
+<span class="nc" id="L449">			builder.append(entry.getKey()).append(&quot;=&quot;);</span>
+<span class="nc bnc" id="L450" title="All 2 branches missed.">			for (String value : entry.getValue()) {</span>
+<span class="nc" id="L451">				builder.append(value);</span>
+			}
+<span class="nc" id="L453">			builder.append(&quot;|&quot;);</span>
+<span class="nc" id="L454">		}</span>
+<span class="nc" id="L455">		return builder.toString();</span>
+	}
+
+	@Override
+	public String toString() {
+<span class="nc" id="L460">		StringBuilder builder = new StringBuilder();</span>
+<span class="nc" id="L461">		builder.append(&quot;---------- Headers ---------\n&quot;);</span>
+<span class="nc" id="L462">		builder.append(getHeaderInfo());</span>
+<span class="nc" id="L463">		builder.append(&quot;---------- Cookies ---------\n&quot;);</span>
+<span class="nc" id="L464">		builder.append(getCookieInfoAsString());</span>
+<span class="nc" id="L465">		builder.append(&quot;--------- Parameters ------------ \n&quot;);</span>
+<span class="nc" id="L466">		builder.append(getParameterInfo());</span>
+<span class="nc" id="L467">		builder.append(&quot;-------- Post RULE_FOR_BODY --------------\n&quot;);</span>
+<span class="nc" id="L468">		builder.append(getBodyInfo());</span>
+<span class="nc" id="L469">		return builder.toString();</span>
+	}
+}
+</pre><div class="footer"><span class="right">Created with <a href="http://www.jacoco.org/jacoco">JaCoCo</a> 0.8.1.201803210924</span></div></body></html>

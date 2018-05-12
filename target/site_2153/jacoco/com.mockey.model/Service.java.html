@@ -1,0 +1,907 @@
+<?xml version="1.0" encoding="UTF-8"?><!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Strict//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-strict.dtd"><html xmlns="http://www.w3.org/1999/xhtml" lang="zh"><head><meta http-equiv="Content-Type" content="text/html;charset=UTF-8"/><link rel="stylesheet" href="../jacoco-resources/report.css" type="text/css"/><link rel="shortcut icon" href="../jacoco-resources/report.gif" type="image/gif"/><title>Service.java</title><link rel="stylesheet" href="../jacoco-resources/prettify.css" type="text/css"/><script type="text/javascript" src="../jacoco-resources/prettify.js"></script></head><body onload="window['PR_TAB_WIDTH']=4;prettyPrint()"><div class="breadcrumb" id="breadcrumb"><span class="info"><a href="../jacoco-sessions.html" class="el_session">Sessions</a></span><a href="../index.html" class="el_report">JaCoCo Ant Example</a> &gt; <a href="index.source.html" class="el_package">com.mockey.model</a> &gt; <span class="el_source">Service.java</span></div><h1>Service.java</h1><pre class="source lang-java linenums">/*
+ * This file is part of Mockey, a tool for testing application 
+ * interactions over HTTP, with a focus on testing web services, 
+ * specifically web applications that consume XML, JSON, and HTML.
+ *  
+ * Copyright (C) 2009-2010  Authors:
+ * 
+ * chad.lafontaine (chad.lafontaine AT gmail DOT com)
+ * neil.cronin (neil AT rackle DOT com) 
+ * lorin.kobashigawa (lkb AT kgawa DOT com)
+ * rob.meyer (rob AT bigdis DOT com)
+ * 
+ * This program is free software; you can redistribute it and/or
+ * modify it under the terms of the GNU General Public License
+ * as published by the Free Software Foundation; either version 2
+ * of the License, or (at your option) any later version.
+ * 
+ * This program is distributed in the hope that it will be useful,
+ * but WITHOUT ANY WARRANTY; without even the implied warranty of
+ * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+ * GNU General Public License for more details.
+ * 
+ * You should have received a copy of the GNU General Public License
+ * along with this program; if not, write to the Free Software
+ * Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301, USA.
+ *
+ */
+package com.mockey.model;
+
+import java.io.UnsupportedEncodingException;
+import java.net.URLDecoder;
+import java.util.ArrayList;
+import java.util.Calendar;
+import java.util.Iterator;
+import java.util.List;
+import java.util.Map;
+import java.util.StringTokenizer;
+
+import org.apache.commons.logging.Log;
+import org.apache.commons.logging.LogFactory;
+import org.apache.http.Header;
+import org.apache.http.message.BasicHeader;
+import org.json.JSONException;
+import org.json.JSONObject;
+
+import com.mockey.ClientExecuteProxy;
+import com.mockey.ClientExecuteProxyException;
+import com.mockey.OrderedMap;
+import com.mockey.plugin.RequestInspectorDefinedByJson;
+import com.mockey.storage.IMockeyStorage;
+import com.mockey.storage.StorageRegistry;
+import com.mockey.ui.Util;
+import java.io.Serializable;
+
+/**
+ * A Service is a remote url that can be called.
+ * 
+ * @author chad.lafontaine
+ * 
+ */
+public class Service extends StatusCheck implements PersistableItem, ExecutableService, Serializable {
+
+	public final static int SERVICE_RESPONSE_TYPE_PROXY = 0;
+	public final static int SERVICE_RESPONSE_TYPE_STATIC_SCENARIO = 1;
+	public final static int SERVICE_RESPONSE_TYPE_DYNAMIC_SCENARIO = 2;
+
+	private Long id;
+	private String serviceName;
+	private String description;
+<span class="fc" id="L70">	private Boolean transientState = new Boolean(false);</span>
+	private Long defaultScenarioId;
+<span class="fc" id="L72">	private int defaultRealUrlIndex = 0;</span>
+	private Long errorScenarioId;
+<span class="fc" id="L74">	private int hangTime = 0;</span>
+	private String requestInspectorName;
+<span class="fc" id="L76">	private String requestInspectorJsonRules = &quot;&quot;;</span>
+<span class="fc" id="L77">	private boolean requestInspectorJsonRulesEnableFlag = false;</span>
+<span class="fc" id="L78">	private OrderedMap&lt;Scenario&gt; scenarios = new OrderedMap&lt;Scenario&gt;();</span>
+<span class="fc" id="L79">	private int serviceResponseType = SERVICE_RESPONSE_TYPE_PROXY;</span>
+<span class="fc" id="L80">	private String httpMethod = &quot;GET&quot;;</span>
+<span class="fc" id="L81">	private String url = &quot;&quot;;</span>
+<span class="fc" id="L82">	private String responseSchema = &quot;&quot;;</span>
+<span class="fc" id="L83">	private boolean responseSchemaFlag = false;</span>
+
+	private List&lt;FulfilledClientRequest&gt; fulfilledRequests;
+<span class="fc" id="L86">	private List&lt;Url&gt; realServiceUrlList = new ArrayList&lt;Url&gt;();</span>
+<span class="fc" id="L87">	private boolean allowRedirectFollow = true;</span>
+<span class="fc" id="L88">	private static Log logger = LogFactory.getLog(Service.class);</span>
+<span class="fc" id="L89">	private static IMockeyStorage store = StorageRegistry.MockeyStorage;</span>
+
+	public List&lt;FulfilledClientRequest&gt; getFulfilledRequests() {
+<span class="nc" id="L92">		return fulfilledRequests;</span>
+	}
+
+	public void setFulfilledRequests(List&lt;FulfilledClientRequest&gt; transactions) {
+<span class="nc" id="L96">		this.fulfilledRequests = transactions;</span>
+<span class="nc" id="L97">	}</span>
+
+	// default constructor for xml.
+	// DO NOT REMOVE. DO NOT CALL.
+<span class="fc" id="L101">	public Service() {</span>
+<span class="fc" id="L102">		this.setServiceName(&quot;&quot;);</span>
+<span class="fc" id="L103">	}</span>
+
+	public String getHttpMethod() {
+<span class="nc" id="L106">		return httpMethod;</span>
+	}
+
+	public void setHttpMethod(String httpMethod) {
+<span class="nc" id="L110">		this.httpMethod = httpMethod;</span>
+<span class="nc" id="L111">	}</span>
+
+	public Long getDefaultScenarioId() {
+
+<span class="nc" id="L115">		return this.defaultScenarioId;</span>
+	}
+
+	/**
+	 * 
+	 * @return null if no default scenario defined, otherwise, returns name
+	 */
+	public String getDefaultScenarioName() {
+<span class="nc" id="L123">		Scenario s = this.getScenario(this.defaultScenarioId);</span>
+<span class="nc bnc" id="L124" title="All 2 branches missed.">		if (s != null) {</span>
+<span class="nc" id="L125">			return s.getScenarioName();</span>
+		} else {
+<span class="nc" id="L127">			return null;</span>
+		}
+	}
+
+	public void setDefaultScenarioId(Long did) {
+
+<span class="nc" id="L133">		this.defaultScenarioId = did;</span>
+<span class="nc" id="L134">	}</span>
+
+	/**
+	 * Finds a service scenario with matching name. If a match is found, then
+	 * its ID is set as the default scenario id. If no match is found, then no
+	 * change. Name matching is case insensitive, and leading and ending
+	 * whitespace is trimmed.
+	 * 
+	 * @param scenarioName
+	 */
+	public void setDefaultScenarioByName(String scenarioName) {
+<span class="nc bnc" id="L145" title="All 2 branches missed.">		if (scenarioName != null) {</span>
+<span class="nc bnc" id="L146" title="All 2 branches missed.">			for (Scenario scenario : this.scenarios.getOrderedList()) {</span>
+<span class="nc bnc" id="L147" title="All 2 branches missed.">				if (scenarioName.trim().equalsIgnoreCase((scenario.getScenarioName().trim()))) {</span>
+<span class="nc" id="L148">					this.setDefaultScenarioId(scenario.getId());</span>
+<span class="nc" id="L149">					break;</span>
+				}
+<span class="nc" id="L151">			}</span>
+		}
+<span class="nc" id="L153">	}</span>
+
+	public String getDescription() {
+<span class="nc" id="L156">		return description;</span>
+	}
+
+	public void setDescription(String description) {
+<span class="nc" id="L160">		this.description = description;</span>
+<span class="nc" id="L161">	}</span>
+
+	public String getServiceName() {
+<span class="fc" id="L164">		return serviceName;</span>
+	}
+
+	public void setServiceName(String name) {
+
+<span class="fc" id="L169">		this.serviceName = name;</span>
+
+<span class="fc" id="L171">	}</span>
+
+	public int getHangTime() {
+<span class="fc" id="L174">		return hangTime;</span>
+	}
+
+	public void setHangTime(int hangTime) {
+<span class="fc" id="L178">		this.hangTime = hangTime;</span>
+<span class="fc" id="L179">	}</span>
+
+	public List&lt;Scenario&gt; getScenarios() {
+<span class="nc" id="L182">		return Util.orderAlphabeticallyByScenarioName(scenarios.getOrderedList());</span>
+	}
+
+	public Scenario getScenario(Long scenarioId) {
+<span class="nc" id="L186">		return (Scenario) scenarios.get(scenarioId);</span>
+	}
+
+	public void deleteScenario(Long scenarioId) {
+<span class="nc" id="L190">		this.scenarios.remove(scenarioId);</span>
+<span class="nc" id="L191">	}</span>
+
+	public Scenario saveOrUpdateScenario(Scenario scenario) {
+<span class="nc" id="L194">		scenario.setServiceId(this.id);</span>
+<span class="nc" id="L195">		return (Scenario) this.scenarios.save(scenario);</span>
+	}
+
+	/**
+	 * DO NOT REMOVE. This is needed by XML reader and has a reference to the
+	 * method signature via reflection. Thank Digester.
+	 * 
+	 * @param realServiceUrl
+	 * @deprecated - this method will call
+	 *             &lt;code&gt;saveOrUpdateRealServiceUrl(Url)&lt;/code&gt;
+	 * @see #saveOrUpdateRealServiceUrl(Url)
+	 */
+	public void setRealServiceUrlByString(String realServiceUrl) {
+<span class="nc" id="L208">		this.saveOrUpdateRealServiceUrl(new Url(realServiceUrl));</span>
+<span class="nc" id="L209">	}</span>
+
+	public String toString() {
+<span class="nc" id="L212">		StringBuffer sb = new StringBuffer();</span>
+<span class="nc" id="L213">		sb.append(&quot;Service name:&quot;).append(this.getServiceName()).append(&quot;\n&quot;);</span>
+<span class="nc" id="L214">		sb.append(&quot;Real URL(s):\n&quot;);</span>
+<span class="nc bnc" id="L215" title="All 4 branches missed.">		if (this.realServiceUrlList != null &amp;&amp; !this.realServiceUrlList.isEmpty()) {</span>
+<span class="nc" id="L216">			Iterator&lt;Url&gt; iter = this.realServiceUrlList.iterator();</span>
+<span class="nc bnc" id="L217" title="All 2 branches missed.">			while (iter.hasNext()) {</span>
+<span class="nc" id="L218">				sb.append(iter.next() + &quot;\n&quot;);</span>
+			}
+<span class="nc" id="L220">		} else {</span>
+<span class="nc" id="L221">			sb.append(&quot;(no real urls defined for this service)\n&quot;);</span>
+		}
+
+<span class="nc" id="L224">		sb.append(&quot;Default scenario ID:&quot;).append(this.getDefaultScenarioId()).append(&quot;\n&quot;);</span>
+<span class="nc" id="L225">		sb.append(&quot;Hang time:&quot;);</span>
+<span class="nc" id="L226">		sb.append(this.getHangTime());</span>
+<span class="nc" id="L227">		sb.append(&quot;\n&quot;);</span>
+
+<span class="nc" id="L229">		return sb.toString();</span>
+	}
+
+	public void setId(Long id) {
+<span class="nc" id="L233">		this.id = id;</span>
+
+		// Recursively set this ID to child Scenarios, if any exist.
+<span class="nc bnc" id="L236" title="All 2 branches missed.">		for (Scenario scenario : getScenarios()) {</span>
+<span class="nc" id="L237">			scenario.setServiceId(this.id);</span>
+<span class="nc" id="L238">			this.saveOrUpdateScenario(scenario);</span>
+<span class="nc" id="L239">		}</span>
+<span class="nc" id="L240">	}</span>
+
+	public Long getId() {
+<span class="fc" id="L243">		return id;</span>
+	}
+
+	/**
+	 * 
+	 * @deprecated
+	 * @see #getRealServiceUrls()
+	 */
+	public String getRealServiceUrl() {
+<span class="nc" id="L252">		return &quot;[DEPRECATED]&quot;;</span>
+
+	}
+
+	/**
+	 * 
+	 * @param serviceResponseType
+	 *            - 0 (proxy), 1 (static), or 2 (dynamic). Any other value will
+	 *            default to PROXY.
+	 */
+	public void setServiceResponseType(int serviceResponseType) {
+<span class="nc bnc" id="L263" title="All 6 branches missed.">		if (serviceResponseType == 1 || serviceResponseType == 0 || serviceResponseType == 2) {</span>
+<span class="nc" id="L264">			this.serviceResponseType = serviceResponseType;</span>
+		} else {
+<span class="nc" id="L266">			this.serviceResponseType = SERVICE_RESPONSE_TYPE_PROXY;</span>
+		}
+<span class="nc" id="L268">		validateDefaultScenarioId();</span>
+
+<span class="nc" id="L270">	}</span>
+
+	// HELPER method - let's validate the 'defaultScenarioId'. If
+	// defaultScenarioId doesn't equal any of the scenario IDs, then
+	// auto-set the defaultID to the 'first' scenario
+	private void validateDefaultScenarioId() {
+<span class="nc" id="L276">		boolean valid = false;</span>
+<span class="nc" id="L277">		List&lt;Scenario&gt; orderedList = this.scenarios.getOrderedList();</span>
+
+<span class="nc bnc" id="L279" title="All 2 branches missed.">		for (Scenario s : orderedList) {</span>
+
+<span class="nc bnc" id="L281" title="All 2 branches missed.">			if (s.getId().equals(this.getDefaultScenarioId())) {</span>
+<span class="nc" id="L282">				valid = true;</span>
+<span class="nc" id="L283">				break;</span>
+			}
+<span class="nc" id="L285">		}</span>
+<span class="nc bnc" id="L286" title="All 2 branches missed.">		if (!valid) {</span>
+<span class="nc bnc" id="L287" title="All 2 branches missed.">			if (this.scenarios.getOrderedList().size() &gt; 0) {</span>
+<span class="nc" id="L288">				this.setDefaultScenarioId(orderedList.get(0).getId());</span>
+			} else {
+				// Reset
+<span class="nc" id="L291">				this.setDefaultScenarioId(null);</span>
+			}
+		}
+<span class="nc" id="L294">	}</span>
+
+	/**
+	 * Takes 'proxy', 'static', or 'dynamic' arguments and translates them to
+	 * appropriate 'int' values and then calls
+	 * &lt;code&gt;setServiceResponseType&lt;/code&gt;
+	 * 
+	 * @see #setServiceResponseType(int)
+	 */
+	public void setServiceResponseTypeByString(String arg) {
+<span class="nc bnc" id="L304" title="All 2 branches missed.">		if (arg != null) {</span>
+<span class="nc bnc" id="L305" title="All 4 branches missed.">			if (&quot;proxy&quot;.trim().equalsIgnoreCase(arg.trim()) || &quot;0&quot;.equalsIgnoreCase(arg.trim())) {</span>
+<span class="nc" id="L306">				setServiceResponseType(Service.SERVICE_RESPONSE_TYPE_PROXY);</span>
+<span class="nc bnc" id="L307" title="All 4 branches missed.">			} else if (&quot;static&quot;.trim().equalsIgnoreCase(arg.trim()) || &quot;1&quot;.equalsIgnoreCase(arg.trim())) {</span>
+<span class="nc" id="L308">				setServiceResponseType(Service.SERVICE_RESPONSE_TYPE_STATIC_SCENARIO);</span>
+<span class="nc bnc" id="L309" title="All 4 branches missed.">			} else if (&quot;dynamic&quot;.trim().equalsIgnoreCase(arg.trim()) || &quot;2&quot;.equalsIgnoreCase(arg.trim())) {</span>
+<span class="nc" id="L310">				setServiceResponseType(Service.SERVICE_RESPONSE_TYPE_DYNAMIC_SCENARIO);</span>
+			}
+		}
+<span class="nc" id="L313">	}</span>
+
+	public int getServiceResponseType() {
+		// If no scenarios, then proxy is automatically on.
+<span class="nc bnc" id="L317" title="All 2 branches missed.">		if (this.getScenarios().size() == 0) {</span>
+<span class="nc" id="L318">			return SERVICE_RESPONSE_TYPE_PROXY;</span>
+		} else {
+<span class="nc" id="L320">			return serviceResponseType;</span>
+		}
+	}
+
+	public String getServiceResponseTypeAsString() {
+<span class="nc" id="L325">		int x = getServiceResponseType();</span>
+<span class="nc bnc" id="L326" title="All 2 branches missed.">		if (x == Service.SERVICE_RESPONSE_TYPE_PROXY) {</span>
+<span class="nc" id="L327">			return &quot;proxy&quot;;</span>
+<span class="nc bnc" id="L328" title="All 2 branches missed.">		} else if (x == Service.SERVICE_RESPONSE_TYPE_STATIC_SCENARIO) {</span>
+<span class="nc" id="L329">			return &quot;static&quot;;</span>
+<span class="nc bnc" id="L330" title="All 2 branches missed.">		} else if (x == Service.SERVICE_RESPONSE_TYPE_DYNAMIC_SCENARIO) {</span>
+<span class="nc" id="L331">			return &quot;dynamic&quot;;</span>
+		} else {
+<span class="nc" id="L333">			return &quot;&quot;;</span>
+		}
+
+	}
+
+	public void setErrorScenarioId(Long errorScenarioId) {
+<span class="nc" id="L339">		this.errorScenarioId = errorScenarioId;</span>
+<span class="nc" id="L340">	}</span>
+
+	public Long getErrorScenarioId() {
+<span class="nc" id="L343">		return errorScenarioId;</span>
+	}
+
+	public Scenario getErrorScenario() {
+		// FIND SERVICE ERROR, IF EXIST.
+<span class="nc bnc" id="L348" title="All 2 branches missed.">		for (Scenario scenario : this.getScenarios()) {</span>
+<span class="nc bnc" id="L349" title="All 2 branches missed.">			if (scenario.getId().equals(this.getErrorScenarioId())) {</span>
+<span class="nc" id="L350">				return scenario;</span>
+			}
+<span class="nc" id="L352">		}</span>
+		// No service error defined, therefore, let's use the universal
+		// error.
+<span class="nc" id="L355">		return StorageRegistry.MockeyStorage.getUniversalErrorScenario();</span>
+	}
+
+	public Boolean isReferencedInAServicePlan() {
+<span class="nc" id="L359">		Boolean isReferenced = false;</span>
+<span class="nc bnc" id="L360" title="All 2 branches missed.">		for (ServicePlan plan : StorageRegistry.MockeyStorage.getServicePlans()) {</span>
+<span class="nc bnc" id="L361" title="All 2 branches missed.">			for (PlanItem planItem : plan.getPlanItemList()) {</span>
+<span class="nc bnc" id="L362" title="All 2 branches missed.">				if (planItem.getServiceName().equals(this.getServiceName())) {</span>
+<span class="nc" id="L363">					isReferenced = true;</span>
+<span class="nc" id="L364">					break;</span>
+				}
+<span class="nc" id="L366">			}</span>
+<span class="nc" id="L367">		}</span>
+<span class="nc" id="L368">		return isReferenced;</span>
+	}
+
+	/**
+	 * The core method to execute the request as either a Proxy, Dynamic, or
+	 * Static Scenario.
+	 */
+	public ResponseFromService execute(RequestFromClient request, Url realServiceUrl) {
+<span class="nc" id="L376">		this.setLastVisit(new Long(Calendar.getInstance().getTimeInMillis()));</span>
+<span class="nc" id="L377">		ResponseFromService response = null;</span>
+<span class="nc bnc" id="L378" title="All 2 branches missed.">		if (this.getServiceResponseType() == Service.SERVICE_RESPONSE_TYPE_PROXY) {</span>
+<span class="nc" id="L379">			response = proxyTheRequest(request, realServiceUrl);</span>
+<span class="nc bnc" id="L380" title="All 2 branches missed.">		} else if (this.getServiceResponseType() == Service.SERVICE_RESPONSE_TYPE_DYNAMIC_SCENARIO) {</span>
+<span class="nc" id="L381">			response = executeDynamicScenario(request, realServiceUrl);</span>
+<span class="nc bnc" id="L382" title="All 2 branches missed.">		} else if (this.getServiceResponseType() == Service.SERVICE_RESPONSE_TYPE_STATIC_SCENARIO) {</span>
+<span class="nc" id="L383">			response = executeStaticScenario(realServiceUrl);</span>
+		}
+<span class="nc" id="L385">		return response;</span>
+	}
+
+	private ResponseFromService proxyTheRequest(RequestFromClient request, Url realServiceUrl) {
+
+<span class="nc" id="L390">		logger.debug(&quot;proxying a moxie.&quot;);</span>
+		// If proxy on, then
+		// 1) Capture request message.
+		// 2) Set up a connection to the real service URL
+		// 3) Forward the request message to the real service URL
+		// 4) Read the reply from the real service URL.
+		// 5) Save request + response as a historical scenario.
+
+		// There are 2 proxy things going on here:
+		// 1. Using Mockey as a 'proxy' to a real service.
+		// 2. The proxy server between Mockey and the real service.
+		//
+		// For the proxy server between Mockey and the real service,
+		// we do the following:
+<span class="nc" id="L404">		ProxyServerModel proxyServer = store.getProxy();</span>
+
+<span class="nc" id="L406">		ClientExecuteProxy clientExecuteProxy = ClientExecuteProxy.getClientExecuteProxyInstance();</span>
+<span class="nc" id="L407">		ResponseFromService response = null;</span>
+
+		// If Twisting is on, then
+		// 1)
+		try {
+<span class="nc" id="L412">			logger.debug(&quot;Initiating request through proxy&quot;);</span>
+<span class="nc" id="L413">			response = clientExecuteProxy.execute(proxyServer, realServiceUrl, allowRedirectFollow, request);</span>
+<span class="nc" id="L414">			response.setScenarioName(&quot;&quot;);</span>
+
+<span class="nc" id="L416">		} catch (ClientExecuteProxyException e) {</span>
+			// We're here for various reasons.
+			// 1) timeout from calling real service.
+			// 2) unable to parse real response.
+			// 3) magic!
+			// Before we throw an exception, check:
+			// (A) does this mock service have a default error response. If
+			// no, then
+			// (B) see if Mockey has a universal error response
+			// If neither, then throw the exception.
+<span class="nc" id="L426">			response = new ResponseFromService();</span>
+<span class="nc" id="L427">			response.setRequestUrl(e.getRequestUrl());</span>
+<span class="nc" id="L428">			Scenario error = this.getErrorScenario();</span>
+<span class="nc bnc" id="L429" title="All 2 branches missed.">			if (error != null) {</span>
+<span class="nc" id="L430">				response.setBody(error.getResponseMessage());</span>
+			} else {
+<span class="nc" id="L432">				StringBuffer msg = new StringBuffer();</span>
+<span class="nc" id="L433">				JSONObject jsonResponseObject = new JSONObject();</span>
+				try {
+<span class="nc" id="L435">					jsonResponseObject</span>
+<span class="nc" id="L436">							.put(&quot;fail&quot;,</span>
+									&quot;We encountered an error. Here's some information to help point out what may have gone wrong.&quot;);
+<span class="nc bnc" id="L438" title="All 4 branches missed.">					if (proxyServer != null &amp;&amp; proxyServer.isProxyEnabled()) {</span>
+<span class="nc bnc" id="L439" title="All 4 branches missed.">						if (proxyServer.getProxyHost() != null &amp;&amp; proxyServer.getProxyHost().trim().length() &gt; 0) {</span>
+<span class="nc" id="L440">							jsonResponseObject.put(&quot;proxyInfo&quot;, &quot;Internet proxy settings are ENABLED pointing to --&gt;&quot;</span>
+<span class="nc" id="L441">									+ proxyServer.getProxyHost() + &quot;&lt;-- &quot;);</span>
+						} else {
+<span class="nc" id="L443">							jsonResponseObject.put(&quot;proxyInfo&quot;,</span>
+									&quot;Internet proxy settings are ENABLED but Internet Proxy Server value is EMPTY.&quot;);
+						}
+					} else {
+<span class="nc" id="L447">						jsonResponseObject.put(&quot;proxyInfo&quot;, &quot;Proxy settings are NOT ENABLED. &quot;);</span>
+					}
+<span class="nc" id="L449">					msg.append(jsonResponseObject.toString());</span>
+<span class="nc" id="L450">				} catch (Exception ae) {</span>
+<span class="nc" id="L451">					logger.error(&quot;Nothing is going right here.&quot;, ae);</span>
+<span class="nc" id="L452">					msg.append(&quot;Experiencing some difficulties. &quot;);</span>
+<span class="nc" id="L453">				}</span>
+<span class="nc" id="L454">				response.setBody(msg.toString());</span>
+			}
+<span class="nc" id="L456">		}</span>
+<span class="nc" id="L457">		response.setScenarioName(&quot;(No name; proxy response)&quot;);</span>
+<span class="nc" id="L458">		return response;</span>
+	}
+
+	private ResponseFromService executeStaticScenario(Url realServiceUrl) {
+
+<span class="nc" id="L463">		logger.debug(&quot;mockeying a static scenario&quot;);</span>
+
+		// Proxy is NOT on. Therefore we use a scenario to figure out a reply.
+		// Either:
+		// 1) Based on matching the request message to one of the scenarios
+		// or
+		// 2) Based on scenario selected.
+		//
+<span class="nc" id="L471">		Scenario scenario = this.getScenario(this.getDefaultScenarioId());</span>
+
+<span class="nc" id="L473">		ResponseFromService response = new ResponseFromService();</span>
+
+<span class="nc bnc" id="L475" title="All 2 branches missed.">		if (scenario != null) {</span>
+<span class="nc" id="L476">			response.setScenarioName(scenario.getScenarioName());</span>
+<span class="nc" id="L477">			response.setScenarioTagsAsString(scenario.getTag());</span>
+<span class="nc" id="L478">			response.setBody(scenario.getResponseMessage());</span>
+<span class="nc" id="L479">			response.setServiceScenarioHangTime(scenario.getHangTime());</span>
+<span class="nc" id="L480">			response.setHttpResponseStatusCode(scenario.getHttpResponseStatusCode());</span>
+<span class="nc" id="L481">			scenario.setLastVisit(new Long(Calendar.getInstance().getTimeInMillis()));</span>
+
+<span class="nc" id="L483">			Map&lt;String, String&gt; headerInfo = scenario.getHeaderInfoHelper();</span>
+<span class="nc" id="L484">			List&lt;Header&gt; headerList = new ArrayList&lt;Header&gt;();</span>
+<span class="nc bnc" id="L485" title="All 2 branches missed.">			for (String k : headerInfo.keySet()) {</span>
+<span class="nc" id="L486">				headerList.add(new BasicHeader(k, headerInfo.get(k)));</span>
+<span class="nc" id="L487">			}</span>
+<span class="nc" id="L488">			response.setHeaders(headerList.toArray(new Header[headerList.size()]));</span>
+
+<span class="nc" id="L490">		} else {</span>
+<span class="nc" id="L491">			response.setBody(&quot;NO SCENARIO SELECTED&quot;);</span>
+		}
+<span class="nc" id="L493">		response.setRequestUrl(realServiceUrl);</span>
+<span class="nc" id="L494">		return response;</span>
+	}
+
+	private ResponseFromService executeDynamicScenario(RequestFromClient request, Url realServiceUrl) {
+
+		// To make things a little easy, we will
+		// concatenate request Parameters and Body (if one was posted)
+		// into 1 long String argument, and then evaluate for
+		// the existence of a match string argument.
+		// In addition, if this Service's mock URL is a
+		// RESTful pattern, then we'll also try to extract the
+		// token ID from the 'realServiceUrl' based on this
+		// service's pattern.
+
+		// STEP 1. &quot;Build the request String to evaluate&quot;
+<span class="nc" id="L509">		logger.debug(&quot;mockeying a dynamic scenario.&quot;);</span>
+<span class="nc" id="L510">		StringBuffer rawRequestDataBuffer = new StringBuffer();</span>
+
+		// Optional REST token from the URL
+<span class="nc" id="L513">		Url mockUrl = new Url(this.getUrl());</span>
+		// Example: &quot;http://example.com/hotels/{hotel}/bookings/{room}&quot;
+<span class="nc" id="L515">		UriTemplate template = new UriTemplate(mockUrl.getFullUrl());</span>
+		// Example: &quot;http://example.com/hotels/1/bookings/42&quot;
+		@SuppressWarnings(&quot;rawtypes&quot;)
+<span class="nc" id="L518">		Map restTokenResults = template.match(realServiceUrl.getFullUrl());</span>
+		@SuppressWarnings(&quot;unchecked&quot;)
+<span class="nc" id="L520">		Iterator&lt;String&gt; tokenKeyIterator = restTokenResults.keySet().iterator();</span>
+<span class="nc bnc" id="L521" title="All 2 branches missed.">		while (tokenKeyIterator.hasNext()) {</span>
+<span class="nc" id="L522">			String key = tokenKeyIterator.next();</span>
+<span class="nc" id="L523">			rawRequestDataBuffer.append(restTokenResults.get(key));</span>
+<span class="nc" id="L524">		}</span>
+
+		// Optional parameters and body
+		try {
+<span class="nc" id="L528">			rawRequestDataBuffer.append(request.buildParameterRequest());</span>
+<span class="nc bnc" id="L529" title="All 2 branches missed.">			if (request.hasPostBody()) {</span>
+<span class="nc" id="L530">				rawRequestDataBuffer.append(request.getBodyInfo());</span>
+			}
+<span class="nc" id="L532">		} catch (UnsupportedEncodingException e) {</span>
+
+<span class="nc" id="L534">			logger.debug(&quot;Unable to extract content from request&quot;, e);</span>
+<span class="nc" id="L535">		}</span>
+<span class="nc" id="L536">		String rawRequestData = &quot;&quot;;</span>
+		try {
+<span class="nc" id="L538">			rawRequestData = URLDecoder.decode(rawRequestDataBuffer.toString(), &quot;UTF-8&quot;);</span>
+<span class="nc" id="L539">		} catch (UnsupportedEncodingException e) {</span>
+<span class="nc" id="L540">			logger.error(&quot;Unable to URL un-encode (or decode) the following: \n &quot; + rawRequestDataBuffer.toString(), e);</span>
+<span class="nc" id="L541">		}</span>
+
+		// STEP 2. &quot;We iterate through each Service Scenario and evaluate&quot;
+
+		// TOPIC: 'Scenario argument matching'
+		// ===================================
+		// A few things to note on this logic loop. Let's say the incoming
+		// request has 'ABC123' in the request and we have Scenario A with
+		// match argument '123' and Scenario B with match argument 'ABC123'.
+		// The goal is to return Scenario B, in this case because there's a
+		// match with 'ABC123'. Unfortunately, Scenario A works too, because
+		// 'ABC123' contains '123'. Which should be returned?
+		// In this particular case, we want to return Scenario B, because it
+		// has the-longest-string match value, i.e. 6 character match vs.
+		// 3 characters.
+<span class="nc" id="L556">		ResponseFromService response = new ResponseFromService();</span>
+<span class="nc" id="L557">		List&lt;Scenario&gt; scenarios = this.getScenarios();</span>
+<span class="nc" id="L558">		Iterator&lt;Scenario&gt; iter = scenarios.iterator();</span>
+<span class="nc" id="L559">		String messageMatchFound = null;</span>
+<span class="nc" id="L560">		int httpResponseStatus = -1;</span>
+<span class="nc" id="L561">		int matchArgLength = -1;</span>
+<span class="nc" id="L562">		Scenario bestMatchedScenario = null;</span>
+		// We must visit ALL Scenarios, without any short circuits.
+<span class="nc bnc" id="L564" title="All 2 branches missed.">		while (iter.hasNext()) {</span>
+<span class="nc" id="L565">			Scenario scenario = iter.next();</span>
+<span class="nc" id="L566">			logger.debug(&quot;Checking: '&quot; + scenario.getMatchStringArg() + &quot;' in Scenario message: \n&quot; + rawRequestData);</span>
+<span class="nc" id="L567">			int indexValue = -1;</span>
+<span class="nc" id="L568">			int tempTotalRuleSuccessfulEvaluationCount = -1;</span>
+			// For RESTful support of VERB (method type), we check if a Scenario
+			// value is set, and if so, it matches incoming request method type.
+			// All TYPES will be allowed if Scenario's method type is 'empty', 'null', or '*' (wildcard). 
+			// Otherwise, ONLY a matching type will be looked at. 
+<span class="nc" id="L573">			String incomingRequestMethod = request.getMethod();</span>
+<span class="nc bnc" id="L574" title="All 4 branches missed.">			if (scenario.getHttpMethodType() == null || scenario.getHttpMethodType().trim().length() == 0</span>
+<span class="nc bnc" id="L575" title="All 2 branches missed.">					|| &quot;*&quot;.equals(scenario.getHttpMethodType().trim())</span>
+<span class="nc bnc" id="L576" title="All 2 branches missed.">					|| scenario.getHttpMethodType().trim().equalsIgnoreCase(incomingRequestMethod)) {</span>
+
+<span class="nc bnc" id="L578" title="All 2 branches missed.">				if (scenario.hasMatchArgument()) {</span>
+<span class="nc bnc" id="L579" title="All 2 branches missed.">					if (scenario.isMatchStringArgEvaluationRulesFlag()) {</span>
+
+						try {
+<span class="nc" id="L582">							RequestInspectorDefinedByJson jsonRulesInspector = new RequestInspectorDefinedByJson(</span>
+<span class="nc" id="L583">									scenario.getMatchStringArg());</span>
+
+<span class="nc" id="L585">							jsonRulesInspector.analyze(request);</span>
+
+<span class="nc bnc" id="L587" title="All 2 branches missed.">							if (jsonRulesInspector.hasAnySuccessForAtLeastOneRuleType()) {</span>
+
+								// No errors, so we have a match.
+<span class="nc" id="L590">								indexValue = 1;</span>
+								// Capture the number of _valid_ rules successfully processed.
+<span class="nc" id="L592">								tempTotalRuleSuccessfulEvaluationCount = jsonRulesInspector.getValidRuleCount();</span>
+
+							} else {
+<span class="nc" id="L595">								logger.debug(&quot;No match. Reason: &quot; + jsonRulesInspector.getPostAnalyzeResultMessage());</span>
+							}
+
+<span class="nc" id="L598">						} catch (JSONException e) {</span>
+<span class="nc" id="L599">							String msg = &quot;Unable to parse JSON rules from scenario: &quot; + scenario.getScenarioName();</span>
+<span class="nc" id="L600">							logger.debug(msg, e);</span>
+							// Unable to interpret this, so we assume
+							// no match
+<span class="nc" id="L603">						}</span>
+
+					} else {
+						// Case insensitive
+<span class="nc" id="L607">						tempTotalRuleSuccessfulEvaluationCount = scenario.getMatchStringArg().trim().length();</span>
+<span class="nc" id="L608">						indexValue = rawRequestData.toLowerCase().indexOf(scenario.getMatchStringArg().toLowerCase());</span>
+					}
+				}
+				// OK, we have found a match-argument that is in the REQUEST,
+				// via 'indexValue &gt; -1' but is it the longest matching argument
+				// via 'tempArgLength &gt; matchArgLength'?
+<span class="nc bnc" id="L614" title="All 4 branches missed.">				if ((indexValue &gt; -1) &amp;&amp; tempTotalRuleSuccessfulEvaluationCount &gt; matchArgLength) {</span>
+<span class="nc" id="L615">					matchArgLength = tempTotalRuleSuccessfulEvaluationCount;</span>
+<span class="nc" id="L616">					bestMatchedScenario = scenario;</span>
+				}
+			}
+<span class="nc" id="L619">		}</span>
+
+<span class="nc bnc" id="L621" title="All 2 branches missed.">		if (bestMatchedScenario != null) {</span>
+<span class="nc" id="L622">			logger.debug(&quot;FOUND - matching '&quot; + bestMatchedScenario.getMatchStringArg() + &quot;' &quot;);</span>
+<span class="nc" id="L623">			messageMatchFound = bestMatchedScenario.getResponseMessage();</span>
+<span class="nc" id="L624">			httpResponseStatus = bestMatchedScenario.getHttpResponseStatusCode();</span>
+			// SET RULE_FOR_HEADERS
+<span class="nc" id="L626">			Map&lt;String, String&gt; headerInfo = bestMatchedScenario.getHeaderInfoHelper();</span>
+<span class="nc" id="L627">			List&lt;Header&gt; headerList = new ArrayList&lt;Header&gt;();</span>
+<span class="nc bnc" id="L628" title="All 2 branches missed.">			for (String k : headerInfo.keySet()) {</span>
+<span class="nc" id="L629">				headerList.add(new BasicHeader(k, headerInfo.get(k)));</span>
+<span class="nc" id="L630">			}</span>
+<span class="nc" id="L631">			response.setServiceScenarioHangTime(bestMatchedScenario.getHangTime());</span>
+<span class="nc" id="L632">			response.setScenarioName(bestMatchedScenario.getScenarioName());</span>
+<span class="nc" id="L633">			response.setHeaders(headerList.toArray(new Header[headerList.size()]));</span>
+<span class="nc" id="L634">			response.setScenarioName(bestMatchedScenario.getScenarioName());</span>
+<span class="nc" id="L635">			response.setScenarioTagsAsString(bestMatchedScenario.getTag());</span>
+		}
+		// If we have no matches. Error handling is as follows:
+		// 1) Does service have a default service error defined? If yes, return
+		// message. If no...
+		// 2) Does Mockey have a universal error message defined? If yes,
+		// return, otherwise...
+		// 3) Return a error message.
+<span class="nc bnc" id="L643" title="All 2 branches missed.">		if (messageMatchFound == null) {</span>
+<span class="nc" id="L644">			response.setScenarioName(&quot;(No matching scenario)&quot;);</span>
+<span class="nc" id="L645">			Scenario u = getErrorScenario();</span>
+<span class="nc bnc" id="L646" title="All 2 branches missed.">			if (u == null) {</span>
+<span class="nc" id="L647">				u = store.getUniversalErrorScenario();</span>
+			}
+<span class="nc bnc" id="L649" title="All 2 branches missed.">			if (u != null) {</span>
+<span class="nc" id="L650">				messageMatchFound = u.getResponseMessage();</span>
+<span class="nc" id="L651">				httpResponseStatus = u.getHttpResponseStatusCode();</span>
+				
+				// SET RULE_FOR_HEADERS
+<span class="nc" id="L654">				Map&lt;String, String&gt; headerInfo = u.getHeaderInfoHelper();</span>
+<span class="nc" id="L655">				List&lt;Header&gt; headerList = new ArrayList&lt;Header&gt;();</span>
+<span class="nc bnc" id="L656" title="All 2 branches missed.">				for (String k : headerInfo.keySet()) {</span>
+<span class="nc" id="L657">					headerList.add(new BasicHeader(k, headerInfo.get(k)));</span>
+<span class="nc" id="L658">				}</span>
+				
+<span class="nc" id="L660">				response.setHeaders(headerList.toArray(new Header[headerList.size()]));</span>
+<span class="nc" id="L661">				response.setScenarioName(u.getScenarioName());</span>
+<span class="nc" id="L662">				response.setScenarioTagsAsString(u.getTag());</span>
+<span class="nc" id="L663">			} else {</span>
+<span class="nc" id="L664">				messageMatchFound = &quot;Yikes, no love for you! Why? Well, it could be that this service setting &quot;</span>
+						+ &quot;is set to Dynamic but there is no found matching scenario, nor is there a default &quot;
+						+ &quot;service-scenario-error defined, nor is there a universal-scenario-error defined &quot;
+						+ &quot;for this incoming request. In otherwords, Mockey doesn't know what to do.&quot;;
+			}
+
+		}
+<span class="nc" id="L671">		response.setRequestUrl(realServiceUrl);</span>
+<span class="nc" id="L672">		response.setBody(messageMatchFound);</span>
+<span class="nc" id="L673">		response.setHttpResponseStatusCode(httpResponseStatus);</span>
+		
+<span class="nc" id="L675">		return response;</span>
+	}
+
+	private String getNiceNameForService(String arg) {
+<span class="nc" id="L679">		String name = arg;</span>
+		// Remove parameters
+<span class="nc" id="L681">		int index = arg.indexOf(&quot;?&quot;);</span>
+<span class="nc bnc" id="L682" title="All 2 branches missed.">		if (index &gt; 0) {</span>
+<span class="nc" id="L683">			arg = arg.substring(0, index);</span>
+		}
+<span class="nc" id="L685">		StringTokenizer st = new StringTokenizer(arg, &quot;/&quot;);</span>
+<span class="nc bnc" id="L686" title="All 2 branches missed.">		while (st.hasMoreTokens()) {</span>
+			// Eventually, we get the last token, and
+			// we use it as the name.
+<span class="nc" id="L689">			name = st.nextToken();</span>
+		}
+<span class="nc" id="L691">		name = name + &quot; (auto generated)&quot;;</span>
+
+<span class="nc" id="L693">		return name;</span>
+	}
+
+	public List&lt;Url&gt; getRealServiceUrls() {
+<span class="fc" id="L697">		return realServiceUrlList;</span>
+	}
+
+	public void clearRealServiceUrls() {
+<span class="nc" id="L701">		realServiceUrlList = new ArrayList&lt;Url&gt;();</span>
+<span class="nc" id="L702">	}</span>
+
+	/**
+	 * 
+	 * @param url
+	 */
+	public void saveOrUpdateRealServiceUrl(Url url) {
+
+<span class="nc bnc" id="L710" title="All 2 branches missed.">		if (url != null) {</span>
+
+<span class="nc" id="L712">			boolean found = this.hasRealServiceUrl(url);</span>
+<span class="nc bnc" id="L713" title="All 4 branches missed.">			if (!found &amp;&amp; !url.getFullUrl().trim().isEmpty()) {</span>
+<span class="nc" id="L714">				this.realServiceUrlList.add(url);</span>
+			}
+
+			// BONUS
+			// If this service name is undefined, then we try to determine
+			// an informative name based on the url
+<span class="nc bnc" id="L720" title="All 4 branches missed.">			if (this.serviceName != null &amp;&amp; this.serviceName.trim().isEmpty()) {</span>
+<span class="nc" id="L721">				this.setServiceName(this.getNiceNameForService(url.getFullUrl()));</span>
+			}
+
+		}
+<span class="nc" id="L725">	}</span>
+
+	/**
+	 * 
+	 * @param otherService
+	 * @return non null if _this_ and otherService both have non-empty list of
+	 *         &lt;code&gt;Url&lt;/code&gt; objects with a matching &lt;code&gt;Url&lt;/code&gt; object.
+	 *         Otherwise, returns false;
+	 */
+	public Url getFirstMatchingRealServiceUrl(Service otherService) {
+
+<span class="nc" id="L736">		Url matchUrl = null;</span>
+<span class="nc bnc" id="L737" title="All 6 branches missed.">		if (this.realServiceUrlList != null &amp;&amp; otherService != null &amp;&amp; !otherService.getRealServiceUrls().isEmpty()) {</span>
+
+<span class="nc bnc" id="L739" title="All 2 branches missed.">			for (Url otherUrl : otherService.getRealServiceUrls()) {</span>
+<span class="nc bnc" id="L740" title="All 2 branches missed.">				if (this.hasRealServiceUrl(otherUrl)) {</span>
+<span class="nc" id="L741">					matchUrl = otherUrl;</span>
+<span class="nc" id="L742">					break;</span>
+				}
+<span class="nc" id="L744">			}</span>
+		}
+<span class="nc" id="L746">		return matchUrl;</span>
+	}
+
+	public boolean hasRealServiceUrl(Url url) {
+<span class="nc" id="L750">		boolean has = false;</span>
+		try {
+<span class="nc bnc" id="L752" title="All 2 branches missed.">			for (Url urlTmp : this.realServiceUrlList) {</span>
+<span class="nc bnc" id="L753" title="All 2 branches missed.">				if (urlTmp.getFullUrl().trim().equalsIgnoreCase(url.getFullUrl())) {</span>
+<span class="nc" id="L754">					has = true;</span>
+<span class="nc" id="L755">					break;</span>
+				}
+<span class="nc" id="L757">			}</span>
+<span class="nc" id="L758">		} catch (Exception e) {</span>
+			// do nothing
+<span class="nc" id="L760">		}</span>
+<span class="nc" id="L761">		return has;</span>
+	}
+
+	/**
+	 * 
+	 * @param url
+	 * @see #getUrl()
+	 */
+	public void setUrl(String url) {
+<span class="fc" id="L770">		this.url = url;</span>
+<span class="fc" id="L771">	}</span>
+
+	/**
+	 * Mock URL. It's possible that this URL looks like one of the Real URLs.
+	 * But, this value can be anything, but should be unique in the list of
+	 * Services.
+	 * 
+	 * @return
+	 */
+	public String getUrl() {
+<span class="fc" id="L781">		return url;</span>
+	}
+
+	public int getDefaultRealUrlIndex() {
+<span class="nc" id="L785">		return this.defaultRealUrlIndex;</span>
+	}
+
+	public void setDefaultRealUrlIndex(int i) {
+<span class="nc" id="L789">		this.defaultRealUrlIndex = i;</span>
+<span class="nc" id="L790">	}</span>
+
+	public Url getDefaultRealUrl() {
+<span class="nc" id="L793">		Url d = null;</span>
+		try {
+<span class="nc" id="L795">			d = this.realServiceUrlList.get(this.defaultRealUrlIndex);</span>
+<span class="nc" id="L796">		} catch (Exception e) {</span>
+			// OK, let's try and be smart.
+			// Reset index.
+<span class="nc" id="L799">			this.defaultRealUrlIndex = 0;</span>
+<span class="nc bnc" id="L800" title="All 2 branches missed.">			if (!this.realServiceUrlList.isEmpty()) {</span>
+<span class="nc" id="L801">				d = this.realServiceUrlList.get(0);</span>
+			}
+<span class="nc" id="L803">		}</span>
+<span class="nc" id="L804">		return d;</span>
+	}
+
+	public void setTransientState(Boolean transientState) {
+<span class="nc" id="L808">		this.transientState = transientState;</span>
+<span class="nc" id="L809">	}</span>
+
+	public Boolean getTransientState() {
+<span class="nc" id="L812">		return transientState;</span>
+	}
+
+	public boolean hasTag(String tag) {
+<span class="nc" id="L816">		boolean has = super.hasTag(tag);</span>
+<span class="nc bnc" id="L817" title="All 2 branches missed.">		if (!has) {</span>
+			// Check scenarios...
+<span class="nc bnc" id="L819" title="All 2 branches missed.">			for (Scenario s : this.getScenarios()) {</span>
+<span class="nc" id="L820">				has = s.hasTag(tag);</span>
+<span class="nc bnc" id="L821" title="All 2 branches missed.">				if (has) {</span>
+<span class="nc" id="L822">					break;</span>
+				}
+<span class="nc" id="L824">			}</span>
+		}
+<span class="nc" id="L826">		return has;</span>
+	}
+
+	/**
+	 * 
+	 * @return the Class Name of the Java class responsible for validation of
+	 *         all incoming requests.
+	 * @see com.mockey.plugin.IRequestInspector
+	 */
+	public String getRequestInspectorName() {
+<span class="nc" id="L836">		return requestInspectorName;</span>
+	}
+
+	public void setRequestInspectorName(String requestInspectorName) {
+<span class="nc" id="L840">		this.requestInspectorName = requestInspectorName;</span>
+<span class="nc" id="L841">	}</span>
+
+	/**
+	 * 
+	 * @return request inspection/validation rules defined in JSON format.
+	 */
+	public String getRequestInspectorJsonRules() {
+
+<span class="fc" id="L849">		return requestInspectorJsonRules;</span>
+	}
+
+	/**
+	 * 
+	 * @param _requestInspectorJsonRules
+	 *            can be null or empty or invalid JSON format to be able display
+	 *            to customers invalid input. Validation will be done elsewhere.
+	 *            If not null, argument will be trimmed prior to being set.
+	 */
+	public void setRequestInspectorJsonRules(String _requestInspectorJsonRules) {
+<span class="pc bpc" id="L860" title="1 of 2 branches missed.">		if (_requestInspectorJsonRules != null) {</span>
+<span class="fc" id="L861">			this.requestInspectorJsonRules = _requestInspectorJsonRules;</span>
+		} else {
+
+<span class="nc" id="L864">			this.requestInspectorJsonRules = _requestInspectorJsonRules;</span>
+		}
+<span class="fc" id="L866">	}</span>
+
+	/**
+	 * 
+	 * @return true if the request inspector's JSON rules should be processed
+	 *         per request.
+	 */
+	public boolean isRequestInspectorJsonRulesEnableFlag() {
+<span class="fc" id="L874">		return requestInspectorJsonRulesEnableFlag;</span>
+	}
+
+	public void setRequestInspectorJsonRulesEnableFlag(boolean requestInspectorJsonRulesEnableFlag) {
+<span class="fc" id="L878">		this.requestInspectorJsonRulesEnableFlag = requestInspectorJsonRulesEnableFlag;</span>
+<span class="fc" id="L879">	}</span>
+
+	/**
+	 * Response schema is used to validate a Service's Scenario format, to help
+	 * developers quickly find out if their Service Scenario(s) are invalid.
+	 * 
+	 * @return a string representing a schema.
+	 */
+	public String getResponseSchema() {
+<span class="fc" id="L888">		return responseSchema;</span>
+	}
+
+	/**
+	 * 
+	 * @param responseSchema
+	 */
+	public void setResponseSchema(String responseSchema) {
+<span class="fc" id="L896">		this.responseSchema = responseSchema;</span>
+<span class="fc" id="L897">	}</span>
+
+	public boolean isResponseSchemaFlag() {
+<span class="fc" id="L900">		return responseSchemaFlag;</span>
+	}
+
+	public void setResponseSchemaFlag(boolean responseSchemaFlag) {
+<span class="fc" id="L904">		this.responseSchemaFlag = responseSchemaFlag;</span>
+<span class="fc" id="L905">	}</span>
+}
+</pre><div class="footer"><span class="right">Created with <a href="http://www.jacoco.org/jacoco">JaCoCo</a> 0.8.1.201803210924</span></div></body></html>

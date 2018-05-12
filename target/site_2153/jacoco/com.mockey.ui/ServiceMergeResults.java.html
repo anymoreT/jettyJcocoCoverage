@@ -1,0 +1,69 @@
+<?xml version="1.0" encoding="UTF-8"?><!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Strict//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-strict.dtd"><html xmlns="http://www.w3.org/1999/xhtml" lang="zh"><head><meta http-equiv="Content-Type" content="text/html;charset=UTF-8"/><link rel="stylesheet" href="../jacoco-resources/report.css" type="text/css"/><link rel="shortcut icon" href="../jacoco-resources/report.gif" type="image/gif"/><title>ServiceMergeResults.java</title><link rel="stylesheet" href="../jacoco-resources/prettify.css" type="text/css"/><script type="text/javascript" src="../jacoco-resources/prettify.js"></script></head><body onload="window['PR_TAB_WIDTH']=4;prettyPrint()"><div class="breadcrumb" id="breadcrumb"><span class="info"><a href="../jacoco-sessions.html" class="el_session">Sessions</a></span><a href="../index.html" class="el_report">JaCoCo Ant Example</a> &gt; <a href="index.source.html" class="el_package">com.mockey.ui</a> &gt; <span class="el_source">ServiceMergeResults.java</span></div><h1>ServiceMergeResults.java</h1><pre class="source lang-java linenums">/*
+ * This file is part of Mockey, a tool for testing application 
+ * interactions over HTTP, with a focus on testing web services, 
+ * specifically web applications that consume XML, JSON, and HTML.
+ *  
+ * Copyright (C) 2009-2010  Authors:
+ * 
+ * chad.lafontaine (chad.lafontaine AT gmail DOT com)
+ * neil.cronin (neil AT rackle DOT com) 
+ * lorin.kobashigawa (lkb AT kgawa DOT com)
+ * rob.meyer (rob AT bigdis DOT com)
+ * 
+ * This program is free software; you can redistribute it and/or
+ * modify it under the terms of the GNU General Public License
+ * as published by the Free Software Foundation; either version 2
+ * of the License, or (at your option) any later version.
+ * 
+ * This program is distributed in the hope that it will be useful,
+ * but WITHOUT ANY WARRANTY; without even the implied warranty of
+ * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+ * GNU General Public License for more details.
+ * 
+ * You should have received a copy of the GNU General Public License
+ * along with this program; if not, write to the Free Software
+ * Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301, USA.
+ *
+ */
+package com.mockey.ui;
+
+import java.util.ArrayList;
+import java.util.Iterator;
+import java.util.List;
+
+<span class="fc" id="L34">public class ServiceMergeResults {</span>
+<span class="fc" id="L35">    private List&lt;String&gt; conflicts = new ArrayList&lt;String&gt;();</span>
+<span class="fc" id="L36">    private List&lt;String&gt; additions = new ArrayList&lt;String&gt;();</span>
+    public void addConflictMsg(String conflictMsg) {
+<span class="nc" id="L38">        this.conflicts.add(conflictMsg);</span>
+<span class="nc" id="L39">    }</span>
+    public List&lt;String&gt; getConflictMsgs() {
+<span class="nc" id="L41">        return conflicts;</span>
+    }
+    public String getConflictMsg() {
+<span class="nc" id="L44">    	return buildMsg(this.conflicts);</span>
+    }
+    
+    public String getAdditionMsg() {
+<span class="nc" id="L48">    	return buildMsg(this.additions);</span>
+    }
+    public void addAdditionMsg(String additionMsg) {
+<span class="fc" id="L51">        this.additions.add(additionMsg);</span>
+<span class="fc" id="L52">    }</span>
+    public List&lt;String&gt; getAdditionMessages() {
+<span class="nc" id="L54">        return additions;</span>
+    }
+    private String buildMsg(List&lt;String&gt; list) {
+<span class="nc" id="L57">    	StringBuffer s = new StringBuffer();</span>
+<span class="nc" id="L58">    	Iterator&lt;String&gt; iter = list.iterator();</span>
+<span class="nc bnc" id="L59" title="All 2 branches missed.">    	while(iter.hasNext()){</span>
+<span class="nc" id="L60">    		s.append(iter.next());</span>
+    	}
+<span class="nc" id="L62">        return s.toString();</span>
+    }
+    
+    
+    
+    
+}
+</pre><div class="footer"><span class="right">Created with <a href="http://www.jacoco.org/jacoco">JaCoCo</a> 0.8.1.201803210924</span></div></body></html>

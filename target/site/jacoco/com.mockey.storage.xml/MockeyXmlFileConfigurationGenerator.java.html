@@ -1,0 +1,450 @@
+<?xml version="1.0" encoding="UTF-8"?><!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Strict//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-strict.dtd"><html xmlns="http://www.w3.org/1999/xhtml" lang="zh"><head><meta http-equiv="Content-Type" content="text/html;charset=UTF-8"/><link rel="stylesheet" href="../jacoco-resources/report.css" type="text/css"/><link rel="shortcut icon" href="../jacoco-resources/report.gif" type="image/gif"/><title>MockeyXmlFileConfigurationGenerator.java</title><link rel="stylesheet" href="../jacoco-resources/prettify.css" type="text/css"/><script type="text/javascript" src="../jacoco-resources/prettify.js"></script></head><body onload="window['PR_TAB_WIDTH']=4;prettyPrint()"><div class="breadcrumb" id="breadcrumb"><span class="info"><a href="../jacoco-sessions.html" class="el_session">Sessions</a></span><a href="../index.html" class="el_report">JaCoCo Ant Example</a> &gt; <a href="index.source.html" class="el_package">com.mockey.storage.xml</a> &gt; <span class="el_source">MockeyXmlFileConfigurationGenerator.java</span></div><h1>MockeyXmlFileConfigurationGenerator.java</h1><pre class="source lang-java linenums">/*
+ * This file is part of Mockey, a tool for testing application 
+ * interactions over HTTP, with a focus on testing web services, 
+ * specifically web applications that consume XML, JSON, and HTML.
+ *  
+ * Copyright (C) 2009-2010  Authors:
+ * 
+ * chad.lafontaine (chad.lafontaine AT gmail DOT com)
+ * neil.cronin (neil AT rackle DOT com) 
+ * lorin.kobashigawa (lkb AT kgawa DOT com)
+ * rob.meyer (rob AT bigdis DOT com)
+ * 
+ * This program is free software; you can redistribute it and/or
+ * modify it under the terms of the GNU General Public License
+ * as published by the Free Software Foundation; either version 2
+ * of the License, or (at your option) any later version.
+ * 
+ * This program is distributed in the hope that it will be useful,
+ * but WITHOUT ANY WARRANTY; without even the implied warranty of
+ * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+ * GNU General Public License for more details.
+ * 
+ * You should have received a copy of the GNU General Public License
+ * along with this program; if not, write to the Free Software
+ * Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301, USA.
+ *
+ */
+package com.mockey.storage.xml;
+
+import java.io.File;
+
+import javax.xml.parsers.DocumentBuilder;
+import javax.xml.parsers.DocumentBuilderFactory;
+import javax.xml.parsers.ParserConfigurationException;
+
+import org.apache.log4j.Logger;
+import org.w3c.dom.CDATASection;
+import org.w3c.dom.Document;
+import org.w3c.dom.Element;
+
+import com.mockey.model.PlanItem;
+import com.mockey.model.ProxyServerModel;
+import com.mockey.model.Scenario;
+import com.mockey.model.Service;
+import com.mockey.model.ServicePlan;
+import com.mockey.model.TwistInfo;
+import com.mockey.model.Url;
+import com.mockey.storage.IMockeyStorage;
+import com.mockey.ui.PatternPair;
+import java.util.Date;
+/**
+ * Builds DOM representing Mockey Service configurations.
+ * 
+ * @author chad.lafontaine
+ * 
+ */
+<span class="nc" id="L57">public class MockeyXmlFileConfigurationGenerator extends XmlGeneratorSupport {</span>
+	/** Basic logger */
+<span class="nc" id="L59">	private static Logger logger = Logger</span>
+<span class="nc" id="L60">			.getLogger(MockeyXmlFileConfigurationGenerator.class);</span>
+
+	private Document getDocument() {
+
+		try {
+			DocumentBuilderFactory factory = DocumentBuilderFactory
+<span class="nc" id="L66">					.newInstance();</span>
+<span class="nc" id="L67">			factory.setXIncludeAware(true);</span>
+<span class="nc" id="L68">			factory.setNamespaceAware(true);</span>
+<span class="nc" id="L69">			DocumentBuilder docBuilder = factory.newDocumentBuilder();</span>
+<span class="nc bnc" id="L70" title="All 2 branches missed.">			if (!docBuilder.isXIncludeAware()) {</span>
+<span class="nc" id="L71">				throw new IllegalStateException(&quot;Dang, not xinclude aware.&quot;);</span>
+			}
+
+<span class="nc" id="L74">			Document document = docBuilder.newDocument();</span>
+
+<span class="nc" id="L76">			return document;</span>
+<span class="nc" id="L77">		} catch (ParserConfigurationException pce) {</span>
+<span class="nc" id="L78">			logger.error(&quot;Unable to parse the store&quot;, pce);</span>
+<span class="nc" id="L79">			return null;</span>
+		}
+
+	}
+
+	/**
+	 * 
+	 * @param mockServiceBean
+	 * @return Service as an XML definition.
+	 */
+	public Document getServiceAsDocument(Service mockServiceBean,
+			boolean includeScenarioDefinitions) {
+<span class="nc" id="L91">		Document document = getDocument();</span>
+<span class="nc" id="L92">		Element rootElement = document.createElement(&quot;mockservice&quot;);</span>
+
+<span class="nc" id="L94">		this.setAttribute(rootElement, &quot;xml:lang&quot;, &quot;en-US&quot;);</span>
+<span class="nc" id="L95">		this.setAttribute(rootElement, &quot;version&quot;, &quot;1.0&quot;);</span>
+<span class="nc" id="L96">		Element serviceElement = this.getServiceAsElement(document,</span>
+				mockServiceBean, includeScenarioDefinitions);
+<span class="nc" id="L98">		rootElement.appendChild(serviceElement);</span>
+<span class="nc" id="L99">		document.appendChild(rootElement);</span>
+<span class="nc" id="L100">		return document;</span>
+	}
+
+	/**
+	 * 
+	 * @param scenario
+	 * @return Scenario as an XML definition.
+	 */
+	public Document getServiceScenarioAsDocument(Scenario scenario,
+			boolean scenarioResponseAsXIncludeTxtFile) {
+<span class="nc" id="L110">		Document document = getDocument();</span>
+<span class="nc" id="L111">		Element serviceElement = this.getScenarioAsElement(document, scenario,</span>
+				scenarioResponseAsXIncludeTxtFile);
+<span class="nc" id="L113">		this.setAttribute(serviceElement, &quot;xml:lang&quot;, &quot;en-US&quot;);</span>
+<span class="nc" id="L114">		this.setAttribute(serviceElement, &quot;version&quot;, &quot;1.0&quot;);</span>
+<span class="nc" id="L115">		document.appendChild(serviceElement);</span>
+<span class="nc" id="L116">		return document;</span>
+	}
+
+	/**
+	 * 
+	 * @param document
+	 * @param mockServiceBean
+	 * @param includeScenarioDefinitions
+	 * @return
+	 */
+	private Element getServiceAsElement(Document document,
+			Service mockServiceBean, boolean includeScenarioDefinitions) {
+
+<span class="nc" id="L129">		Element serviceElement = document.createElement(&quot;service&quot;);</span>
+
+<span class="nc bnc" id="L131" title="All 2 branches missed.">		if (mockServiceBean != null) {</span>
+			// logger.debug(&quot;building XML representation for MockServiceBean:\n&quot;
+			// + mockServiceBean.toString());
+			// *************************************
+			// We do NOT want to write out ID.
+			// If we did, then someone uploading this xml definition may
+			// overwrite services
+			// defined with the same ID.
+			// serviceElement.setAttribute(&quot;id&quot;, mockServiceBean.getId());
+			// *************************************
+<span class="nc" id="L141">			serviceElement.setAttribute(&quot;name&quot;,</span>
+<span class="nc" id="L142">					mockServiceBean.getServiceName());</span>
+<span class="nc" id="L143">			serviceElement</span>
+<span class="nc" id="L144">					.setAttribute(&quot;description&quot;,</span>
+<span class="nc" id="L145">							getSafeForXmlOutputString(mockServiceBean</span>
+<span class="nc" id="L146">									.getDescription()));</span>
+<span class="nc" id="L147">			serviceElement.setAttribute(</span>
+					&quot;hang_time&quot;,
+<span class="nc" id="L149">					getSafeForXmlOutputString(&quot;&quot;</span>
+<span class="nc" id="L150">							+ mockServiceBean.getHangTime()));</span>
+<span class="nc" id="L151">			serviceElement.setAttribute(</span>
+					&quot;request_inspector_name&quot;,
+<span class="nc" id="L153">					getSafeForXmlOutputString(&quot;&quot;</span>
+<span class="nc" id="L154">							+ mockServiceBean.getRequestInspectorName()));</span>
+<span class="nc" id="L155">			serviceElement.setAttribute(&quot;url&quot;, getSafeForXmlOutputString(&quot;&quot;</span>
+<span class="nc" id="L156">					+ mockServiceBean.getUrl()));</span>
+<span class="nc" id="L157">			serviceElement.setAttribute(&quot;tag&quot;,</span>
+<span class="nc" id="L158">					getSafeForXmlOutputString(mockServiceBean.getTag()));</span>
+			// CHANGE on March 2013
+			// Last visit will always change, and there's no need to persist
+			// this to a repository.
+			// This information is for in-memory use only, and displayed to
+			// users ONLY.
+			// serviceElement.setAttribute(&quot;last_visit&quot;,
+			// getSafeForXmlOutputString(&quot;&quot; + mockServiceBean.getLastVisit()));
+<span class="nc" id="L166">			serviceElement.setAttribute(</span>
+					&quot;default_scenario_id&quot;,
+<span class="nc" id="L168">					getSafeForXmlOutputString(&quot;&quot;</span>
+<span class="nc" id="L169">							+ (mockServiceBean.getDefaultScenarioId())));</span>
+<span class="nc" id="L170">			serviceElement.setAttribute(</span>
+					&quot;error_scenario_id&quot;,
+<span class="nc" id="L172">					getSafeForXmlOutputString(&quot;&quot;</span>
+<span class="nc" id="L173">							+ (mockServiceBean.getErrorScenarioId())));</span>
+
+<span class="nc" id="L175">			serviceElement.setAttribute(</span>
+					&quot;service_response_type&quot;,
+<span class="nc" id="L177">					getSafeForXmlOutputString(&quot;&quot;</span>
+<span class="nc" id="L178">							+ mockServiceBean.getServiceResponseType()));</span>
+<span class="nc" id="L179">			serviceElement.setAttribute(</span>
+					&quot;default_real_url_index&quot;,
+<span class="nc" id="L181">					getSafeForXmlOutputString(&quot;&quot;</span>
+<span class="nc" id="L182">							+ mockServiceBean.getDefaultRealUrlIndex()));</span>
+
+			// Request validation rules in JSON format definition.
+<span class="nc" id="L185">			Element requestInspectorJsonRulesElement = document</span>
+<span class="nc" id="L186">					.createElement(&quot;request_inspector_json_rules&quot;);</span>
+<span class="nc" id="L187">			requestInspectorJsonRulesElement.setAttribute(&quot;enable_flag&quot;, &quot;&quot;</span>
+<span class="nc" id="L188">					+ mockServiceBean.isRequestInspectorJsonRulesEnableFlag());</span>
+<span class="nc" id="L189">			CDATASection cdataJsonRulesElement = document</span>
+<span class="nc" id="L190">					.createCDATASection(getSafeForXmlOutputString(mockServiceBean</span>
+<span class="nc" id="L191">							.getRequestInspectorJsonRules()));</span>
+<span class="nc" id="L192">			requestInspectorJsonRulesElement.appendChild(cdataJsonRulesElement);</span>
+<span class="nc" id="L193">			serviceElement.appendChild(requestInspectorJsonRulesElement);</span>
+
+			// Service Scenario Response Schema
+<span class="nc" id="L196">			Element responseSchemaElement = document</span>
+<span class="nc" id="L197">					.createElement(&quot;response_schema&quot;);</span>
+<span class="nc" id="L198">			responseSchemaElement.setAttribute(&quot;enable_flag&quot;, &quot;&quot;</span>
+<span class="nc" id="L199">					+ mockServiceBean.isResponseSchemaFlag());</span>
+<span class="nc" id="L200">			CDATASection cdataresponseSchemaElement = document</span>
+<span class="nc" id="L201">					.createCDATASection(getSafeForXmlOutputString(mockServiceBean</span>
+<span class="nc" id="L202">							.getResponseSchema()));</span>
+<span class="nc" id="L203">			responseSchemaElement.appendChild(cdataresponseSchemaElement);</span>
+<span class="nc" id="L204">			serviceElement.appendChild(responseSchemaElement);</span>
+
+			// New real service URLs
+<span class="nc bnc" id="L207" title="All 2 branches missed.">			for (Url realUrl : mockServiceBean.getRealServiceUrls()) {</span>
+<span class="nc" id="L208">				Element urlElement = document.createElement(&quot;real_url&quot;);</span>
+<span class="nc" id="L209">				urlElement.setAttribute(&quot;url&quot;,</span>
+<span class="nc" id="L210">						getSafeForXmlOutputString(realUrl.getFullUrl()));</span>
+				// urlElement.appendChild(cdataResponseElement);
+<span class="nc" id="L212">				serviceElement.appendChild(urlElement);</span>
+<span class="nc" id="L213">			}</span>
+
+			// Scenarios
+			// TODO.
+			// includeScenarioDefinitions = true;
+<span class="nc bnc" id="L218" title="All 2 branches missed.">			if (includeScenarioDefinitions) {</span>
+<span class="nc bnc" id="L219" title="All 2 branches missed.">				for (Scenario scenario : mockServiceBean.getScenarios()) {</span>
+<span class="nc" id="L220">					Element scenarioElement = getScenarioAsElement(document,</span>
+							scenario, false);
+<span class="nc" id="L222">					serviceElement.appendChild(scenarioElement);</span>
+<span class="nc" id="L223">				}</span>
+			} else {
+<span class="nc bnc" id="L225" title="All 2 branches missed.">				for (Scenario scenario : mockServiceBean.getScenarios()) {</span>
+<span class="nc" id="L226">					Element include = document.createElementNS(</span>
+							&quot;http://www.w3.org/2001/XInclude&quot;, &quot;xi:include&quot;);
+<span class="nc" id="L228">					String path = MockeyXmlFileManager.getInstance()</span>
+<span class="nc" id="L229">							.getServiceScenarioFileRelativePathToDepotFolder(</span>
+									mockServiceBean, scenario);
+<span class="nc" id="L231">					include.setAttribute(&quot;href&quot;, getSafeIncludePathForOS(path));</span>
+<span class="nc" id="L232">					include.setAttribute(&quot;parse&quot;, &quot;xml&quot;);</span>
+<span class="nc" id="L233">					serviceElement.appendChild(include);</span>
+<span class="nc" id="L234">				}</span>
+			}
+		}
+<span class="nc" id="L237">		return serviceElement;</span>
+	}
+
+	private Element getScenarioAsElement(Document document, Scenario scenario,
+			boolean scenarioResponseAsXIncludeTxtFile) {
+<span class="nc" id="L242">		Element scenarioElement = document.createElement(&quot;scenario&quot;);</span>
+<span class="nc" id="L243">		scenarioElement.setAttribute(&quot;id&quot;, scenario.getId().toString());</span>
+<span class="nc" id="L244">		scenarioElement.setAttribute(&quot;name&quot;,</span>
+<span class="nc" id="L245">				getSafeForXmlOutputString(scenario.getScenarioName()));</span>
+<span class="nc" id="L246">		scenarioElement.setAttribute(&quot;tag&quot;,</span>
+<span class="nc" id="L247">				getSafeForXmlOutputString(scenario.getTag()));</span>
+<span class="nc" id="L248">		scenarioElement.setAttribute(&quot;hang_time&quot;,</span>
+<span class="nc" id="L249">				getSafeForXmlOutputString(&quot;&quot; + scenario.getHangTime()));</span>
+		// REMOVED March 2013. We don't need this in a repot for persistence.
+		// It's only for a visual/at-run-time queue.
+		// scenarioElement.setAttribute(&quot;last_visit&quot;,
+		// getSafeForXmlOutputString(&quot;&quot; + scenario.getLastVisit()));
+<span class="nc" id="L254">		scenarioElement.setAttribute(</span>
+				&quot;http_resp_status_code&quot;,
+<span class="nc" id="L256">				getSafeForXmlOutputString(&quot;&quot;</span>
+<span class="nc" id="L257">						+ scenario.getHttpResponseStatusCode()));</span>
+<span class="nc" id="L258">		scenarioElement.setAttribute(&quot;http_method_type&quot;,</span>
+<span class="nc" id="L259">				getSafeForXmlOutputString(&quot;&quot; + scenario.getHttpMethodType()));</span>
+
+<span class="nc" id="L261">		Element scenarioMatchStringElement = document</span>
+<span class="nc" id="L262">				.createElement(&quot;scenario_match&quot;);</span>
+<span class="nc" id="L263">		scenarioMatchStringElement.setAttribute(</span>
+				&quot;scenario_match_evaluation_rules_flag&quot;, Boolean
+<span class="nc" id="L265">						.toString(scenario</span>
+<span class="nc" id="L266">								.isMatchStringArgEvaluationRulesFlag()));</span>
+<span class="nc" id="L267">		CDATASection cdataMatchElement = document</span>
+<span class="nc" id="L268">				.createCDATASection(getSafeForXmlOutputString(scenario</span>
+<span class="nc" id="L269">						.getMatchStringArg()));</span>
+<span class="nc" id="L270">		scenarioMatchStringElement.appendChild(cdataMatchElement);</span>
+<span class="nc" id="L271">		scenarioElement.appendChild(scenarioMatchStringElement);</span>
+
+		// responseHeader
+<span class="nc" id="L274">		Element scenarioResponseElement = document</span>
+<span class="nc" id="L275">				.createElement(&quot;scenario_response&quot;);</span>
+<span class="nc bnc" id="L276" title="All 2 branches missed.">		if (scenarioResponseAsXIncludeTxtFile) {</span>
+<span class="nc" id="L277">			Element include = document.createElementNS(</span>
+					&quot;http://www.w3.org/2001/XInclude&quot;, &quot;xi:include&quot;);
+<span class="nc" id="L279">			include.setAttribute(&quot;href&quot;, MockeyXmlFileManager.getInstance()</span>
+<span class="nc" id="L280">					.getScenarioResponseFileName(scenario));</span>
+<span class="nc" id="L281">			include.setAttribute(&quot;parse&quot;, &quot;text&quot;);</span>
+<span class="nc" id="L282">			scenarioResponseElement.appendChild(include);</span>
+<span class="nc" id="L283">		} else {</span>
+<span class="nc" id="L284">			CDATASection cdataResponseElement = document</span>
+<span class="nc" id="L285">					.createCDATASection(getSafeForXmlOutputString(scenario</span>
+<span class="nc" id="L286">							.getResponseMessage()));</span>
+<span class="nc" id="L287">			scenarioResponseElement.appendChild(cdataResponseElement);</span>
+		}
+<span class="nc" id="L289">		scenarioElement.appendChild(scenarioResponseElement);</span>
+
+<span class="nc" id="L291">		Element scenarioResponseHeaderElement = document</span>
+<span class="nc" id="L292">				.createElement(&quot;scenario_response_header&quot;);</span>
+<span class="nc" id="L293">		CDATASection cdataResponseHeaderElement = document</span>
+<span class="nc" id="L294">				.createCDATASection(getSafeForXmlOutputString(scenario</span>
+<span class="nc" id="L295">						.getResponseHeader()));</span>
+<span class="nc" id="L296">		scenarioResponseHeaderElement.appendChild(cdataResponseHeaderElement);</span>
+<span class="nc" id="L297">		scenarioElement.appendChild(scenarioResponseHeaderElement);</span>
+<span class="nc" id="L298">		return scenarioElement;</span>
+	}
+
+	/**
+	 * 
+	 * @param document
+	 *            - Handle to create XML artifacts
+	 * @param store
+	 *            - state of all service definitions
+	 * @param fullDefinition
+	 *            - if true, builds full definition of the DOM, with no Service
+	 *            references, but includes all service definitions
+	 * @return
+	 */
+	public Document getStoreAsDocument(IMockeyStorage store,
+			boolean nonRefFullDefinition) {
+
+<span class="nc" id="L315">		Date date = new Date();</span>
+<span class="nc" id="L316">		Document document = this.getDocument();</span>
+<span class="nc" id="L317">		Element rootElement = document.createElement(&quot;mockservice&quot;);</span>
+<span class="nc" id="L318">		Scenario mssb = store.getUniversalErrorScenario();</span>
+<span class="nc" id="L319">		this.setAttribute(rootElement, &quot;xml:lang&quot;, &quot;en-US&quot;);</span>
+<span class="nc" id="L320">		this.setAttribute(rootElement, &quot;version&quot;, &quot;1.0&quot;);</span>
+<span class="nc" id="L321">		this.setAttribute(rootElement, &quot;timestamp&quot;, Long.toString(date.getTime()));</span>
+		// Universal Service settings
+<span class="nc bnc" id="L323" title="All 2 branches missed.">		if (mssb != null) {</span>
+<span class="nc" id="L324">			this.setAttribute(rootElement, &quot;universal_error_service_id&quot;, &quot;&quot;</span>
+<span class="nc" id="L325">					+ mssb.getServiceId());</span>
+<span class="nc" id="L326">			this.setAttribute(rootElement, &quot;universal_error_scenario_id&quot;, &quot;&quot;</span>
+<span class="nc" id="L327">					+ mssb.getId());</span>
+		}
+<span class="nc bnc" id="L329" title="All 2 branches missed.">		if (store.getUniversalTwistInfoId() != null) {</span>
+<span class="nc" id="L330">			this.setAttribute(rootElement, &quot;universal_twist_info_id&quot;, &quot;&quot;</span>
+<span class="nc" id="L331">					+ store.getUniversalTwistInfoId());</span>
+		}
+
+<span class="nc bnc" id="L334" title="All 2 branches missed.">		if (store.getDefaultServicePlanIdAsLong() != null) {</span>
+<span class="nc" id="L335">			this.setAttribute(rootElement, &quot;default_service_plan_id&quot;, &quot;&quot;</span>
+<span class="nc" id="L336">					+ store.getDefaultServicePlanId());</span>
+		}
+
+		// Proxy settings
+<span class="nc" id="L340">		ProxyServerModel psm = store.getProxy();</span>
+<span class="nc bnc" id="L341" title="All 2 branches missed.">		if (psm != null) {</span>
+<span class="nc" id="L342">			Element proxyElement = document.createElement(&quot;proxy_settings&quot;);</span>
+<span class="nc" id="L343">			proxyElement.setAttribute(&quot;proxy_url&quot;, psm.getProxyUrl());</span>
+<span class="nc" id="L344">			proxyElement.setAttribute(&quot;proxy_enabled&quot;,</span>
+<span class="nc" id="L345">					&quot;&quot; + psm.isProxyEnabled());</span>
+<span class="nc" id="L346">			rootElement.appendChild(proxyElement);</span>
+		}
+
+		// SERVICE LIST
+		// logger.debug(&quot;Building non-reference, full definition? &quot; +
+		// nonRefFullDefinition);
+<span class="nc bnc" id="L352" title="All 2 branches missed.">		if (nonRefFullDefinition) {</span>
+			// Includes ALL service definitions in the DOM
+<span class="nc bnc" id="L354" title="All 2 branches missed.">			for (Service mockServiceBean : store.getServices()) {</span>
+<span class="nc" id="L355">				Element serviceElement = this.getServiceAsElement(document,</span>
+						mockServiceBean, true);
+<span class="nc" id="L357">				rootElement.appendChild(serviceElement);</span>
+<span class="nc" id="L358">			}</span>
+		} else {
+			// Includes reference pointers to service definitions in the DOM
+<span class="nc bnc" id="L361" title="All 2 branches missed.">			for (Service mockServiceBean : store.getServices()) {</span>
+
+<span class="nc" id="L363">				Element serviceElement = document.createElement(&quot;serviceref&quot;);</span>
+<span class="nc" id="L364">				MockeyXmlFileManager mxfm = MockeyXmlFileManager.getInstance();</span>
+<span class="nc" id="L365">				File serviceFile = mxfm.getServiceFile(mockServiceBean);</span>
+<span class="nc" id="L366">				String relativePathToServiceFile = mxfm</span>
+<span class="nc" id="L367">						.getRelativePath(serviceFile);</span>
+<span class="nc" id="L368">				serviceElement.setAttribute(&quot;file&quot;, getSafeIncludePathForOS(relativePathToServiceFile));</span>
+<span class="nc" id="L369">				rootElement.appendChild(serviceElement);</span>
+<span class="nc" id="L370">			}</span>
+		}
+
+		// SERVICE PLAN LIST
+<span class="nc bnc" id="L374" title="All 2 branches missed.">		if (store.getServicePlans() != null) {</span>
+<span class="nc bnc" id="L375" title="All 2 branches missed.">			for (ServicePlan servicePlan : store.getServicePlans()) {</span>
+<span class="nc" id="L376">				Element servicePlanElement = document</span>
+<span class="nc" id="L377">						.createElement(&quot;service_plan&quot;);</span>
+<span class="nc" id="L378">				servicePlanElement.setAttribute(&quot;name&quot;, servicePlan.getName());</span>
+<span class="nc" id="L379">				servicePlanElement.setAttribute(&quot;description&quot;,</span>
+<span class="nc" id="L380">						servicePlan.getDescription());</span>
+<span class="nc" id="L381">				servicePlanElement.setAttribute(&quot;id&quot;, &quot;&quot; + servicePlan.getId());</span>
+<span class="nc" id="L382">				servicePlanElement.setAttribute(&quot;tag&quot;, servicePlan.getTag());</span>
+				// REMOVED March 2013.
+				// No need to persist. Visual queue only.
+				// servicePlanElement.setAttribute(&quot;last_visit&quot;,
+				// getSafeForXmlOutputString(&quot;&quot; + servicePlan.getLastVisit()));
+<span class="nc bnc" id="L387" title="All 2 branches missed.">				for (PlanItem pi : servicePlan.getPlanItemList()) {</span>
+<span class="nc" id="L388">					Element planItemElement = document</span>
+<span class="nc" id="L389">							.createElement(&quot;plan_item&quot;);</span>
+<span class="nc" id="L390">					planItemElement.setAttribute(&quot;hang_time&quot;,</span>
+<span class="nc" id="L391">							&quot;&quot; + pi.getHangTime());</span>
+<span class="nc" id="L392">					planItemElement.setAttribute(&quot;service_name&quot;,</span>
+<span class="nc" id="L393">							getSafeForXmlOutputString(pi.getServiceName()));</span>
+<span class="nc" id="L394">					planItemElement.setAttribute(&quot;scenario_name&quot;,</span>
+<span class="nc" id="L395">							getSafeForXmlOutputString(pi.getScenarioName()));</span>
+<span class="nc" id="L396">					planItemElement.setAttribute(&quot;service_response_type&quot;, &quot;&quot;</span>
+<span class="nc" id="L397">							+ pi.getServiceResponseType());</span>
+
+<span class="nc" id="L399">					servicePlanElement.appendChild(planItemElement);</span>
+<span class="nc" id="L400">				}</span>
+
+<span class="nc" id="L402">				rootElement.appendChild(servicePlanElement);</span>
+
+<span class="nc" id="L404">			}</span>
+		}
+
+		// TWIST CONFIGURATION
+<span class="nc bnc" id="L408" title="All 2 branches missed.">		if (store.getTwistInfoList() != null) {</span>
+<span class="nc bnc" id="L409" title="All 2 branches missed.">			for (TwistInfo twistInfo : store.getTwistInfoList()) {</span>
+<span class="nc" id="L410">				Element twistConfigElement = document</span>
+<span class="nc" id="L411">						.createElement(&quot;twist_config&quot;);</span>
+<span class="nc" id="L412">				twistConfigElement.setAttribute(&quot;name&quot;, twistInfo.getName());</span>
+<span class="nc" id="L413">				twistConfigElement.setAttribute(&quot;id&quot;, &quot;&quot; + twistInfo.getId());</span>
+<span class="nc bnc" id="L414" title="All 2 branches missed.">				for (PatternPair patternPair : twistInfo.getPatternPairList()) {</span>
+<span class="nc" id="L415">					Element patternPairElement = document</span>
+<span class="nc" id="L416">							.createElement(&quot;twist_pattern&quot;);</span>
+<span class="nc" id="L417">					patternPairElement.setAttribute(&quot;origination&quot;, &quot;&quot;</span>
+<span class="nc" id="L418">							+ patternPair.getOrigination());</span>
+<span class="nc" id="L419">					patternPairElement.setAttribute(&quot;destination&quot;, &quot;&quot;</span>
+<span class="nc" id="L420">							+ patternPair.getDestination());</span>
+<span class="nc" id="L421">					twistConfigElement.appendChild(patternPairElement);</span>
+<span class="nc" id="L422">				}</span>
+<span class="nc" id="L423">				rootElement.appendChild(twistConfigElement);</span>
+<span class="nc" id="L424">			}</span>
+
+		}
+<span class="nc" id="L427">		document.appendChild(rootElement);</span>
+<span class="nc" id="L428">		return document;</span>
+	}
+
+	private String getSafeForXmlOutputString(String arg) {
+<span class="nc bnc" id="L432" title="All 2 branches missed.">		if (arg != null) {</span>
+<span class="nc" id="L433">			return arg.trim();</span>
+		} else {
+<span class="nc" id="L435">			return &quot;&quot;;</span>
+		}
+	}
+
+	/*
+	 * On Windows, relative file paths &quot;directory\somewhere\another\place&quot; needs
+	 * to be XML file path safe. e.g. &quot;directory/somewhere/another/place&quot;
+	 */
+	private String getSafeIncludePathForOS(String path) {
+
+<span class="nc" id="L445">		String safePath = path.replace('\\', '/');</span>
+<span class="nc" id="L446">		return safePath;</span>
+	}
+
+}
+</pre><div class="footer"><span class="right">Created with <a href="http://www.jacoco.org/jacoco">JaCoCo</a> 0.8.1.201803210924</span></div></body></html>

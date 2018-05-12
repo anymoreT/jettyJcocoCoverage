@@ -1,0 +1,56 @@
+<project xmlns:jacoco="antlib:org.jacoco.ant" name="Example Ant Build with JaCoCo">
+    <description>
+        Example Ant build file that demonstrates how a JaCoCo coverage report can be itegrated into an existing build in three simple steps.
+    </description>
+    <property name="src.dir" location="./src/java"/>
+    <property name="result.dir" location="./target"/>
+
+
+    <property environment="env"/>
+    <property name="src.dir" location="src/java"/>
+    <property name="test.src.dir" value="src/test" />
+    <property name="webapp.dir" value="web"/>
+    <property name="lib.dir" value="${webapp.dir}/WEB-INF/lib"/>
+    <property name="build.dir" location="build"/>
+    <property name="etc.dir" location="etc"/>
+    <property name="one-jar-lib.dir" location="${etc.dir}/one-jar"/>
+    <property name="dist.dir" location="dist"/>
+    <!--  VERSION NUMBER should follow Semantic Versioning. http://semver.org/ -->
+    <property name="version.num" value="2.0"/>
+    <property name="classes.dir" location="${build.dir}/WEB-INF/classes"/>
+    <property name="test.classes.dir" value="${build.dir}/test/classes" />
+    <property name="test.report.dir" value="${build.dir}/report"/>
+
+    <property name="result.classes.dir" location="dist/classes"/>
+    <property name="result.report.dir" location="${result.dir}/site/jacoco"/>
+    <property name="result.exec.file" location="${result.dir}/jacoco.exec"/>
+
+    <!--  Step 1: Import JaCoCo Ant tasks  -->
+    <taskdef uri="antlib:org.jacoco.ant" resource="org/jacoco/ant/antlib.xml">
+        <classpath path="${lib.dir}/jacocoant.jar"/>
+    </taskdef>
+    <target name="report">
+        <!--  Step 3: Create coverage report  -->
+        <jacoco:report>
+            <!--
+             This task needs the collected execution data and ...
+            -->
+            <executiondata>
+                <file file="${result.exec.file}"/>
+            </executiondata>
+            <!--  the class files and optional source files ...  -->
+            <structure name="JaCoCo Ant Example">
+                <classfiles>
+                    <fileset dir="${result.classes.dir}"/>
+                </classfiles>
+                <sourcefiles encoding="UTF-8">
+                    <fileset dir="${src.dir}"/>
+                </sourcefiles>
+            </structure>
+            <!--  to produce reports in different formats.  -->
+            <html destdir="${result.report.dir}"/>
+            <csv destfile="${result.report.dir}/report.csv"/>
+            <xml destfile="${result.report.dir}/report.xml"/>
+        </jacoco:report>
+    </target>
+</project>

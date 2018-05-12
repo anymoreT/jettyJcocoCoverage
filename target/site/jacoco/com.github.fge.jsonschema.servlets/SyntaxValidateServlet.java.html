@@ -1,0 +1,206 @@
+<?xml version="1.0" encoding="UTF-8"?><!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Strict//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-strict.dtd"><html xmlns="http://www.w3.org/1999/xhtml" lang="zh"><head><meta http-equiv="Content-Type" content="text/html;charset=UTF-8"/><link rel="stylesheet" href="../jacoco-resources/report.css" type="text/css"/><link rel="shortcut icon" href="../jacoco-resources/report.gif" type="image/gif"/><title>SyntaxValidateServlet.java</title><link rel="stylesheet" href="../jacoco-resources/prettify.css" type="text/css"/><script type="text/javascript" src="../jacoco-resources/prettify.js"></script></head><body onload="window['PR_TAB_WIDTH']=4;prettyPrint()"><div class="breadcrumb" id="breadcrumb"><span class="info"><a href="../jacoco-sessions.html" class="el_session">Sessions</a></span><a href="../index.html" class="el_report">JaCoCo Ant Example</a> &gt; <a href="index.source.html" class="el_package">com.github.fge.jsonschema.servlets</a> &gt; <span class="el_source">SyntaxValidateServlet.java</span></div><h1>SyntaxValidateServlet.java</h1><pre class="source lang-java linenums">/*
+ * Copyright (c) 2013, Francis Galiegue &lt;fgaliegue@gmail.com&gt;
+ *
+ * This program is free software: you can redistribute it and/or modify
+ * it under the terms of the Lesser GNU General Public License as
+ * published by the Free Software Foundation, either version 3 of the
+ * License, or (at your option) any later version.
+ *
+ * This program is distributed in the hope that it will be useful,
+ * but WITHOUT ANY WARRANTY; without even the implied warranty of
+ * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+ * Lesser GNU General Public License for more details.
+ *
+ * You should have received a copy of the GNU General Public License
+ * along with this program.  If not, see &lt;http://www.gnu.org/licenses/&gt;.
+ */
+
+package com.github.fge.jsonschema.servlets;
+
+import com.fasterxml.jackson.core.JsonLocation;
+import com.fasterxml.jackson.core.JsonProcessingException;
+import com.fasterxml.jackson.databind.JsonNode;
+import com.fasterxml.jackson.databind.node.JsonNodeFactory;
+import com.fasterxml.jackson.databind.node.ObjectNode;
+import com.github.fge.jsonschema.constants.ParseError;
+import com.github.fge.jsonschema.exceptions.ProcessingException;
+import com.github.fge.jsonschema.library.syntax.DraftV4SyntaxCheckerDictionary;
+import com.github.fge.jsonschema.processors.data.SchemaHolder;
+import com.github.fge.jsonschema.processors.syntax.SyntaxProcessor;
+import com.github.fge.jsonschema.report.ListProcessingReport;
+import com.github.fge.jsonschema.tree.CanonicalSchemaTree;
+import com.github.fge.jsonschema.tree.SchemaTree;
+import com.github.fge.jsonschema.util.JsonLoader;
+import com.google.common.annotations.VisibleForTesting;
+import com.google.common.collect.Sets;
+import com.google.common.io.Closeables;
+import com.google.common.net.MediaType;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
+
+import javax.servlet.ServletException;
+import javax.servlet.http.HttpServlet;
+import javax.servlet.http.HttpServletRequest;
+import javax.servlet.http.HttpServletResponse;
+import java.io.IOException;
+import java.io.OutputStream;
+import java.nio.charset.Charset;
+import java.util.Enumeration;
+import java.util.Set;
+
+import static com.github.fge.jsonschema.constants.SyntaxValidateServletConstants.*;
+
+<span class="nc" id="L53">public final class SyntaxValidateServlet</span>
+    extends HttpServlet
+{
+<span class="nc" id="L56">    private static final Logger log</span>
+<span class="nc" id="L57">        = LoggerFactory.getLogger(SyntaxValidateServlet.class);</span>
+
+<span class="nc" id="L59">    private static final SyntaxProcessor PROCESSOR</span>
+<span class="nc" id="L60">        = new SyntaxProcessor(DraftV4SyntaxCheckerDictionary.get());</span>
+
+    @Override
+    public void doPost(final HttpServletRequest req,
+        final HttpServletResponse resp)
+        throws ServletException, IOException
+    {
+<span class="nc" id="L67">        final Set&lt;String&gt; params = Sets.newHashSet();</span>
+
+        /*
+         * First, check our parameters
+         */
+        /*
+         * Why, in 2013, doesn't servlet-api provide an Iterator&lt;String&gt;?
+         *
+         * Well, at least, Jetty's implementation has a generified Enumeration.
+         * Still, that sucks.
+         */
+<span class="nc" id="L78">        final Enumeration&lt;String&gt; enumeration = req.getParameterNames();</span>
+
+        // FIXME: no duplicates, it seems, but I cannot find the spec which
+        // guarantees that
+<span class="nc bnc" id="L82" title="All 2 branches missed.">        while (enumeration.hasMoreElements())</span>
+<span class="nc" id="L83">            params.add(enumeration.nextElement());</span>
+
+        // We have required parameters
+<span class="nc bnc" id="L86" title="All 2 branches missed.">        if (!params.containsAll(Request.required())) {</span>
+<span class="nc" id="L87">            log.warn(&quot;Missing parameters! Someone using me as a web service?&quot;);</span>
+<span class="nc" id="L88">            resp.sendError(HttpServletResponse.SC_BAD_REQUEST,</span>
+                &quot;Missing parameters&quot;);
+<span class="nc" id="L90">            return;</span>
+        }
+
+        // We don't want extraneous parameters
+<span class="nc" id="L94">        params.removeAll(Request.valid());</span>
+
+<span class="nc bnc" id="L96" title="All 2 branches missed.">        if (!params.isEmpty()) {</span>
+<span class="nc" id="L97">            log.warn(&quot;Invalid parameters! Someone using me as a web service?&quot;);</span>
+<span class="nc" id="L98">            resp.sendError(HttpServletResponse.SC_BAD_REQUEST,</span>
+                &quot;Invalid parameters&quot;);
+<span class="nc" id="L100">            return;</span>
+        }
+
+<span class="nc" id="L103">        final String rawSchema = req.getParameter(Request.SCHEMA);</span>
+
+        // Set correct content type
+<span class="nc" id="L106">        resp.setContentType(MediaType.JSON_UTF_8.toString());</span>
+
+        final JsonNode ret;
+        try {
+<span class="nc" id="L110">            ret = buildResult(rawSchema);</span>
+<span class="nc" id="L111">        } catch (ProcessingException e) {</span>
+            // Should not happen!
+<span class="nc" id="L113">            log.error(&quot;Uh, syntax validation failed!&quot;, e);</span>
+<span class="nc" id="L114">            resp.sendError(HttpServletResponse.SC_INTERNAL_SERVER_ERROR);</span>
+<span class="nc" id="L115">            return;</span>
+<span class="nc" id="L116">        }</span>
+
+<span class="nc" id="L118">        final OutputStream out = resp.getOutputStream();</span>
+
+        try {
+<span class="nc" id="L121">            out.write(ret.toString().getBytes(Charset.forName(&quot;UTF-8&quot;)));</span>
+<span class="nc" id="L122">            out.flush();</span>
+        } finally {
+<span class="nc" id="L124">            Closeables.closeQuietly(out);</span>
+        }
+<span class="nc" id="L126">    }</span>
+
+    /*
+     * Build the response. When we arrive here, we are guaranteed that we have
+     * the needed elements.
+     */
+    @VisibleForTesting
+    static JsonNode buildResult(final String rawSchema)
+        throws IOException, ProcessingException
+    {
+<span class="nc" id="L136">        final ObjectNode ret = JsonNodeFactory.instance.objectNode();</span>
+
+<span class="nc" id="L138">        final boolean invalidSchema = fillWithData(ret, Response.SCHEMA,</span>
+            Response.INVALID_SCHEMA, rawSchema);
+
+<span class="nc" id="L141">        final JsonNode schemaNode = ret.remove(Response.SCHEMA);</span>
+
+<span class="nc bnc" id="L143" title="All 2 branches missed.">        if (invalidSchema)</span>
+<span class="nc" id="L144">            return ret;</span>
+
+<span class="nc" id="L146">        final SchemaTree tree = new CanonicalSchemaTree(schemaNode);</span>
+<span class="nc" id="L147">        final SchemaHolder holder = new SchemaHolder(tree);</span>
+<span class="nc" id="L148">        final ListProcessingReport report = new ListProcessingReport();</span>
+
+<span class="nc" id="L150">        PROCESSOR.process(report, holder);</span>
+<span class="nc" id="L151">        final boolean success = report.isSuccess();</span>
+
+<span class="nc" id="L153">        ret.put(Response.VALID, success);</span>
+<span class="nc" id="L154">        ret.put(Response.RESULTS, report.asJson());</span>
+<span class="nc" id="L155">        return ret;</span>
+    }
+
+    /*
+     * We have to use that since Java is not smart enough to detect that
+     * sometimes, a variable is initialized in all paths.
+     *
+     * This returns true if the data is invalid.
+     */
+    private static boolean fillWithData(final ObjectNode node,
+        final String onSuccess, final String onFailure, final String raw)
+        throws IOException
+    {
+        try {
+<span class="nc" id="L169">            node.put(onSuccess, JsonLoader.fromString(raw));</span>
+<span class="nc" id="L170">            return false;</span>
+<span class="nc" id="L171">        } catch (JsonProcessingException e) {</span>
+<span class="nc" id="L172">            node.put(onFailure, buildParsingError(e, raw.contains(&quot;\r\n&quot;)));</span>
+<span class="nc" id="L173">            return true;</span>
+        }
+    }
+
+    private static JsonNode buildParsingError(final JsonProcessingException e,
+        final boolean crlf)
+    {
+<span class="nc" id="L180">        final JsonLocation location = e.getLocation();</span>
+<span class="nc" id="L181">        final ObjectNode ret = JsonNodeFactory.instance.objectNode();</span>
+
+        /*
+         * Unfortunately, for some reason, Jackson botches the column number in
+         * its JsonPosition -- I cannot figure out why exactly. However, it does
+         * have a correct offset into the buffer.
+         *
+         * The problem is that if the input has CR/LF line terminators, its
+         * offset will be &quot;off&quot; by the number of lines minus 1 with regards to
+         * what JavaScript sees as positions in text areas. Make the necessary
+         * adjustments so that the caret jumps at the correct position in this
+         * case.
+         */
+<span class="nc" id="L194">        final int lineNr = location.getLineNr();</span>
+<span class="nc" id="L195">        int offset = (int) location.getCharOffset();</span>
+<span class="nc bnc" id="L196" title="All 2 branches missed.">        if (crlf)</span>
+<span class="nc" id="L197">            offset = offset - lineNr + 1;</span>
+<span class="nc" id="L198">        ret.put(ParseError.LINE, lineNr);</span>
+<span class="nc" id="L199">        ret.put(ParseError.OFFSET, offset);</span>
+
+        // Finally, put the message
+<span class="nc" id="L202">        ret.put(ParseError.MESSAGE, e.getOriginalMessage());</span>
+<span class="nc" id="L203">        return ret;</span>
+    }
+}
+</pre><div class="footer"><span class="right">Created with <a href="http://www.jacoco.org/jacoco">JaCoCo</a> 0.8.1.201803210924</span></div></body></html>

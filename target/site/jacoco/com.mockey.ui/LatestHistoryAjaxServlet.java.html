@@ -1,0 +1,111 @@
+<?xml version="1.0" encoding="UTF-8"?><!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Strict//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-strict.dtd"><html xmlns="http://www.w3.org/1999/xhtml" lang="zh"><head><meta http-equiv="Content-Type" content="text/html;charset=UTF-8"/><link rel="stylesheet" href="../jacoco-resources/report.css" type="text/css"/><link rel="shortcut icon" href="../jacoco-resources/report.gif" type="image/gif"/><title>LatestHistoryAjaxServlet.java</title><link rel="stylesheet" href="../jacoco-resources/prettify.css" type="text/css"/><script type="text/javascript" src="../jacoco-resources/prettify.js"></script></head><body onload="window['PR_TAB_WIDTH']=4;prettyPrint()"><div class="breadcrumb" id="breadcrumb"><span class="info"><a href="../jacoco-sessions.html" class="el_session">Sessions</a></span><a href="../index.html" class="el_report">JaCoCo Ant Example</a> &gt; <a href="index.source.html" class="el_package">com.mockey.ui</a> &gt; <span class="el_source">LatestHistoryAjaxServlet.java</span></div><h1>LatestHistoryAjaxServlet.java</h1><pre class="source lang-java linenums">/*
+ * This file is part of Mockey, a tool for testing application
+ * interactions over HTTP, with a focus on testing web services,
+ * specifically web applications that consume XML, JSON, and HTML.
+ *
+ * Copyright (C) 2009-2010  Authors:
+ *
+ * chad.lafontaine (chad.lafontaine AT gmail DOT com)
+ * neil.cronin (neil AT rackle DOT com)
+ * lorin.kobashigawa (lkb AT kgawa DOT com)
+ * rob.meyer (rob AT bigdis DOT com)
+ *
+ * This program is free software; you can redistribute it and/or
+ * modify it under the terms of the GNU General Public License
+ * as published by the Free Software Foundation; either version 2
+ * of the License, or (at your option) any later version.
+ *
+ * This program is distributed in the hope that it will be useful,
+ * but WITHOUT ANY WARRANTY; without even the implied warranty of
+ * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+ * GNU General Public License for more details.
+ *
+ * You should have received a copy of the GNU General Public License
+ * along with this program; if not, write to the Free Software
+ * Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301, USA.
+ *
+ */
+package com.mockey.ui;
+
+import java.io.IOException;
+import java.io.PrintStream;
+import java.util.List;
+
+import javax.servlet.ServletException;
+import javax.servlet.http.HttpServlet;
+import javax.servlet.http.HttpServletRequest;
+import javax.servlet.http.HttpServletResponse;
+
+import org.apache.log4j.Logger;
+import org.json.JSONException;
+import org.json.JSONObject;
+
+import com.mockey.model.FulfilledClientRequest;
+import com.mockey.model.HistoryFilter;
+import com.mockey.storage.IMockeyStorage;
+import com.mockey.storage.StorageRegistry;
+
+/**
+ * Returns JSON of the fulfilled request, designed to be consumed by an
+ * AJAX call.
+ *
+ */
+<span class="nc" id="L53">public class LatestHistoryAjaxServlet extends HttpServlet {</span>
+
+    private static final long serialVersionUID = 4178219038104708097L;
+<span class="nc" id="L56">    private static IMockeyStorage store = StorageRegistry.MockeyStorage;</span>
+<span class="nc" id="L57">    private static Logger logger = Logger.getLogger(LatestHistoryAjaxServlet.class);</span>
+
+    /**
+     * Returns the latest conversation sent to the spoofer. If tags are specified, returns the latest conversation
+     * matching the given tags.
+     */
+    public void service(HttpServletRequest req, HttpServletResponse resp) throws ServletException, IOException {
+<span class="nc" id="L64">        JSONObject jsonObject = new JSONObject();</span>
+        try {
+            List&lt;FulfilledClientRequest&gt; fCRequests;
+<span class="nc" id="L67">            String filterTokensParameter = req.getParameter(&quot;tag&quot;);</span>
+<span class="nc bnc" id="L68" title="All 2 branches missed.">            if (filterTokensParameter != null) {</span>
+<span class="nc" id="L69">                HistoryFilter historyFilter = new HistoryFilter();</span>
+<span class="nc" id="L70">                historyFilter.addTokens(filterTokensParameter.split(&quot; &quot;));</span>
+<span class="nc" id="L71">                fCRequests = store.getFulfilledClientRequest(historyFilter.getTokens());</span>
+<span class="nc" id="L72">            } else {</span>
+<span class="nc" id="L73">                fCRequests = store.getFulfilledClientRequests();</span>
+            }
+<span class="nc bnc" id="L75" title="All 2 branches missed.">            if (!fCRequests.isEmpty()) {</span>
+                // Get the last one
+<span class="nc" id="L77">                FulfilledClientRequest fCRequest = fCRequests.get(fCRequests.size() - 1);</span>
+<span class="nc" id="L78">                jsonObject.put(&quot;serviceId&quot;, fCRequest.getServiceId());</span>
+<span class="nc" id="L79">                jsonObject.put(&quot;serviceName&quot;, fCRequest.getServiceName());</span>
+<span class="nc" id="L80">                jsonObject.put(&quot;requestUrl&quot;, fCRequest.getRawRequest());</span>
+<span class="nc" id="L81">                jsonObject.put(&quot;requestHeaders&quot;, fCRequest.getClientRequestHeaders());</span>
+<span class="nc" id="L82">                jsonObject.put(&quot;requestParameters&quot;, fCRequest.getClientRequestParameters());</span>
+<span class="nc" id="L83">                jsonObject.put(&quot;requestBody&quot;, fCRequest.getClientRequestBody());</span>
+<span class="nc" id="L84">                jsonObject.put(&quot;requestCookies&quot;, fCRequest.getClientRequestCookies());</span>
+<span class="nc" id="L85">                jsonObject.put(&quot;responseCookies&quot;, fCRequest.getClientResponseCookies());</span>
+<span class="nc" id="L86">                jsonObject.put(&quot;responseStatus&quot;, fCRequest.getResponseMessage().getHttpResponseStatusCode());</span>
+<span class="nc" id="L87">                jsonObject.put(&quot;responseHeader&quot;, fCRequest.getResponseMessage().getHeaderInfo());</span>
+<span class="nc" id="L88">                jsonObject.put(&quot;responseBody&quot;, fCRequest.getResponseMessage().getBody());</span>
+<span class="nc" id="L89">                jsonObject.put(&quot;responseScenarioName&quot;, fCRequest.getScenarioName());</span>
+<span class="nc" id="L90">                jsonObject.put(&quot;responseScenarioTags&quot;, fCRequest.getScenarioTagsAsString());</span>
+<span class="nc" id="L91">            } else {</span>
+<span class="nc" id="L92">                jsonObject.put(&quot;error&quot;, &quot;No history for given tags&quot;);</span>
+            }
+<span class="nc" id="L94">        } catch (Exception e) {</span>
+<span class="nc" id="L95">            logger.error(&quot;error encountered while getting history&quot;, e);</span>
+            try {
+<span class="nc" id="L97">                jsonObject.put(&quot;error&quot;, &quot;History for the latest conversation is not available.&quot;);</span>
+<span class="nc" id="L98">            } catch (JSONException e1) {</span>
+<span class="nc" id="L99">                logger.error(&quot;Unable to create JSON&quot;, e1);</span>
+<span class="nc" id="L100">            }</span>
+<span class="nc" id="L101">        }</span>
+
+<span class="nc" id="L103">        resp.setContentType(&quot;application/json&quot;);</span>
+
+<span class="nc" id="L105">        PrintStream out = new PrintStream(resp.getOutputStream());</span>
+
+<span class="nc" id="L107">        out.println(jsonObject.toString());</span>
+<span class="nc" id="L108">    }</span>
+
+}
+</pre><div class="footer"><span class="right">Created with <a href="http://www.jacoco.org/jacoco">JaCoCo</a> 0.8.1.201803210924</span></div></body></html>

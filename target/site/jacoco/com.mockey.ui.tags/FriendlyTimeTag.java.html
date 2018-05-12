@@ -1,0 +1,96 @@
+<?xml version="1.0" encoding="UTF-8"?><!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Strict//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-strict.dtd"><html xmlns="http://www.w3.org/1999/xhtml" lang="zh"><head><meta http-equiv="Content-Type" content="text/html;charset=UTF-8"/><link rel="stylesheet" href="../jacoco-resources/report.css" type="text/css"/><link rel="shortcut icon" href="../jacoco-resources/report.gif" type="image/gif"/><title>FriendlyTimeTag.java</title><link rel="stylesheet" href="../jacoco-resources/prettify.css" type="text/css"/><script type="text/javascript" src="../jacoco-resources/prettify.js"></script></head><body onload="window['PR_TAB_WIDTH']=4;prettyPrint()"><div class="breadcrumb" id="breadcrumb"><span class="info"><a href="../jacoco-sessions.html" class="el_session">Sessions</a></span><a href="../index.html" class="el_report">JaCoCo Ant Example</a> &gt; <a href="index.source.html" class="el_package">com.mockey.ui.tags</a> &gt; <span class="el_source">FriendlyTimeTag.java</span></div><h1>FriendlyTimeTag.java</h1><pre class="source lang-java linenums">/*
+ * This file is part of Mockey, a tool for testing application 
+ * interactions over HTTP, with a focus on testing web services, 
+ * specifically web applications that consume XML, JSON, and HTML.
+ *  
+ * Copyright (C) 2009-2010  Authors:
+ * 
+ * chad.lafontaine (chad.lafontaine AT gmail DOT com)
+ * neil.cronin (neil AT rackle DOT com) 
+ * lorin.kobashigawa (lkb AT kgawa DOT com)
+ * rob.meyer (rob AT bigdis DOT com)
+ * 
+ * This program is free software; you can redistribute it and/or
+ * modify it under the terms of the GNU General Public License
+ * as published by the Free Software Foundation; either version 2
+ * of the License, or (at your option) any later version.
+ * 
+ * This program is distributed in the hope that it will be useful,
+ * but WITHOUT ANY WARRANTY; without even the implied warranty of
+ * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+ * GNU General Public License for more details.
+ * 
+ * You should have received a copy of the GNU General Public License
+ * along with this program; if not, write to the Free Software
+ * Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301, USA.
+ *
+ */
+package com.mockey.ui.tags;
+
+import java.io.IOException;
+import java.text.DateFormat;
+import java.text.SimpleDateFormat;
+
+import javax.servlet.jsp.JspException;
+import javax.servlet.jsp.JspWriter;
+import javax.servlet.jsp.tagext.TagSupport;
+
+/**
+ * Friendly time tag for HTML display. Instead of
+ * &quot;Fri Mar 26 10:28:50 PDT 2010&quot;, this tag will display &quot;1 hour ago&quot;,
+ * &quot;Yesterday&quot;, &quot;long time ago&quot; with the exact time and time provided with a
+ * mouse hover.
+ * 
+ * TODO: this needs testing. 
+ * 
+ * @author chad.lafontaine
+ */
+<span class="nc" id="L48">public class FriendlyTimeTag extends TagSupport {</span>
+
+	/**
+	 * 
+	 */
+	private static final long serialVersionUID = -4299632380644405286L;
+
+	/**
+	 * 
+	 */
+	// Time in milliseconds.
+	private Long time;
+	
+<span class="nc" id="L61">	private static final DateFormat dateFormat = new SimpleDateFormat(</span>
+			&quot;yyyy/MM/dd hh:mm:ss a&quot;);
+<span class="nc" id="L63">	private static final DateFormat dateFormatShort = new SimpleDateFormat(</span>
+			&quot;hh:mm:ss a&quot;);
+
+	@Override
+	public int doStartTag() throws JspException {
+
+		// return dateFormat.format(time);
+
+<span class="nc" id="L71">		JspWriter out = pageContext.getOut();</span>
+		try {
+<span class="nc" id="L73">			String text = &quot;Time unknown.&quot;;</span>
+<span class="nc bnc" id="L74" title="All 2 branches missed.">			if (time != null) {</span>
+<span class="nc" id="L75">				text = &quot;&lt;a id=\&quot;fdate\&quot; title=\&quot;&quot; + dateFormat.format(time) + &quot;\&quot;&gt;&quot; </span>
+<span class="nc" id="L76">				  + dateFormatShort.format(time) + &quot;&lt;/a&gt;&quot;;</span>
+			}
+
+<span class="nc" id="L79">			out.print(text);</span>
+<span class="nc" id="L80">		} catch (IOException e) {</span>
+<span class="nc" id="L81">			throw new JspException(&quot;Unable to write to the jsp output&quot;, e);</span>
+<span class="nc" id="L82">		}</span>
+<span class="nc" id="L83">		return SKIP_BODY;</span>
+	}
+
+	public Long getTime() {
+<span class="nc" id="L87">		return time;</span>
+	}
+
+	public void setTime(Long time) {
+<span class="nc" id="L91">		this.time = time;</span>
+<span class="nc" id="L92">	}</span>
+
+	
+}
+</pre><div class="footer"><span class="right">Created with <a href="http://www.jacoco.org/jacoco">JaCoCo</a> 0.8.1.201803210924</span></div></body></html>

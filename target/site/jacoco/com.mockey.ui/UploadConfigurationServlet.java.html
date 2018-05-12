@@ -1,0 +1,188 @@
+<?xml version="1.0" encoding="UTF-8"?><!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Strict//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-strict.dtd"><html xmlns="http://www.w3.org/1999/xhtml" lang="zh"><head><meta http-equiv="Content-Type" content="text/html;charset=UTF-8"/><link rel="stylesheet" href="../jacoco-resources/report.css" type="text/css"/><link rel="shortcut icon" href="../jacoco-resources/report.gif" type="image/gif"/><title>UploadConfigurationServlet.java</title><link rel="stylesheet" href="../jacoco-resources/prettify.css" type="text/css"/><script type="text/javascript" src="../jacoco-resources/prettify.js"></script></head><body onload="window['PR_TAB_WIDTH']=4;prettyPrint()"><div class="breadcrumb" id="breadcrumb"><span class="info"><a href="../jacoco-sessions.html" class="el_session">Sessions</a></span><a href="../index.html" class="el_report">JaCoCo Ant Example</a> &gt; <a href="index.source.html" class="el_package">com.mockey.ui</a> &gt; <span class="el_source">UploadConfigurationServlet.java</span></div><h1>UploadConfigurationServlet.java</h1><pre class="source lang-java linenums">/*
+ * This file is part of Mockey, a tool for testing application 
+ * interactions over HTTP, with a focus on testing web services, 
+ * specifically web applications that consume XML, JSON, and HTML.
+ *  
+ * Copyright (C) 2009-2010  Authors:
+ * 
+ * chad.lafontaine (chad.lafontaine AT gmail DOT com)
+ * neil.cronin (neil AT rackle DOT com) 
+ * lorin.kobashigawa (lkb AT kgawa DOT com)
+ * rob.meyer (rob AT bigdis DOT com)
+ * 
+ * This program is free software; you can redistribute it and/or
+ * modify it under the terms of the GNU General Public License
+ * as published by the Free Software Foundation; either version 2
+ * of the License, or (at your option) any later version.
+ * 
+ * This program is distributed in the hope that it will be useful,
+ * but WITHOUT ANY WARRANTY; without even the implied warranty of
+ * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+ * GNU General Public License for more details.
+ * 
+ * You should have received a copy of the GNU General Public License
+ * along with this program; if not, write to the Free Software
+ * Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301, USA.
+ *
+ */
+package com.mockey.ui;
+
+import java.io.BufferedReader;
+import java.io.IOException;
+import java.io.InputStream;
+import java.io.InputStreamReader;
+import java.net.URL;
+import java.nio.charset.Charset;
+import java.util.Iterator;
+import java.util.List;
+
+import javax.servlet.RequestDispatcher;
+import javax.servlet.ServletException;
+import javax.servlet.http.HttpServlet;
+import javax.servlet.http.HttpServletRequest;
+import javax.servlet.http.HttpServletResponse;
+
+import org.apache.commons.fileupload.DiskFileUpload;
+import org.apache.commons.fileupload.FileItem;
+import org.apache.http.protocol.HTTP;
+import org.apache.log4j.Logger;
+
+import com.mockey.storage.xml.MockeyXmlFileManager;
+
+/**
+ * 
+ * @author Chad.Lafontaine
+ * 
+ */
+<span class="nc" id="L57">public class UploadConfigurationServlet extends HttpServlet {</span>
+
+	private static final long serialVersionUID = 2874257060865115637L;
+<span class="nc" id="L60">	private static Logger logger = Logger.getLogger(UploadConfigurationServlet.class);</span>
+
+	public void service(HttpServletRequest req, HttpServletResponse resp) throws ServletException, IOException {
+<span class="nc" id="L63">		super.service(req, resp);</span>
+<span class="nc" id="L64">	}</span>
+
+	/**
+	 * 
+	 * 
+	 * @param req
+	 *            basic request
+	 * @param resp
+	 *            basic resp
+	 * @throws ServletException
+	 *             basic
+	 * @throws IOException
+	 *             basic
+	 */
+	public void doGet(HttpServletRequest req, HttpServletResponse resp) throws ServletException, IOException {
+
+<span class="nc" id="L80">		RequestDispatcher dispatch = req.getRequestDispatcher(&quot;/upload.jsp&quot;);</span>
+<span class="nc" id="L81">		dispatch.forward(req, resp);</span>
+<span class="nc" id="L82">	}</span>
+
+	/**
+	 * 
+	 * 
+	 * @param req
+	 *            basic request
+	 * @param resp
+	 *            basic resp
+	 * @throws ServletException
+	 *             basic
+	 * @throws IOException
+	 *             basic
+	 */
+	@SuppressWarnings(&quot;unchecked&quot;)
+	public void doPost(HttpServletRequest req, HttpServletResponse resp) throws ServletException, IOException {
+
+<span class="nc" id="L99">		String url = null;</span>
+<span class="nc" id="L100">		String definitionsAsString = null;</span>
+<span class="nc" id="L101">		String taglistValue = &quot;&quot;;</span>
+
+		// ***********************************
+		// STEP #1 - READ DATA
+		// ***********************************
+<span class="nc bnc" id="L106" title="All 2 branches missed.">		if (req.getParameter(&quot;viaUrl&quot;) != null) {</span>
+<span class="nc" id="L107">			url = req.getParameter(&quot;url&quot;);</span>
+<span class="nc" id="L108">			taglistValue = req.getParameter(&quot;taglist&quot;);</span>
+			try {
+<span class="nc" id="L110">				InputStream fstream = new URL(url).openStream();</span>
+<span class="nc bnc" id="L111" title="All 2 branches missed.">				if (fstream != null) {</span>
+
+<span class="nc" id="L113">					BufferedReader br = new BufferedReader(new InputStreamReader(fstream, Charset.forName(HTTP.UTF_8)));</span>
+<span class="nc" id="L114">					StringBuffer inputString = new StringBuffer();</span>
+					// Read File Line By Line
+<span class="nc" id="L116">					String strLine = null;</span>
+					// READ FIRST
+<span class="nc bnc" id="L118" title="All 2 branches missed.">					while ((strLine = br.readLine()) != null) {</span>
+						// Print the content on the console
+<span class="nc" id="L120">						inputString.append(new String(strLine.getBytes(HTTP.UTF_8)));</span>
+					}
+<span class="nc" id="L122">					definitionsAsString = inputString.toString();</span>
+				}
+<span class="nc" id="L124">			} catch (Exception e) {</span>
+<span class="nc" id="L125">				logger.error(&quot;Unable to reach url: &quot; + url, e);</span>
+<span class="nc" id="L126">				Util.saveErrorMessage(&quot;Unable to reach url: &quot; + url, req);</span>
+<span class="nc" id="L127">			}</span>
+		} else {
+<span class="nc" id="L129">			byte[] data = null;</span>
+			try {
+				// STEP 1. GATHER UPLOADED ITEMS
+				// Create a new file upload handler
+<span class="nc" id="L133">				DiskFileUpload upload = new DiskFileUpload();</span>
+
+				// Parse the request
+<span class="nc" id="L136">				List&lt;FileItem&gt; items = upload.parseRequest(req);</span>
+<span class="nc" id="L137">				Iterator&lt;FileItem&gt; iter = items.iterator();</span>
+<span class="nc bnc" id="L138" title="All 2 branches missed.">				while (iter.hasNext()) {</span>
+<span class="nc" id="L139">					FileItem item = (FileItem) iter.next();</span>
+
+<span class="nc bnc" id="L141" title="All 2 branches missed.">					if (!item.isFormField()) {</span>
+
+<span class="nc" id="L143">						data = item.get();</span>
+
+					} else {
+
+<span class="nc" id="L147">						String name = item.getFieldName();</span>
+<span class="nc bnc" id="L148" title="All 2 branches missed.">						if (&quot;taglist&quot;.equals(name)) {</span>
+<span class="nc" id="L149">							taglistValue = item.getString();</span>
+						}
+
+					}
+<span class="nc" id="L153">				}</span>
+<span class="nc bnc" id="L154" title="All 4 branches missed.">				if (data != null &amp;&amp; data.length &gt; 0) {</span>
+<span class="nc" id="L155">					definitionsAsString = new String(data);</span>
+				}
+<span class="nc" id="L157">			} catch (Exception e) {</span>
+<span class="nc" id="L158">				logger.error(&quot;Unable to read or parse file: &quot;, e);</span>
+<span class="nc" id="L159">				Util.saveErrorMessage(&quot;Unable to upload or parse file.&quot;, req);</span>
+<span class="nc" id="L160">			}</span>
+		}
+
+		// ***********************************
+		// STEP #2 - PERSIST DATA
+		// ***********************************
+		try {
+
+<span class="nc bnc" id="L168" title="All 2 branches missed.">			if (definitionsAsString != null) {</span>
+<span class="nc" id="L169">				MockeyXmlFileManager configurationReader = MockeyXmlFileManager.getInstance();</span>
+				
+<span class="nc" id="L171">				ServiceMergeResults results = configurationReader.loadConfigurationWithXmlDef(definitionsAsString,</span>
+						taglistValue);
+
+<span class="nc" id="L174">				Util.saveSuccessMessage(&quot;Service definitions uploaded.&quot;, req);</span>
+<span class="nc" id="L175">				req.setAttribute(&quot;conflicts&quot;, results.getConflictMsgs());</span>
+<span class="nc" id="L176">				req.setAttribute(&quot;additions&quot;, results.getAdditionMessages());</span>
+<span class="nc" id="L177">			} else {</span>
+<span class="nc" id="L178">				Util.saveErrorMessage(&quot;Unable to upload or parse empty file.&quot;, req);</span>
+			}
+<span class="nc" id="L180">		} catch (Exception e) {</span>
+<span class="nc" id="L181">			Util.saveErrorMessage(&quot;Unable to upload or parse file.&quot;, req);</span>
+<span class="nc" id="L182">		}</span>
+
+<span class="nc" id="L184">		RequestDispatcher dispatch = req.getRequestDispatcher(&quot;/upload.jsp&quot;);</span>
+<span class="nc" id="L185">		dispatch.forward(req, resp);</span>
+<span class="nc" id="L186">	}</span>
+}
+</pre><div class="footer"><span class="right">Created with <a href="http://www.jacoco.org/jacoco">JaCoCo</a> 0.8.1.201803210924</span></div></body></html>

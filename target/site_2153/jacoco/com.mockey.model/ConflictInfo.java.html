@@ -1,0 +1,141 @@
+<?xml version="1.0" encoding="UTF-8"?><!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Strict//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-strict.dtd"><html xmlns="http://www.w3.org/1999/xhtml" lang="zh"><head><meta http-equiv="Content-Type" content="text/html;charset=UTF-8"/><link rel="stylesheet" href="../jacoco-resources/report.css" type="text/css"/><link rel="shortcut icon" href="../jacoco-resources/report.gif" type="image/gif"/><title>ConflictInfo.java</title><link rel="stylesheet" href="../jacoco-resources/prettify.css" type="text/css"/><script type="text/javascript" src="../jacoco-resources/prettify.js"></script></head><body onload="window['PR_TAB_WIDTH']=4;prettyPrint()"><div class="breadcrumb" id="breadcrumb"><span class="info"><a href="../jacoco-sessions.html" class="el_session">Sessions</a></span><a href="../index.html" class="el_report">JaCoCo Ant Example</a> &gt; <a href="index.source.html" class="el_package">com.mockey.model</a> &gt; <span class="el_source">ConflictInfo.java</span></div><h1>ConflictInfo.java</h1><pre class="source lang-java linenums">/*
+ * This file is part of Mockey, a tool for testing application 
+ * interactions over HTTP, with a focus on testing web services, 
+ * specifically web applications that consume XML, JSON, and HTML.
+ *  
+ * Copyright (C) 2009-2010  Authors:
+ * 
+ * chad.lafontaine (chad.lafontaine AT gmail DOT com)
+ * neil.cronin (neil AT rackle DOT com) 
+ * lorin.kobashigawa (lkb AT kgawa DOT com)
+ * rob.meyer (rob AT bigdis DOT com)
+ * 
+ * This program is free software; you can redistribute it and/or
+ * modify it under the terms of the GNU General Public License
+ * as published by the Free Software Foundation; either version 2
+ * of the License, or (at your option) any later version.
+ * 
+ * This program is distributed in the hope that it will be useful,
+ * but WITHOUT ANY WARRANTY; without even the implied warranty of
+ * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+ * GNU General Public License for more details.
+ * 
+ * You should have received a copy of the GNU General Public License
+ * along with this program; if not, write to the Free Software
+ * Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301, USA.
+ *
+ */
+package com.mockey.model;
+
+import java.util.ArrayList;
+import java.util.HashMap;
+import java.util.List;
+import java.util.Map;
+
+/**
+ * Purpose of this class is to understand if there is a possible conflict or
+ * 'noise' in the Mockey store. Conflict being one of the following issues:
+ * 
+ * &lt;pre&gt;
+ * &lt;ul&gt;
+ *   &lt;li&gt;Service A and Service B have the same Name &lt;/li&gt;
+ *   &lt;li&gt;Service A and Service B have 1 or more matching real URLs&lt;/li&gt;
+ *   &lt;li&gt;Service A and Service B have 1 or more matching mock URLs&lt;/li&gt;
+ *   &lt;li&gt;Service A and Service B have 1 or more matching Scenarios&lt;/li&gt;
+ *   &lt;li&gt;Service A and Service C have 1 or more matching real URLs&lt;/li&gt;
+ * &lt;/ul&gt;
+ * &lt;/pre&gt;
+ * 
+ * In short, Service A may have 1 or more services with a possible conflict. And
+ * each conflicting Service may have 1 ore more reasons for a conflict.
+ * 
+ * @author clafonta
+ * 
+ */
+<span class="fc" id="L55">public class ConflictInfo {</span>
+
+	// Ugly!!
+<span class="fc" id="L58">	private Map&lt;Service, List&lt;Conflict&gt;&gt; conflictMap = new HashMap&lt;Service, List&lt;Conflict&gt;&gt;();</span>
+
+	/**
+	 * There can be 1 or more conflicting Services per 1 Service key.
+	 * 
+	 * @param key
+	 *            - Service A
+	 * @param conflict
+	 *            - Service that has 1 or more matching attributes as Service A,
+	 *            e.g. name, url (real or mocked).
+	 * @param message
+	 *            - a description of the issue.
+	 */
+	public void addConflict(Service key, Service conflictService, String message) {
+		
+<span class="nc" id="L73">		List&lt;Conflict&gt; conflictList = this.conflictMap.get(key);</span>
+<span class="nc bnc" id="L74" title="All 2 branches missed.">		if(conflictList==null){</span>
+<span class="nc" id="L75">			conflictList = new ArrayList&lt;Conflict&gt;();</span>
+		}
+		
+<span class="nc" id="L78">		Conflict conflict = null;</span>
+<span class="nc" id="L79">		int index = 0;</span>
+<span class="nc bnc" id="L80" title="All 2 branches missed.">		for(Conflict c: conflictList){</span>
+<span class="nc bnc" id="L81" title="All 2 branches missed.">			if(c.getService().getId().equals(conflictService.getId())){</span>
+<span class="nc" id="L82">				conflict = c;</span>
+<span class="nc" id="L83">				break;</span>
+			}
+<span class="nc" id="L85">			index++;</span>
+<span class="nc" id="L86">		}</span>
+		
+<span class="nc bnc" id="L88" title="All 2 branches missed.">		if(conflict== null){</span>
+<span class="nc" id="L89">			conflict = new Conflict(conflictService);</span>
+<span class="nc" id="L90">			index = -1;</span>
+		}
+		
+<span class="nc" id="L93">		conflict.addConflictMessage(message);</span>
+<span class="nc bnc" id="L94" title="All 2 branches missed.">		if(index&gt;-1){</span>
+<span class="nc" id="L95">			conflictList.set(index, conflict);</span>
+		}else {
+<span class="nc" id="L97">			conflictList.add(conflict);</span>
+		}
+<span class="nc" id="L99">		this.conflictMap.put(key, conflictList);</span>
+		
+		
+		
+<span class="nc" id="L103">	}</span>
+
+	public boolean hasConflictFlag(Service service) {
+<span class="nc" id="L106">		boolean conflict = false;</span>
+<span class="nc bnc" id="L107" title="All 2 branches missed.">		if(this.conflictMap.get(service)!=null){</span>
+<span class="nc" id="L108">			conflict = true;</span>
+		}else {
+<span class="nc" id="L110">			conflict = false;</span>
+		}
+<span class="nc" id="L112">		return conflict;</span>
+	}
+
+	public List&lt;Conflict&gt; getConflictList(Service service) {
+<span class="nc" id="L116">		return this.conflictMap.get(service);</span>
+	}
+
+	public class Conflict {
+<span class="nc" id="L120">		private Service conflictService = null;</span>
+<span class="nc" id="L121">		private List&lt;String&gt; conflictMessageList = new ArrayList&lt;String&gt;();</span>
+<span class="nc" id="L122">		public Conflict(Service service){</span>
+<span class="nc" id="L123">			this.conflictService = service;</span>
+<span class="nc" id="L124">		}</span>
+		public Service getService() {
+<span class="nc" id="L126">			return this.conflictService;</span>
+		}
+
+		public void addConflictMessage(String message) {
+<span class="nc bnc" id="L130" title="All 2 branches missed.">			if (!this.conflictMessageList.contains(message)) {</span>
+<span class="nc" id="L131">				this.conflictMessageList.add(message);</span>
+			}
+<span class="nc" id="L133">		}</span>
+
+		public List&lt;String&gt; getConflictMessageList() {
+<span class="nc" id="L136">			return this.conflictMessageList;</span>
+		}
+	}
+
+}
+</pre><div class="footer"><span class="right">Created with <a href="http://www.jacoco.org/jacoco">JaCoCo</a> 0.8.1.201803210924</span></div></body></html>

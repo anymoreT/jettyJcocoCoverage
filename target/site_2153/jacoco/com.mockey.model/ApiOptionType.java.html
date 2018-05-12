@@ -1,0 +1,20 @@
+<?xml version="1.0" encoding="UTF-8"?><!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Strict//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-strict.dtd"><html xmlns="http://www.w3.org/1999/xhtml" lang="zh"><head><meta http-equiv="Content-Type" content="text/html;charset=UTF-8"/><link rel="stylesheet" href="../jacoco-resources/report.css" type="text/css"/><link rel="shortcut icon" href="../jacoco-resources/report.gif" type="image/gif"/><title>ApiOptionType.java</title><link rel="stylesheet" href="../jacoco-resources/prettify.css" type="text/css"/><script type="text/javascript" src="../jacoco-resources/prettify.js"></script></head><body onload="window['PR_TAB_WIDTH']=4;prettyPrint()"><div class="breadcrumb" id="breadcrumb"><span class="info"><a href="../jacoco-sessions.html" class="el_session">Sessions</a></span><a href="../index.html" class="el_report">JaCoCo Ant Example</a> &gt; <a href="index.source.html" class="el_package">com.mockey.model</a> &gt; <span class="el_source">ApiOptionType.java</span></div><h1>ApiOptionType.java</h1><pre class="source lang-java linenums">package com.mockey.model;
+
+public class ApiOptionType {
+<span class="nc" id="L4">	private String type = null;</span>
+<span class="nc" id="L5">	private ApiOptionType(String _type){</span>
+<span class="nc" id="L6">		this.type = _type;</span>
+<span class="nc" id="L7">	}</span>
+	public boolean equals(ApiOptionType arg){
+<span class="nc bnc" id="L9" title="All 4 branches missed.">		if(arg!=null &amp;&amp; this.type.equals(arg.type)){</span>
+<span class="nc" id="L10">			return true;</span>
+		}
+		else {
+<span class="nc" id="L13">			return false;</span>
+		}
+	}
+<span class="nc" id="L16">	public final static ApiOptionType NUMBER = new ApiOptionType(&quot;number&quot;);</span>
+<span class="nc" id="L17">	public final static ApiOptionType STRING = new ApiOptionType(&quot;string&quot;);</span>
+
+}
+</pre><div class="footer"><span class="right">Created with <a href="http://www.jacoco.org/jacoco">JaCoCo</a> 0.8.1.201803210924</span></div></body></html>

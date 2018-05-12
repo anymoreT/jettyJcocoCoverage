@@ -1,0 +1,148 @@
+<?xml version="1.0" encoding="UTF-8"?><!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Strict//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-strict.dtd"><html xmlns="http://www.w3.org/1999/xhtml" lang="zh"><head><meta http-equiv="Content-Type" content="text/html;charset=UTF-8"/><link rel="stylesheet" href="../jacoco-resources/report.css" type="text/css"/><link rel="shortcut icon" href="../jacoco-resources/report.gif" type="image/gif"/><title>ServiceMergeServlet.java</title><link rel="stylesheet" href="../jacoco-resources/prettify.css" type="text/css"/><script type="text/javascript" src="../jacoco-resources/prettify.js"></script></head><body onload="window['PR_TAB_WIDTH']=4;prettyPrint()"><div class="breadcrumb" id="breadcrumb"><span class="info"><a href="../jacoco-sessions.html" class="el_session">Sessions</a></span><a href="../index.html" class="el_report">JaCoCo Ant Example</a> &gt; <a href="index.source.html" class="el_package">com.mockey.ui</a> &gt; <span class="el_source">ServiceMergeServlet.java</span></div><h1>ServiceMergeServlet.java</h1><pre class="source lang-java linenums">/*
+ * This file is part of Mockey, a tool for testing application 
+ * interactions over HTTP, with a focus on testing web services, 
+ * specifically web applications that consume XML, JSON, and HTML.
+ *  
+ * Copyright (C) 2009-2010  Authors:
+ * 
+ * chad.lafontaine (chad.lafontaine AT gmail DOT com)
+ * neil.cronin (neil AT rackle DOT com) 
+ * lorin.kobashigawa (lkb AT kgawa DOT com)
+ * rob.meyer (rob AT bigdis DOT com)
+ * 
+ * This program is free software; you can redistribute it and/or
+ * modify it under the terms of the GNU General Public License
+ * as published by the Free Software Foundation; either version 2
+ * of the License, or (at your option) any later version.
+ * 
+ * This program is distributed in the hope that it will be useful,
+ * but WITHOUT ANY WARRANTY; without even the implied warranty of
+ * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+ * GNU General Public License for more details.
+ * 
+ * You should have received a copy of the GNU General Public License
+ * along with this program; if not, write to the Free Software
+ * Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301, USA.
+ *
+ */
+package com.mockey.ui;
+
+import java.io.IOException;
+import java.io.PrintWriter;
+import java.util.Enumeration;
+import java.util.HashMap;
+import java.util.Map;
+
+import javax.servlet.RequestDispatcher;
+import javax.servlet.ServletException;
+import javax.servlet.http.HttpServlet;
+import javax.servlet.http.HttpServletRequest;
+import javax.servlet.http.HttpServletResponse;
+
+import org.apache.commons.logging.Log;
+import org.apache.commons.logging.LogFactory;
+
+import com.mockey.model.Service;
+import com.mockey.storage.IMockeyStorage;
+import com.mockey.storage.StorageRegistry;
+import com.mockey.storage.xml.MockeyXmlFileManager;
+
+<span class="fc" id="L50">public class ServiceMergeServlet extends HttpServlet {</span>
+<span class="fc" id="L51">	private Log log = LogFactory.getLog(ServiceMergeServlet.class);</span>
+
+	private static final long serialVersionUID = 5503460488900643184L;
+<span class="fc" id="L54">	private static IMockeyStorage store = StorageRegistry.MockeyStorage;</span>
+
+	public void doGet(HttpServletRequest req, HttpServletResponse resp)
+			throws ServletException, IOException {
+
+<span class="fc" id="L59">		req.setAttribute(&quot;services&quot;, Util.orderAlphabeticallyByServiceName(store.getServices()));</span>
+<span class="fc" id="L60">		req.setAttribute(&quot;plans&quot;, store.getServicePlans());</span>
+
+<span class="fc" id="L62">		RequestDispatcher dispatch = req</span>
+<span class="fc" id="L63">				.getRequestDispatcher(&quot;service_merge.jsp&quot;);</span>
+
+<span class="fc" id="L65">		dispatch.forward(req, resp);</span>
+<span class="fc" id="L66">	}</span>
+
+	/**
+	 * 
+	 * 
+	 * @param req
+	 *            basic request
+	 * @param resp
+	 *            basic resp
+	 * @throws ServletException
+	 *             basic
+	 * @throws IOException
+	 *             basic
+	 */
+	@SuppressWarnings(&quot;unchecked&quot;)
+	public void doPost(HttpServletRequest req, HttpServletResponse resp)
+			throws ServletException, IOException {
+
+<span class="nc" id="L84">		Boolean originalMode = store.getReadOnlyMode();</span>
+<span class="nc" id="L85">		store.setReadOnlyMode(true);</span>
+		
+<span class="nc" id="L87">		String[] serviceMergeIdList = req</span>
+<span class="nc" id="L88">				.getParameterValues(&quot;serviceIdMergeSource[]&quot;);</span>
+<span class="nc" id="L89">		Enumeration&lt;String&gt; names = (Enumeration&lt;String&gt;)req.getParameterNames();</span>
+<span class="nc bnc" id="L90" title="All 2 branches missed.">		while(names.hasMoreElements()){</span>
+<span class="nc" id="L91">			log.debug(names.nextElement());</span>
+		}
+<span class="nc" id="L93">		Long serviceIdMergeSource = null;</span>
+<span class="nc" id="L94">		Long serviceIdMergeDestination = null;</span>
+<span class="nc" id="L95">		ServiceMergeResults mergeResults = new ServiceMergeResults();</span>
+<span class="nc" id="L96">		Map&lt;String, String&gt; responseMap = new HashMap&lt;String, String&gt;();</span>
+		try {
+<span class="nc bnc" id="L98" title="All 2 branches missed.">			for (int i = 0; i &lt; serviceMergeIdList.length; i++) {</span>
+
+<span class="nc" id="L100">				serviceIdMergeSource = new Long(serviceMergeIdList[i]);</span>
+<span class="nc" id="L101">				serviceIdMergeDestination = new Long(req</span>
+<span class="nc" id="L102">						.getParameter(&quot;serviceIdMergeDestination&quot;));</span>
+<span class="nc bnc" id="L103" title="All 2 branches missed.">				if (!serviceIdMergeSource.equals(serviceIdMergeDestination)) {</span>
+
+<span class="nc" id="L105">					Service serviceMergeSource = store</span>
+<span class="nc" id="L106">							.getServiceById(serviceIdMergeSource);</span>
+<span class="nc" id="L107">					Service serviceMergeDestination = store</span>
+<span class="nc" id="L108">							.getServiceById(serviceIdMergeDestination);</span>
+<span class="nc" id="L109">					MockeyXmlFileManager configurationReader = MockeyXmlFileManager.getInstance();</span>
+<span class="nc" id="L110">					mergeResults = configurationReader.mergeServices(</span>
+							serviceMergeSource, serviceMergeDestination,
+							mergeResults, null);
+
+				}
+<span class="nc" id="L115">				responseMap.put(&quot;additions&quot;, mergeResults.getAdditionMsg());</span>
+<span class="nc" id="L116">				responseMap.put(&quot;conflicts&quot;, mergeResults.getConflictMsg());</span>
+			}
+			
+<span class="nc" id="L119">		} catch (Exception e) {</span>
+			// Do nothing
+<span class="nc" id="L121">			log.error(&quot;Something wrong with merging services.&quot;, e);</span>
+<span class="nc" id="L122">			responseMap.put(&quot;conflicts&quot;, &quot;Unable to merge services. The services selected may be missing or contain bad data. Sorry about this.&quot;);</span>
+
+<span class="nc" id="L124">		}</span>
+		
+		// IF NO CONFLICTS, THEN DELETE OLD SOURCE SERVICES
+<span class="nc bnc" id="L127" title="All 6 branches missed.">		if(mergeResults!=null &amp;&amp; (mergeResults.getConflictMsgs()==null || mergeResults.getConflictMsgs().isEmpty())){</span>
+<span class="nc bnc" id="L128" title="All 2 branches missed.">			for (int i = 0; i &lt; serviceMergeIdList.length; i++) {</span>
+<span class="nc" id="L129">				serviceIdMergeSource = new Long(serviceMergeIdList[i]);</span>
+<span class="nc" id="L130">				Service service = store.getServiceById(serviceIdMergeSource);</span>
+<span class="nc" id="L131">				store.deleteService(service);</span>
+			}
+			
+		}
+<span class="nc" id="L135">		resp.setContentType(&quot;application/json&quot;);</span>
+<span class="nc" id="L136">		PrintWriter out = resp.getWriter();</span>
+
+<span class="nc" id="L138">		String resultingJSON = Util.getJSON(responseMap);</span>
+<span class="nc" id="L139">		out.println(resultingJSON);</span>
+
+<span class="nc" id="L141">		out.flush();</span>
+<span class="nc" id="L142">		out.close();</span>
+<span class="nc" id="L143">		store.setReadOnlyMode(originalMode);</span>
+<span class="nc" id="L144">		return;</span>
+		// AJAX thing. Return nothing at this time.
+	}
+}
+</pre><div class="footer"><span class="right">Created with <a href="http://www.jacoco.org/jacoco">JaCoCo</a> 0.8.1.201803210924</span></div></body></html>

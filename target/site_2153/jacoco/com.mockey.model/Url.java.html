@@ -1,0 +1,312 @@
+<?xml version="1.0" encoding="UTF-8"?><!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Strict//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-strict.dtd"><html xmlns="http://www.w3.org/1999/xhtml" lang="zh"><head><meta http-equiv="Content-Type" content="text/html;charset=UTF-8"/><link rel="stylesheet" href="../jacoco-resources/report.css" type="text/css"/><link rel="shortcut icon" href="../jacoco-resources/report.gif" type="image/gif"/><title>Url.java</title><link rel="stylesheet" href="../jacoco-resources/prettify.css" type="text/css"/><script type="text/javascript" src="../jacoco-resources/prettify.js"></script></head><body onload="window['PR_TAB_WIDTH']=4;prettyPrint()"><div class="breadcrumb" id="breadcrumb"><span class="info"><a href="../jacoco-sessions.html" class="el_session">Sessions</a></span><a href="../index.html" class="el_report">JaCoCo Ant Example</a> &gt; <a href="index.source.html" class="el_package">com.mockey.model</a> &gt; <span class="el_source">Url.java</span></div><h1>Url.java</h1><pre class="source lang-java linenums">/*
+ * This file is part of Mockey, a tool for testing application 
+ * interactions over HTTP, with a focus on testing web services, 
+ * specifically web applications that consume XML, JSON, and HTML.
+ *  
+ * Copyright (C) 2009-2010  Authors:
+ * 
+ * chad.lafontaine (chad.lafontaine AT gmail DOT com)
+ * neil.cronin (neil AT rackle DOT com) 
+ * lorin.kobashigawa (lkb AT kgawa DOT com)
+ * rob.meyer (rob AT bigdis DOT com)
+ * 
+ * This program is free software; you can redistribute it and/or
+ * modify it under the terms of the GNU General Public License
+ * as published by the Free Software Foundation; either version 2
+ * of the License, or (at your option) any later version.
+ * 
+ * This program is distributed in the hope that it will be useful,
+ * but WITHOUT ANY WARRANTY; without even the implied warranty of
+ * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+ * GNU General Public License for more details.
+ * 
+ * You should have received a copy of the GNU General Public License
+ * along with this program; if not, write to the Free Software
+ * Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301, USA.
+ *
+ */
+package com.mockey.model;
+
+import java.net.MalformedURLException;
+import java.net.URL;
+
+import javax.servlet.http.HttpServletRequest;
+
+import org.apache.log4j.Logger;
+
+/**
+ * A Url is the specific http url of a Service.
+ * 
+ */
+public class Url {
+	/**
+	 * The name of the mock service servlet name
+	 */
+	public static final String MOCK_SERVICE_PATH = &quot;/service/&quot;;
+<span class="pc" id="L46">	private Logger logger = Logger.getLogger(Url.class);</span>
+	private String scheme;
+<span class="pc" id="L48">	private int port = 80;</span>
+	private String host;
+	private String path;
+
+	/**
+	 * @return the scheme
+	 */
+	public String getScheme() {
+<span class="nc" id="L56">		return scheme;</span>
+	}
+
+	/**
+	 * @return the port
+	 */
+	public int getPort() {
+<span class="nc" id="L63">		return port;</span>
+	}
+
+	/**
+	 * @return the host
+	 */
+	public String getHost() {
+<span class="nc" id="L70">		return host;</span>
+	}
+
+	/**
+	 * @return the path
+	 */
+	public String getPath() {
+<span class="nc bnc" id="L77" title="All 4 branches missed.">		return path != null &amp;&amp; path.trim() != &quot;&quot; ? path : &quot;/&quot;;</span>
+	}
+
+	/**
+	 * Constructor will parse the url argument to determine the port, host, and
+	 * scheme (http or https).
+	 * 
+	 * @param url
+	 */
+<span class="fc" id="L86">	public Url(String url) {</span>
+
+<span class="fc" id="L88">		parse(url);</span>
+<span class="fc" id="L89">	}</span>
+
+	/**
+	 * Empty constructor, needed for reflection but not useful unless parse
+	 * method is called shortly after.
+	 * 
+	 */
+<span class="nc" id="L96">	public Url() {</span>
+
+<span class="nc" id="L98">	}</span>
+
+	/**
+	 * Calls parse. Method setter used in reflection.
+	 * 
+	 * @param url
+	 */
+	public void setUrl(String url) {
+<span class="nc" id="L106">		this.parse(url);</span>
+<span class="nc" id="L107">	}</span>
+
+	/**
+	 * If https or http cannot be determined, then HTTP will be the default. If
+	 * path cannot be determined, then 80 for HTTP scheme is default, 443 for
+	 * HTTPS.
+	 * 
+	 * @param url
+	 * @throws UrlException
+	 */
+	public void parse(String url) {
+
+<span class="fc" id="L119">		int beginIndex = url.indexOf(MOCK_SERVICE_PATH);</span>
+<span class="pc bpc" id="L120" title="1 of 2 branches missed.">		if (beginIndex &gt; -1) {</span>
+<span class="nc" id="L121">			url = url.substring(MOCK_SERVICE_PATH.length());</span>
+
+		}
+
+		// Get rid of the garbage prior to the http.
+<span class="fc" id="L126">		int indexStartOfHttp = url.indexOf(&quot;http&quot;);</span>
+<span class="pc bpc" id="L127" title="1 of 2 branches missed.">		if (indexStartOfHttp &gt; -1) {</span>
+<span class="nc" id="L128">			url = url.substring(indexStartOfHttp);</span>
+		}
+
+		// extract the scheme
+<span class="pc bpc" id="L132" title="1 of 2 branches missed.">		if (url.matches(&quot;(?i)^https?://.*&quot;)) {</span>
+<span class="nc" id="L133">			this.scheme = url.substring(0, url.indexOf(&quot;:&quot;));</span>
+<span class="nc" id="L134">			url = url.substring(url.indexOf(&quot;://&quot;) + 3, url.length());</span>
+		} else {
+<span class="fc" id="L136">			this.scheme = &quot;http&quot;;</span>
+		}
+
+		// extract the host and port
+		String hostAndPort;
+<span class="pc bpc" id="L141" title="1 of 2 branches missed.">		if (url.indexOf(&quot;/&quot;) &gt; 0) {</span>
+<span class="nc" id="L142">			hostAndPort = url.substring(0, url.indexOf(&quot;/&quot;));</span>
+		} else {
+<span class="fc" id="L144">			hostAndPort = url;</span>
+		}
+<span class="pc bpc" id="L146" title="1 of 2 branches missed.">		if (hostAndPort.indexOf(&quot;:&quot;) &gt; 0) {</span>
+<span class="nc" id="L147">			this.host = hostAndPort.substring(0, hostAndPort.indexOf(&quot;:&quot;));</span>
+<span class="nc" id="L148">			String portArg = hostAndPort.substring(hostAndPort.indexOf(&quot;:&quot;) + 1, hostAndPort.length());</span>
+			try {
+<span class="nc" id="L150">				this.port = Integer.valueOf(portArg);</span>
+<span class="nc" id="L151">			} catch (Exception e) {</span>
+<span class="nc" id="L152">				logger.debug(</span>
+						&quot;Unable to determine port for URL: &quot; + hostAndPort + &quot;\n Setting to default based on scheme. &quot;);
+<span class="nc bnc" id="L154" title="All 2 branches missed.">				if (this.scheme.equalsIgnoreCase(&quot;https&quot;)) {</span>
+<span class="nc" id="L155">					this.port = 443;</span>
+				} else {
+<span class="nc" id="L157">					this.port = 80;</span>
+				}
+<span class="nc" id="L159">			}</span>
+<span class="nc" id="L160">		} else {</span>
+<span class="fc" id="L161">			this.host = hostAndPort;</span>
+<span class="pc bpc" id="L162" title="1 of 2 branches missed.">			if (this.scheme.equalsIgnoreCase(&quot;https&quot;)) {</span>
+<span class="nc" id="L163">				this.port = 443;</span>
+			} else {
+<span class="fc" id="L165">				this.port = 80;</span>
+			}
+		}
+
+<span class="pc bpc" id="L169" title="1 of 2 branches missed.">		if (url.indexOf(&quot;/&quot;) &gt; 0) {</span>
+<span class="nc" id="L170">			this.path = url.substring(url.indexOf(&quot;/&quot;), url.length());</span>
+		} else {
+<span class="fc" id="L172">			this.path = &quot;&quot;;</span>
+		}
+<span class="fc" id="L174">		this.path = this.path.trim();</span>
+
+		// scheme and port are not case sensitive so normalize to lowercase
+<span class="fc" id="L177">		this.scheme = this.scheme.toLowerCase();</span>
+<span class="fc" id="L178">		this.host = this.host.toLowerCase();</span>
+<span class="fc" id="L179">	}</span>
+
+	/**
+	 * 
+	 * @return true if port equates to default value based on scheme, e.g. 443
+	 *         and 80 for HTTPS and HTTP respectively.
+	 */
+	public boolean isDefaultPort() {
+<span class="nc bnc" id="L187" title="All 8 branches missed.">		return (&quot;https&quot;.equals(scheme) &amp;&amp; 443 == port) || (&quot;http&quot;.equals(scheme) &amp;&amp; 80 == port);</span>
+	}
+
+	/**
+	 * Returns the URL: scheme and host, and optionally, the port. Only
+	 * non-default HTTPS and HTTP port values will be appended to the URL.
+	 * 
+	 * @return
+	 */
+	public String getFullUrl() {
+<span class="fc" id="L197">		StringBuilder builder = new StringBuilder();</span>
+<span class="pc bpc" id="L198" title="3 of 6 branches missed.">		if (scheme != null &amp;&amp; host != null &amp;&amp; host.trim().length() &gt; 0) {</span>
+<span class="nc" id="L199">			builder.append(scheme).append(&quot;://&quot;).append(host);</span>
+<span class="nc bnc" id="L200" title="All 2 branches missed.">			if (!isDefaultPort()) {</span>
+<span class="nc" id="L201">				builder.append(&quot;:&quot;).append(port);</span>
+			}
+		}
+<span class="pc bpc" id="L204" title="1 of 2 branches missed.">		if (path != null) {</span>
+<span class="fc" id="L205">			builder.append(path);</span>
+		}
+<span class="fc" id="L207">		return builder.toString();</span>
+	}
+
+	public String toString() {
+<span class="fc" id="L211">		return getFullUrl();</span>
+	}
+
+	/**
+	 * Why build an absolute path, and not just use relative?
+	 * 
+	 * Here's why:
+	 * 
+	 * &lt;pre&gt;
+	 * https://stackoverflow.com/questions/18891210/how-to-reproduce-sendredirect-issue-https-change-to-http
+	 * &lt;/pre&gt;
+	 * 
+	 * @param servletPath
+	 *            - servletPath
+	 * @return - returns absolute URL to the servletPath.
+	 */
+	public static String getAbsoluteURL(HttpServletRequest req, String servletPath) {
+
+<span class="fc" id="L229">		String scheme = req.getScheme(); // http</span>
+<span class="fc" id="L230">		String serverName = req.getServerName(); // hostname.com</span>
+<span class="fc" id="L231">		int serverPort = req.getServerPort(); // 80</span>
+<span class="fc" id="L232">		String contextPath = req.getContextPath(); // /mywebapp</span>
+
+		// Reconstruct original requesting URL
+<span class="fc" id="L235">		StringBuilder url = new StringBuilder();</span>
+<span class="fc" id="L236">		url.append(scheme).append(&quot;://&quot;).append(serverName);</span>
+
+<span class="pc bpc" id="L238" title="2 of 4 branches missed.">		if (serverPort != 80 &amp;&amp; serverPort != 443) {</span>
+<span class="fc" id="L239">			url.append(&quot;:&quot;).append(serverPort);</span>
+		}
+
+<span class="fc" id="L242">		url.append(contextPath).append(servletPath);</span>
+
+<span class="fc" id="L244">		return url.toString();</span>
+	}
+
+	/**
+	 * Given a valid URL with query and reference arguments, this method will
+	 * extract remove those values and return a value with
+	 * SCHEME://HOST[:PORT]//PATH
+	 * 
+	 * @param validUrl
+	 * @return
+	 * @throws MalformedURLException
+	 */
+	public static String getSchemeHostPortPathFromURL(String validUrl) throws MalformedURLException {
+<span class="nc" id="L257">		URL aURL = new URL(validUrl);</span>
+<span class="nc" id="L258">		String port = &quot;&quot;;</span>
+<span class="nc bnc" id="L259" title="All 2 branches missed.">		if (aURL.getPort() &gt; -1) {</span>
+<span class="nc" id="L260">			port = &quot;:&quot; + aURL.getPort();</span>
+		}
+<span class="nc" id="L262">		String schemeHostPortPath = aURL.getProtocol() + &quot;://&quot; + aURL.getHost() + port + aURL.getPath();</span>
+<span class="nc" id="L263">		return schemeHostPortPath;</span>
+	}
+
+	/**
+	 * Convenience method. When did this get here?
+	 * 
+	 * @return
+	 */
+	public boolean hasSettings() {
+<span class="nc bnc" id="L272" title="All 4 branches missed.">		if (this.getFullUrl() != null &amp;&amp; this.getFullUrl().trim().length() &gt; 0) {</span>
+<span class="nc" id="L273">			return true;</span>
+		} else {
+<span class="nc" id="L275">			return false;</span>
+		}
+	}
+
+	public static void main(String[] args) {
+		// What's this?
+		// URL not Url?
+		// Ah...we're testing URL for help here.
+		URL aURL;
+		try {
+<span class="nc" id="L285">			Url b = new Url();</span>
+
+<span class="nc" id="L287">			System.out.println(b.hasSettings());</span>
+<span class="nc" id="L288">			b = new Url(&quot;http://www.google.com&quot;);</span>
+<span class="nc" id="L289">			System.out.println(b.hasSettings());</span>
+<span class="nc" id="L290">			b = new Url(&quot;&quot;);</span>
+<span class="nc" id="L291">			System.out.println(b.hasSettings() + &quot; '&quot; + b.toString() + &quot;'&quot;);</span>
+
+<span class="nc" id="L293">			aURL = new URL(&quot;http://java.sun.com:80/docs/books/tutorial/index.html////?&quot;);</span>
+
+<span class="nc" id="L295">			System.out.println(&quot;protocol = &quot; + aURL.getProtocol());</span>
+<span class="nc" id="L296">			System.out.println(&quot;authority = &quot; + aURL.getAuthority());</span>
+<span class="nc" id="L297">			System.out.println(&quot;host = &quot; + aURL.getHost());</span>
+<span class="nc" id="L298">			System.out.println(&quot;port = &quot; + aURL.getPort());</span>
+<span class="nc" id="L299">			System.out.println(&quot;path = &quot; + aURL.getPath());</span>
+<span class="nc" id="L300">			System.out.println(&quot;query = &quot; + aURL.getQuery());</span>
+<span class="nc" id="L301">			System.out.println(&quot;filename = &quot; + aURL.getFile());</span>
+<span class="nc" id="L302">			System.out.println(&quot;ref = &quot; + aURL.getRef());</span>
+<span class="nc" id="L303">			System.out.println(&quot;As a string = &quot; + aURL.toString());</span>
+<span class="nc" id="L304">		} catch (MalformedURLException e) {</span>
+			// TODO Auto-generated catch block
+<span class="nc" id="L306">			e.printStackTrace();</span>
+<span class="nc" id="L307">		}</span>
+
+<span class="nc" id="L309">	}</span>
+
+}
+</pre><div class="footer"><span class="right">Created with <a href="http://www.jacoco.org/jacoco">JaCoCo</a> 0.8.1.201803210924</span></div></body></html>

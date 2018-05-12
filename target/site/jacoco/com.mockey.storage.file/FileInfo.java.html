@@ -1,0 +1,119 @@
+<?xml version="1.0" encoding="UTF-8"?><!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Strict//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-strict.dtd"><html xmlns="http://www.w3.org/1999/xhtml" lang="zh"><head><meta http-equiv="Content-Type" content="text/html;charset=UTF-8"/><link rel="stylesheet" href="../jacoco-resources/report.css" type="text/css"/><link rel="shortcut icon" href="../jacoco-resources/report.gif" type="image/gif"/><title>FileInfo.java</title><link rel="stylesheet" href="../jacoco-resources/prettify.css" type="text/css"/><script type="text/javascript" src="../jacoco-resources/prettify.js"></script></head><body onload="window['PR_TAB_WIDTH']=4;prettyPrint()"><div class="breadcrumb" id="breadcrumb"><span class="info"><a href="../jacoco-sessions.html" class="el_session">Sessions</a></span><a href="../index.html" class="el_report">JaCoCo Ant Example</a> &gt; <a href="index.source.html" class="el_package">com.mockey.storage.file</a> &gt; <span class="el_source">FileInfo.java</span></div><h1>FileInfo.java</h1><pre class="source lang-java linenums">/*
+ * This file is part of Mockey, a tool for testing application 
+ * interactions over HTTP, with a focus on testing web services, 
+ * specifically web applications that consume XML, JSON, and HTML.
+ *  
+ * Copyright (C) 2009-2010  Authors:
+ * 
+ * chad.lafontaine (chad.lafontaine AT gmail DOT com)
+ * 
+ * This program is free software; you can redistribute it and/or
+ * modify it under the terms of the GNU General Public License
+ * as published by the Free Software Foundation; either version 2
+ * of the License, or (at your option) any later version.
+ * 
+ * This program is distributed in the hope that it will be useful,
+ * but WITHOUT ANY WARRANTY; without even the implied warranty of
+ * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+ * GNU General Public License for more details.
+ * 
+ * You should have received a copy of the GNU General Public License
+ * along with this program; if not, write to the Free Software
+ * Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301, USA.
+ *
+ */
+package com.mockey.storage.file;
+
+import java.text.DateFormat;
+import java.text.SimpleDateFormat;
+import java.util.Date;
+
+<span class="nc" id="L31">public class FileInfo {</span>
+
+	private String filename;
+	private long length;
+	private long lastModified;
+
+	public String getFilename() {
+<span class="nc" id="L38">		return filename;</span>
+	}
+
+	public void setFilename(String filename) {
+<span class="nc" id="L42">		this.filename = filename;</span>
+<span class="nc" id="L43">	}</span>
+
+	public long getLength() {
+<span class="nc" id="L46">		return length;</span>
+	}
+
+	public void setLength(long length) {
+<span class="nc" id="L50">		this.length = length;</span>
+<span class="nc" id="L51">	}</span>
+
+	public String getSizeDesc() {
+
+<span class="nc" id="L55">		return StorageUnit.of(this.length).format(this.length);</span>
+	}
+
+	public String getLastModifiedDesc() {
+<span class="nc" id="L59">		Date date = new Date(this.lastModified);</span>
+<span class="nc" id="L60">		DateFormat format = new SimpleDateFormat(&quot;dd/MM/yyyy HH:mm&quot;);</span>
+<span class="nc" id="L61">		String result = format.format(date);</span>
+<span class="nc" id="L62">		return result;</span>
+	}
+
+	public long getLastModified() {
+<span class="nc" id="L66">		return lastModified;</span>
+	}
+
+	public void setLastModified(long lastModified) {
+<span class="nc" id="L70">		this.lastModified = lastModified;</span>
+<span class="nc" id="L71">	}</span>
+
+<span class="nc" id="L73">	private enum StorageUnit {</span>
+<span class="nc" id="L74">		BYTE(&quot;B&quot;, 1L), KILOBYTE(&quot;KB&quot;, 1L &lt;&lt; 10), MEGABYTE(&quot;MB&quot;, 1L &lt;&lt; 20), GIGABYTE(</span>
+<span class="nc" id="L75">				&quot;GB&quot;, 1L &lt;&lt; 30), TERABYTE(&quot;TB&quot;, 1L &lt;&lt; 40), PETABYTE(&quot;PB&quot;,</span>
+<span class="nc" id="L76">				1L &lt;&lt; 50), EXABYTE(&quot;EB&quot;, 1L &lt;&lt; 60);</span>
+		private final String symbol;
+		private final long divider; // divider of BASE unit
+
+<span class="nc" id="L80">		StorageUnit(String name, long divider) {</span>
+<span class="nc" id="L81">			this.symbol = name;</span>
+<span class="nc" id="L82">			this.divider = divider;</span>
+<span class="nc" id="L83">		}</span>
+
+		// Source:
+		// http://groups.google.com/group/comp.lang.java.help/browse_thread/thread/0db818517ca9de79/b0a55aa19f911204?pli=1
+		public static StorageUnit of(final long number) {
+<span class="nc bnc" id="L88" title="All 2 branches missed.">			final long n = number &gt; 0 ? -number : number;</span>
+<span class="nc bnc" id="L89" title="All 2 branches missed.">			if (n &gt; -(1L &lt;&lt; 10)) {</span>
+<span class="nc" id="L90">				return BYTE;</span>
+<span class="nc bnc" id="L91" title="All 2 branches missed.">			} else if (n &gt; -(1L &lt;&lt; 20)) {</span>
+<span class="nc" id="L92">				return KILOBYTE;</span>
+<span class="nc bnc" id="L93" title="All 2 branches missed.">			} else if (n &gt; -(1L &lt;&lt; 30)) {</span>
+<span class="nc" id="L94">				return MEGABYTE;</span>
+<span class="nc bnc" id="L95" title="All 2 branches missed.">			} else if (n &gt; -(1L &lt;&lt; 40)) {</span>
+<span class="nc" id="L96">				return GIGABYTE;</span>
+<span class="nc bnc" id="L97" title="All 2 branches missed.">			} else if (n &gt; -(1L &lt;&lt; 50)) {</span>
+<span class="nc" id="L98">				return TERABYTE;</span>
+<span class="nc bnc" id="L99" title="All 2 branches missed.">			} else if (n &gt; -(1L &lt;&lt; 60)) {</span>
+<span class="nc" id="L100">				return PETABYTE;</span>
+			} else { // n &gt;= Long.MIN_VALUE
+<span class="nc" id="L102">				return EXABYTE;</span>
+			}
+		}
+
+		public String format(long number) {
+<span class="nc" id="L107">			return nf.format((double) number / divider) + &quot; &quot; + symbol;</span>
+		}
+
+		private static java.text.NumberFormat nf = java.text.NumberFormat
+<span class="nc" id="L111">				.getInstance();</span>
+		static {
+<span class="nc" id="L113">			nf.setGroupingUsed(false);</span>
+<span class="nc" id="L114">			nf.setMinimumFractionDigits(0);</span>
+<span class="nc" id="L115">			nf.setMaximumFractionDigits(1);</span>
+<span class="nc" id="L116">		}</span>
+	}
+}
+</pre><div class="footer"><span class="right">Created with <a href="http://www.jacoco.org/jacoco">JaCoCo</a> 0.8.1.201803210924</span></div></body></html>

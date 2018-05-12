@@ -1,0 +1,51 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<testsuite name="Ant test" failures="0" tests="47" time="0.246" errors="0">
+  <properties/>
+  <testcase name="parsesRealServiceUrlIntoHostAndPath" time="0.003" classname="com.mockey.MockServiceBeanTest"/>
+  <testcase name="parsesSchemeFromRealServiceUrl" time="0.001" classname="com.mockey.MockServiceBeanTest"/>
+  <testcase name="validateSearchResultByName" time="0.028" classname="com.mockey.SearchResultBuilderTest"/>
+  <testcase name="validateSearchResultByServiceTag" time="0.001" classname="com.mockey.SearchResultBuilderTest"/>
+  <testcase name="validateSearchResultByServicePlanTag" time="0.001" classname="com.mockey.SearchResultBuilderTest"/>
+  <testcase name="validateSearchResultScenarioContent" time="0.002" classname="com.mockey.SearchResultBuilderTest"/>
+  <testcase name="checkServiceConflict" time="0.001" classname="com.mockey.model.ConflictInfoTest"/>
+  <testcase name="checkDuplicateScenarioConflict" time="0.0" classname="com.mockey.model.ConflictInfoTest"/>
+  <testcase name="validateSettingChecker" time="0.001" classname="com.mockey.model.ProxyServerModelTest"/>
+  <testcase name="addTagsToScenario" time="0.0" classname="com.mockey.model.ScenarioTest"/>
+  <testcase name="testdHeaderValue" time="0.0" classname="com.mockey.model.ScenarioTest"/>
+  <testcase name="addCheckNotSameScenario" time="0.0" classname="com.mockey.model.ScenarioTest"/>
+  <testcase name="checkAlphabeticOrderOfTags" time="0.001" classname="com.mockey.model.ScenarioTest"/>
+  <testcase name="addCheckSameScenario" time="0.0" classname="com.mockey.model.ScenarioTest"/>
+  <testcase name="addTagsToService" time="0.0" classname="com.mockey.model.ServiceTest"/>
+  <testcase name="removeTagsFromService" time="0.0" classname="com.mockey.model.ServiceTest"/>
+  <testcase name="addTagListToService" time="0.001" classname="com.mockey.model.ServiceTest"/>
+  <testcase name="addRealUrlsToService" time="0.0" classname="com.mockey.model.ServiceTest"/>
+  <testcase name="addSpaceTagListToService" time="0.0" classname="com.mockey.model.ServiceTest"/>
+  <testcase name="validateCaseInsensitiveVariablesInURL" time="0.002" classname="com.mockey.model.UriTemplateTest"/>
+  <testcase name="validateOddMatchVariablesInURL" time="0.001" classname="com.mockey.model.UriTemplateTest"/>
+  <testcase name="validateParametizedUrl" time="0.0" classname="com.mockey.model.UriTemplateTest"/>
+  <testcase name="validateSimpleURL" time="0.0" classname="com.mockey.model.UriTemplateTest"/>
+  <testcase name="validateMultipleVariablesInURL" time="0.0" classname="com.mockey.model.UriTemplateTest"/>
+  <testcase name="testCleanClassName" time="0.001" classname="com.mockey.plugin.TestPackageInfoPeerClassFinder"/>
+  <testcase name="testGetPackageNameFromPackageInfoClass" time="0.0" classname="com.mockey.plugin.TestPackageInfoPeerClassFinder"/>
+  <testcase name="testRequestInspector" time="0.001" classname="com.mockey.plugin.TestPluginStore"/>
+  <testcase name="testForDuplicateRequestInspectorClassNames" time="0.0" classname="com.mockey.plugin.TestPluginStore"/>
+  <testcase name="testInstanceCreator" time="0.0" classname="com.mockey.plugin.TestPluginStore"/>
+  <testcase name="checkForConflictingServiceName" time="0.137" classname="com.mockey.storage.xml.MockeyXmlFileManagerTest"/>
+  <testcase name="validateServiceFileWithNewBasePath" time="0.003" classname="com.mockey.storage.xml.MockeyXmlFileManagerTest"/>
+  <testcase name="checkForMergedRealUrls" time="0.013" classname="com.mockey.storage.xml.MockeyXmlFileManagerTest"/>
+  <testcase name="checkProxyAdditionMsg" time="0.012" classname="com.mockey.storage.xml.MockeyXmlFileManagerTest"/>
+  <testcase name="checkForMergedServiceScenarioTags" time="0.013" classname="com.mockey.storage.xml.MockeyXmlFileManagerTest"/>
+  <testcase name="validateServiceScenarioFile" time="0.001" classname="com.mockey.storage.xml.MockeyXmlFileManagerTest"/>
+  <testcase name="checkForRelativePath" time="0.001" classname="com.mockey.storage.xml.MockeyXmlFileManagerTest"/>
+  <testcase name="validateServiceAdd" time="0.0" classname="com.mockey.storage.xml.MockeyXmlFileManagerTest"/>
+  <testcase name="checkForMergedServiceTags" time="0.007" classname="com.mockey.storage.xml.MockeyXmlFileManagerTest"/>
+  <testcase name="validateDefaultBasePath" time="0.0" classname="com.mockey.storage.xml.MockeyXmlFileManagerTest"/>
+  <testcase name="validateNewBasePath" time="0.001" classname="com.mockey.storage.xml.MockeyXmlFileManagerTest"/>
+  <testcase name="testInBetween" time="0.001" classname="com.mockey.util.ServiceStatHelperTest"/>
+  <testcase name="testGetDateFromString" time="0.0" classname="com.mockey.util.ServiceStatHelperTest"/>
+  <testcase name="replacesEmptyPathWithSlash" time="0.0" classname="com.mockey.util.UrlTest"/>
+  <testcase name="validateEmptySetings" time="0.0" classname="com.mockey.util.UrlTest"/>
+  <testcase name="extractMockUrlFromFullUrl" time="0.001" classname="com.mockey.util.UrlTest"/>
+  <testcase name="parsesPortFromUrl" time="0.0" classname="com.mockey.util.UrlTest"/>
+  <testcase name="parsesFullUrl" time="0.0" classname="com.mockey.util.UrlTest"/>
+</testsuite>

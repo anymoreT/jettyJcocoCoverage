@@ -1,0 +1,313 @@
+<html>
+<head>
+<title>TestNG:  Ant test</title>
+<link href="../testng.css" rel="stylesheet" type="text/css" />
+<link href="../my-testng.css" rel="stylesheet" type="text/css" />
+
+<style type="text/css">
+.log { display: none;} 
+.stack-trace { display: none;} 
+</style>
+<script type="text/javascript">
+<!--
+function flip(e) {
+  current = e.style.display;
+  if (current == 'block') {
+    e.style.display = 'none';
+    return 0;
+  }
+  else {
+    e.style.display = 'block';
+    return 1;
+  }
+}
+
+function toggleBox(szDivId, elem, msg1, msg2)
+{
+  var res = -1;  if (document.getElementById) {
+    res = flip(document.getElementById(szDivId));
+  }
+  else if (document.all) {
+    // this is the way old msie versions work
+    res = flip(document.all[szDivId]);
+  }
+  if(elem) {
+    if(res == 0) elem.innerHTML = msg1; else elem.innerHTML = msg2;
+  }
+
+}
+
+function toggleAllBoxes() {
+  if (document.getElementsByTagName) {
+    d = document.getElementsByTagName('div');
+    for (i = 0; i < d.length; i++) {
+      if (d[i].className == 'log') {
+        flip(d[i]);
+      }
+    }
+  }
+}
+
+// -->
+</script>
+
+</head>
+<body>
+<h2 align='center'>Ant test</h2><table border='1' align="center">
+<tr>
+<td>Tests passed/Failed/Skipped:</td><td>47/0/0</td>
+</tr><tr>
+<td>Started on:</td><td>Sat May 12 17:45:32 CST 2018</td>
+</tr>
+<tr><td>Total time:</td><td>0 seconds (246 ms)</td>
+</tr><tr>
+<td>Included groups:</td><td></td>
+</tr><tr>
+<td>Excluded groups:</td><td></td>
+</tr>
+</table><p/>
+<small><i>(Hover the method name to see the test class name)</i></small><p/>
+<table width='100%' border='1' class='invocation-passed'>
+<tr><td colspan='3' align='center'><b>PASSED TESTS</b></td></tr>
+<tr><td><b>Test method</b></td>
+<td width="10%"><b>Time (seconds)</b></td>
+<td width="30%"><b>Exception</b></td>
+</tr>
+<tr>
+<td title='com.mockey.model.ScenarioTest.addCheckNotSameScenario()'>addCheckNotSameScenario</td>
+<td>0</td>
+<td></td>
+</tr>
+<tr>
+<td title='com.mockey.model.ScenarioTest.addCheckSameScenario()'>addCheckSameScenario</td>
+<td>0</td>
+<td></td>
+</tr>
+<tr>
+<td title='com.mockey.model.ServiceTest.addRealUrlsToService()'>addRealUrlsToService</td>
+<td>0</td>
+<td></td>
+</tr>
+<tr>
+<td title='com.mockey.model.ServiceTest.addSpaceTagListToService()'>addSpaceTagListToService</td>
+<td>0</td>
+<td></td>
+</tr>
+<tr>
+<td title='com.mockey.model.ServiceTest.addTagListToService()'>addTagListToService</td>
+<td>0</td>
+<td></td>
+</tr>
+<tr>
+<td title='com.mockey.model.ScenarioTest.addTagsToScenario()'>addTagsToScenario</td>
+<td>0</td>
+<td></td>
+</tr>
+<tr>
+<td title='com.mockey.model.ServiceTest.addTagsToService()'>addTagsToService</td>
+<td>0</td>
+<td></td>
+</tr>
+<tr>
+<td title='com.mockey.model.ScenarioTest.checkAlphabeticOrderOfTags()'>checkAlphabeticOrderOfTags</td>
+<td>0</td>
+<td></td>
+</tr>
+<tr>
+<td title='com.mockey.model.ConflictInfoTest.checkDuplicateScenarioConflict()'>checkDuplicateScenarioConflict</td>
+<td>0</td>
+<td></td>
+</tr>
+<tr>
+<td title='com.mockey.storage.xml.MockeyXmlFileManagerTest.checkForConflictingServiceName()'>checkForConflictingServiceName</td>
+<td>0</td>
+<td></td>
+</tr>
+<tr>
+<td title='com.mockey.storage.xml.MockeyXmlFileManagerTest.checkForMergedRealUrls()'>checkForMergedRealUrls</td>
+<td>0</td>
+<td></td>
+</tr>
+<tr>
+<td title='com.mockey.storage.xml.MockeyXmlFileManagerTest.checkForMergedServiceScenarioTags()'>checkForMergedServiceScenarioTags</td>
+<td>0</td>
+<td></td>
+</tr>
+<tr>
+<td title='com.mockey.storage.xml.MockeyXmlFileManagerTest.checkForMergedServiceTags()'>checkForMergedServiceTags</td>
+<td>0</td>
+<td></td>
+</tr>
+<tr>
+<td title='com.mockey.storage.xml.MockeyXmlFileManagerTest.checkForRelativePath()'>checkForRelativePath</td>
+<td>0</td>
+<td></td>
+</tr>
+<tr>
+<td title='com.mockey.storage.xml.MockeyXmlFileManagerTest.checkProxyAdditionMsg()'>checkProxyAdditionMsg</td>
+<td>0</td>
+<td></td>
+</tr>
+<tr>
+<td title='com.mockey.model.ConflictInfoTest.checkServiceConflict()'>checkServiceConflict</td>
+<td>0</td>
+<td></td>
+</tr>
+<tr>
+<td title='com.mockey.util.UrlTest.extractMockUrlFromFullUrl()'>extractMockUrlFromFullUrl</td>
+<td>0</td>
+<td></td>
+</tr>
+<tr>
+<td title='com.mockey.util.UrlTest.parsesFullUrl()'>parsesFullUrl</td>
+<td>0</td>
+<td></td>
+</tr>
+<tr>
+<td title='com.mockey.util.UrlTest.parsesPortFromUrl()'>parsesPortFromUrl</td>
+<td>0</td>
+<td></td>
+</tr>
+<tr>
+<td title='com.mockey.MockServiceBeanTest.parsesRealServiceUrlIntoHostAndPath()'>parsesRealServiceUrlIntoHostAndPath</td>
+<td>0</td>
+<td></td>
+</tr>
+<tr>
+<td title='com.mockey.MockServiceBeanTest.parsesSchemeFromRealServiceUrl()'>parsesSchemeFromRealServiceUrl</td>
+<td>0</td>
+<td></td>
+</tr>
+<tr>
+<td title='com.mockey.model.ServiceTest.removeTagsFromService()'>removeTagsFromService</td>
+<td>0</td>
+<td></td>
+</tr>
+<tr>
+<td title='com.mockey.util.UrlTest.replacesEmptyPathWithSlash()'>replacesEmptyPathWithSlash</td>
+<td>0</td>
+<td></td>
+</tr>
+<tr>
+<td title='com.mockey.plugin.TestPackageInfoPeerClassFinder.testCleanClassName()'>testCleanClassName</td>
+<td>0</td>
+<td></td>
+</tr>
+<tr>
+<td title='com.mockey.plugin.TestPluginStore.testForDuplicateRequestInspectorClassNames()'>testForDuplicateRequestInspectorClassNames</td>
+<td>0</td>
+<td></td>
+</tr>
+<tr>
+<td title='com.mockey.util.ServiceStatHelperTest.testGetDateFromString()'>testGetDateFromString</td>
+<td>0</td>
+<td></td>
+</tr>
+<tr>
+<td title='com.mockey.plugin.TestPackageInfoPeerClassFinder.testGetPackageNameFromPackageInfoClass()'>testGetPackageNameFromPackageInfoClass</td>
+<td>0</td>
+<td></td>
+</tr>
+<tr>
+<td title='com.mockey.util.ServiceStatHelperTest.testInBetween()'>testInBetween</td>
+<td>0</td>
+<td></td>
+</tr>
+<tr>
+<td title='com.mockey.plugin.TestPluginStore.testInstanceCreator()'>testInstanceCreator</td>
+<td>0</td>
+<td></td>
+</tr>
+<tr>
+<td title='com.mockey.plugin.TestPluginStore.testRequestInspector()'>testRequestInspector</td>
+<td>0</td>
+<td></td>
+</tr>
+<tr>
+<td title='com.mockey.model.ScenarioTest.testdHeaderValue()'>testdHeaderValue</td>
+<td>0</td>
+<td></td>
+</tr>
+<tr>
+<td title='com.mockey.model.UriTemplateTest.validateCaseInsensitiveVariablesInURL()'>validateCaseInsensitiveVariablesInURL</td>
+<td>0</td>
+<td></td>
+</tr>
+<tr>
+<td title='com.mockey.storage.xml.MockeyXmlFileManagerTest.validateDefaultBasePath()'>validateDefaultBasePath</td>
+<td>0</td>
+<td></td>
+</tr>
+<tr>
+<td title='com.mockey.util.UrlTest.validateEmptySetings()'>validateEmptySetings</td>
+<td>0</td>
+<td></td>
+</tr>
+<tr>
+<td title='com.mockey.model.UriTemplateTest.validateMultipleVariablesInURL()'>validateMultipleVariablesInURL</td>
+<td>0</td>
+<td></td>
+</tr>
+<tr>
+<td title='com.mockey.storage.xml.MockeyXmlFileManagerTest.validateNewBasePath()'>validateNewBasePath</td>
+<td>0</td>
+<td></td>
+</tr>
+<tr>
+<td title='com.mockey.model.UriTemplateTest.validateOddMatchVariablesInURL()'>validateOddMatchVariablesInURL</td>
+<td>0</td>
+<td></td>
+</tr>
+<tr>
+<td title='com.mockey.model.UriTemplateTest.validateParametizedUrl()'>validateParametizedUrl</td>
+<td>0</td>
+<td></td>
+</tr>
+<tr>
+<td title='com.mockey.SearchResultBuilderTest.validateSearchResultByName()'>validateSearchResultByName</td>
+<td>0</td>
+<td></td>
+</tr>
+<tr>
+<td title='com.mockey.SearchResultBuilderTest.validateSearchResultByServicePlanTag()'>validateSearchResultByServicePlanTag</td>
+<td>0</td>
+<td></td>
+</tr>
+<tr>
+<td title='com.mockey.SearchResultBuilderTest.validateSearchResultByServiceTag()'>validateSearchResultByServiceTag</td>
+<td>0</td>
+<td></td>
+</tr>
+<tr>
+<td title='com.mockey.SearchResultBuilderTest.validateSearchResultScenarioContent()'>validateSearchResultScenarioContent</td>
+<td>0</td>
+<td></td>
+</tr>
+<tr>
+<td title='com.mockey.storage.xml.MockeyXmlFileManagerTest.validateServiceAdd()'>validateServiceAdd</td>
+<td>0</td>
+<td></td>
+</tr>
+<tr>
+<td title='com.mockey.storage.xml.MockeyXmlFileManagerTest.validateServiceFileWithNewBasePath()'>validateServiceFileWithNewBasePath</td>
+<td>0</td>
+<td></td>
+</tr>
+<tr>
+<td title='com.mockey.storage.xml.MockeyXmlFileManagerTest.validateServiceScenarioFile()'>validateServiceScenarioFile</td>
+<td>0</td>
+<td></td>
+</tr>
+<tr>
+<td title='com.mockey.model.ProxyServerModelTest.validateSettingChecker()'>validateSettingChecker</td>
+<td>0</td>
+<td></td>
+</tr>
+<tr>
+<td title='com.mockey.model.UriTemplateTest.validateSimpleURL()'>validateSimpleURL</td>
+<td>0</td>
+<td></td>
+</tr>
+</table><p>
+</body>
+</html>

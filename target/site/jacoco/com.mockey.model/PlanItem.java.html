@@ -1,0 +1,97 @@
+<?xml version="1.0" encoding="UTF-8"?><!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Strict//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-strict.dtd"><html xmlns="http://www.w3.org/1999/xhtml" lang="zh"><head><meta http-equiv="Content-Type" content="text/html;charset=UTF-8"/><link rel="stylesheet" href="../jacoco-resources/report.css" type="text/css"/><link rel="shortcut icon" href="../jacoco-resources/report.gif" type="image/gif"/><title>PlanItem.java</title><link rel="stylesheet" href="../jacoco-resources/prettify.css" type="text/css"/><script type="text/javascript" src="../jacoco-resources/prettify.js"></script></head><body onload="window['PR_TAB_WIDTH']=4;prettyPrint()"><div class="breadcrumb" id="breadcrumb"><span class="info"><a href="../jacoco-sessions.html" class="el_session">Sessions</a></span><a href="../index.html" class="el_report">JaCoCo Ant Example</a> &gt; <a href="index.source.html" class="el_package">com.mockey.model</a> &gt; <span class="el_source">PlanItem.java</span></div><h1>PlanItem.java</h1><pre class="source lang-java linenums">/*
+ * This file is part of Mockey, a tool for testing application 
+ * interactions over HTTP, with a focus on testing web services, 
+ * specifically web applications that consume XML, JSON, and HTML.
+ *  
+ * Copyright (C) 2009-2010  Authors:
+ * 
+ * chad.lafontaine (chad.lafontaine AT gmail DOT com)
+ * neil.cronin (neil AT rackle DOT com) 
+ * lorin.kobashigawa (lkb AT kgawa DOT com)
+ * rob.meyer (rob AT bigdis DOT com)
+ * 
+ * This program is free software; you can redistribute it and/or
+ * modify it under the terms of the GNU General Public License
+ * as published by the Free Software Foundation; either version 2
+ * of the License, or (at your option) any later version.
+ * 
+ * This program is distributed in the hope that it will be useful,
+ * but WITHOUT ANY WARRANTY; without even the implied warranty of
+ * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+ * GNU General Public License for more details.
+ * 
+ * You should have received a copy of the GNU General Public License
+ * along with this program; if not, write to the Free Software
+ * Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301, USA.
+ *
+ */
+package com.mockey.model;
+
+/**
+ * Mapping of desired settings for a service for the purpose of quickly setting
+ * a desired state, part of a ServicePlan.
+ * 
+ * @see com.mockey.model.ServicePlan
+ * 
+ * @author chad.lafontaine
+ * 
+ */
+<span class="nc" id="L39">public class PlanItem implements PersistableItem{</span>
+	private Long id;
+	private String serviceName;
+	private String scenarioName;
+    
+    private int hangTime;
+    private int serviceResponseType;
+
+
+    public void setServiceResponseType(int serviceResponseType) {
+<span class="nc" id="L49">        this.serviceResponseType = serviceResponseType;</span>
+<span class="nc" id="L50">    }</span>
+
+    public int getServiceResponseType() {
+<span class="nc" id="L53">        return serviceResponseType;</span>
+    }
+
+    public void setHangTime(int hangTime) {
+<span class="nc" id="L57">        this.hangTime = hangTime;</span>
+<span class="nc" id="L58">    }</span>
+
+    public int getHangTime() {
+<span class="nc" id="L61">        return hangTime;</span>
+    }
+
+	public String getScenarioName() {
+<span class="nc" id="L65">		return scenarioName;</span>
+	}
+
+	public void setScenarioName(String scenarioName) {
+<span class="nc" id="L69">		this.scenarioName = scenarioName;</span>
+<span class="nc" id="L70">	}</span>
+
+	public String getServiceName() {
+<span class="nc" id="L73">		return serviceName;</span>
+	}
+
+	public void setServiceName(String serviceName) {
+<span class="nc" id="L77">		this.serviceName = serviceName;</span>
+<span class="nc" id="L78">	}</span>
+
+	public Long getId() {
+<span class="nc" id="L81">		return id;</span>
+	}
+
+	public void setId(Long id) {
+<span class="nc" id="L85">		this.id = id;</span>
+<span class="nc" id="L86">	}</span>
+
+	@Override
+	public String toString() {
+<span class="nc" id="L90">		return &quot;PlanItem [id=&quot; + id + &quot;, serviceName=&quot; + serviceName + &quot;, scenarioName=&quot; + scenarioName + &quot;, hangTime=&quot;</span>
+				+ hangTime + &quot;, serviceResponseType=&quot; + serviceResponseType + &quot;]&quot;;
+	}
+	
+	
+
+}
+</pre><div class="footer"><span class="right">Created with <a href="http://www.jacoco.org/jacoco">JaCoCo</a> 0.8.1.201803210924</span></div></body></html>

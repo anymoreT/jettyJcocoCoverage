@@ -1,0 +1,116 @@
+<?xml version="1.0" encoding="ISO-8859-1"?>
+<!DOCTYPE taglib PUBLIC 
+	"-//Sun Microsystems, Inc.//DTD JSP Tag Library 1.1//EN"
+	"http://java.sun.com/j2ee/dtds/web-jsptaglibrary_1_1.dtd"
+>
+<taglib>
+	<tlibversion>1.0</tlibversion>
+	<jspversion>1.1</jspversion>
+	<shortname>custom</shortname>
+		<tag>
+		<name>service</name>
+		<tagclass>com.mockey.ui.tags.ServiceResponseTypeTag</tagclass>
+		<bodycontent>JSP</bodycontent>
+		<info>Manages an display of type of service response (Static, Dynamic, or Proxy). Style value '1' displays service respone type. Default style displays all 3 options.</info>
+		<attribute>
+			<name>type</name>
+			<required>true</required>
+			<rtexprvalue>true</rtexprvalue>
+		</attribute>
+		<attribute>
+			<name>serviceId</name>
+			<required>false</required>
+			<rtexprvalue>true</rtexprvalue>
+		</attribute>
+		<attribute>
+			<name>style</name>
+			<required>false</required>
+			<rtexprvalue>true</rtexprvalue>
+		</attribute>
+	</tag>
+	<tag>
+		<name>fdate</name>
+		<tagclass>com.mockey.ui.tags.FriendlyDateTag</tagclass>
+		<bodycontent>JSP</bodycontent>
+		<info>Manages an informal display of time passed.</info>
+		<attribute>
+			<name>date</name>
+			<required>true</required>
+			<rtexprvalue>true</rtexprvalue>
+		</attribute>
+	</tag>
+	<tag>
+		<name>slug</name>
+		<tagclass>com.mockey.ui.tags.SlugTag</tagclass>
+		<bodycontent>JSP</bodycontent>
+		<info>Manages a the display of a service URL</info>
+		<attribute>
+			<name>text</name>
+			<required>true</required>
+			<rtexprvalue>true</rtexprvalue>
+		</attribute>
+		<attribute>
+			<name>maxLength</name>
+			<required>true</required>
+			<rtexprvalue>true</rtexprvalue>
+		</attribute>
+	</tag>
+	<tag>
+		<name>url</name>
+		<tagclass>com.mockey.ui.tags.ServiceUrlTag</tagclass>
+		<bodycontent>JSP</bodycontent>
+		<info>Manages a the display of a service URL. </info>
+		<attribute>
+			<name>value</name>
+			<required>true</required>
+			<rtexprvalue>true</rtexprvalue>
+		</attribute>
+		<attribute>
+			<name>breakpoint</name>
+			<required>false</required>
+			<rtexprvalue>true</rtexprvalue>
+		</attribute>
+	</tag>
+	<tag>
+		<name>history</name>
+		<tagclass>com.mockey.ui.tags.HistoryFilterTag</tagclass>
+		<bodycontent>JSP</bodycontent>
+		<info>Manages a the display of a history token removal</info>
+		<attribute>
+			<name>value</name>
+			<required>true</required>
+			<rtexprvalue>true</rtexprvalue>
+		</attribute>
+	</tag>
+	<tag>
+		<name>clipboard</name>
+		<tagclass>com.mockey.ui.tags.ClipboardTag</tagclass>
+		<bodycontent>JSP</bodycontent>
+		<info>Adds an add to clipboard link</info>
+		<attribute>
+			<name>id</name>
+			<required>true</required>
+			<rtexprvalue>true</rtexprvalue>
+		</attribute>
+		<attribute>
+			<name>text</name>
+			<required>true</required>
+			<rtexprvalue>true</rtexprvalue>
+		</attribute>
+		<attribute>
+			<name>bgcolor</name>
+			<required>false</required>
+		</attribute>
+	</tag>
+	<tag>
+		<name>message</name>
+		<tagclass>com.mockey.ui.tags.MessageTag</tagclass>
+		<bodycontent>JSP</bodycontent>
+		<attribute>
+			<name>separator</name>
+			<required>false</required>
+			<rtexprvalue>false</rtexprvalue>
+		</attribute>
+	</tag>
+
+</taglib>

@@ -1,0 +1,82 @@
+<?xml version="1.0" encoding="UTF-8"?><!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Strict//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-strict.dtd"><html xmlns="http://www.w3.org/1999/xhtml" lang="zh"><head><meta http-equiv="Content-Type" content="text/html;charset=UTF-8"/><link rel="stylesheet" href="../jacoco-resources/report.css" type="text/css"/><link rel="shortcut icon" href="../jacoco-resources/report.gif" type="image/gif"/><title>FileViewServlet.java</title><link rel="stylesheet" href="../jacoco-resources/prettify.css" type="text/css"/><script type="text/javascript" src="../jacoco-resources/prettify.js"></script></head><body onload="window['PR_TAB_WIDTH']=4;prettyPrint()"><div class="breadcrumb" id="breadcrumb"><span class="info"><a href="../jacoco-sessions.html" class="el_session">Sessions</a></span><a href="../index.html" class="el_report">JaCoCo Ant Example</a> &gt; <a href="index.source.html" class="el_package">com.mockey.storage.file</a> &gt; <span class="el_source">FileViewServlet.java</span></div><h1>FileViewServlet.java</h1><pre class="source lang-java linenums">/*
+ * This file is part of Mockey, a tool for testing application 
+ * interactions over HTTP, with a focus on testing web services, 
+ * specifically web applications that consume XML, JSON, and HTML.
+ *  
+ * Copyright (C) 2009-2010  Authors:
+ * 
+ * chad.lafontaine (chad.lafontaine AT gmail DOT com)
+ * 
+ * This program is free software; you can redistribute it and/or
+ * modify it under the terms of the GNU General Public License
+ * as published by the Free Software Foundation; either version 2
+ * of the License, or (at your option) any later version.
+ * 
+ * This program is distributed in the hope that it will be useful,
+ * but WITHOUT ANY WARRANTY; without even the implied warranty of
+ * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+ * GNU General Public License for more details.
+ * 
+ * You should have received a copy of the GNU General Public License
+ * along with this program; if not, write to the Free Software
+ * Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301, USA.
+ *
+ */
+package com.mockey.storage.file;
+
+import java.io.File;
+import java.io.FileInputStream;
+import java.io.IOException;
+import java.io.OutputStream;
+
+import javax.servlet.ServletContext;
+import javax.servlet.http.HttpServlet;
+import javax.servlet.http.HttpServletRequest;
+import javax.servlet.http.HttpServletResponse;
+
+<span class="nc" id="L37">public class FileViewServlet extends HttpServlet {</span>
+
+	/**
+	 * 
+	 */
+	private static final long serialVersionUID = 4799258651817808844L;
+
+	// This method is called by the servlet container to process a GET request.
+	public void service(HttpServletRequest req, HttpServletResponse resp)
+			throws IOException {
+<span class="nc" id="L47">		String fileName = req.getParameter(&quot;filename&quot;);</span>
+<span class="nc" id="L48">		ServletContext sc = getServletContext();</span>
+<span class="nc" id="L49">		FileSystemManager fileManager = new FileSystemManager();</span>
+<span class="nc" id="L50">		File image = fileManager.getImageFile(fileName);</span>
+
+		// Get the MIME type of the image
+		// Hack: looks like getMimeType in Tomcat 6.0xx doesn't like uppercase .PNG!
+<span class="nc" id="L54">		String mimeType = sc.getMimeType(fileName.toLowerCase());</span>
+<span class="nc bnc" id="L55" title="All 2 branches missed.">		if (mimeType == null) {</span>
+<span class="nc" id="L56">			sc.log(&quot;Could not get MIME type of &quot; + image.getName());</span>
+<span class="nc" id="L57">			resp.setStatus(HttpServletResponse.SC_INTERNAL_SERVER_ERROR);</span>
+<span class="nc" id="L58">			return;</span>
+		}
+
+		// Set content type
+<span class="nc" id="L62">		resp.setContentType(mimeType);</span>
+
+		// Set content size
+
+<span class="nc" id="L66">		resp.setContentLength((int) image.length());</span>
+
+		// Open the file and output streams
+<span class="nc" id="L69">		FileInputStream in = new FileInputStream(image);</span>
+<span class="nc" id="L70">		OutputStream out = resp.getOutputStream();</span>
+
+		// Copy the contents of the file to the output stream
+<span class="nc" id="L73">		byte[] buf = new byte[1024];</span>
+<span class="nc" id="L74">		int count = 0;</span>
+<span class="nc bnc" id="L75" title="All 2 branches missed.">		while ((count = in.read(buf)) &gt;= 0) {</span>
+<span class="nc" id="L76">			out.write(buf, 0, count);</span>
+		}
+<span class="nc" id="L78">		in.close();</span>
+<span class="nc" id="L79">		out.close();</span>
+<span class="nc" id="L80">	}</span>
+}
+</pre><div class="footer"><span class="right">Created with <a href="http://www.jacoco.org/jacoco">JaCoCo</a> 0.8.1.201803210924</span></div></body></html>

@@ -1,0 +1,355 @@
+<?xml version="1.0" encoding="UTF-8"?><!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Strict//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-strict.dtd"><html xmlns="http://www.w3.org/1999/xhtml" lang="zh"><head><meta http-equiv="Content-Type" content="text/html;charset=UTF-8"/><link rel="stylesheet" href="../jacoco-resources/report.css" type="text/css"/><link rel="shortcut icon" href="../jacoco-resources/report.gif" type="image/gif"/><title>ServiceSetupServlet.java</title><link rel="stylesheet" href="../jacoco-resources/prettify.css" type="text/css"/><script type="text/javascript" src="../jacoco-resources/prettify.js"></script></head><body onload="window['PR_TAB_WIDTH']=4;prettyPrint()"><div class="breadcrumb" id="breadcrumb"><span class="info"><a href="../jacoco-sessions.html" class="el_session">Sessions</a></span><a href="../index.html" class="el_report">JaCoCo Ant Example</a> &gt; <a href="index.source.html" class="el_package">com.mockey.ui</a> &gt; <span class="el_source">ServiceSetupServlet.java</span></div><h1>ServiceSetupServlet.java</h1><pre class="source lang-java linenums">/*
+ * This file is part of Mockey, a tool for testing application 
+ * interactions over HTTP, with a focus on testing web services, 
+ * specifically web applications that consume XML, JSON, and HTML.
+ *  
+ * Copyright (C) 2009-2010  Authors:
+ * 
+ * chad.lafontaine (chad.lafontaine AT gmail DOT com)
+ * neil.cronin (neil AT rackle DOT com) 
+ * lorin.kobashigawa (lkb AT kgawa DOT com)
+ * rob.meyer (rob AT bigdis DOT com)
+ * 
+ * This program is free software; you can redistribute it and/or
+ * modify it under the terms of the GNU General Public License
+ * as published by the Free Software Foundation; either version 2
+ * of the License, or (at your option) any later version.
+ * 
+ * This program is distributed in the hope that it will be useful,
+ * but WITHOUT ANY WARRANTY; without even the implied warranty of
+ * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+ * GNU General Public License for more details.
+ * 
+ * You should have received a copy of the GNU General Public License
+ * along with this program; if not, write to the Free Software
+ * Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301, USA.
+ *
+ */
+package com.mockey.ui;
+
+import java.io.IOException;
+import java.io.PrintWriter;
+import java.text.SimpleDateFormat;
+import java.util.ArrayList;
+import java.util.Date;
+import java.util.HashMap;
+import java.util.Iterator;
+import java.util.List;
+import java.util.Map;
+
+import javax.servlet.RequestDispatcher;
+import javax.servlet.ServletException;
+import javax.servlet.http.HttpServlet;
+import javax.servlet.http.HttpServletRequest;
+import javax.servlet.http.HttpServletResponse;
+
+import org.apache.log4j.Logger;
+
+import com.mockey.ServiceValidator;
+import com.mockey.model.Service;
+import com.mockey.model.Url;
+import com.mockey.plugin.IRequestInspector;
+import com.mockey.plugin.PluginStore;
+import com.mockey.storage.IMockeyStorage;
+import com.mockey.storage.StorageRegistry;
+
+<span class="fc" id="L56">public class ServiceSetupServlet extends HttpServlet {</span>
+	private static final long serialVersionUID = 5503460488900643184L;
+<span class="fc" id="L58">	private static IMockeyStorage store = StorageRegistry.MockeyStorage;</span>
+<span class="fc" id="L59">	private static final Boolean TRANSIENT_STATE = new Boolean(true);</span>
+	private static final String DATE_FORMAT = &quot;MM/dd/yyyy&quot;;
+<span class="fc" id="L61">	private static final SimpleDateFormat formatter = new SimpleDateFormat(&quot;MM/dd/yyyy&quot;);</span>
+<span class="fc" id="L62">	private static Logger logger = Logger.getLogger(ServiceSetupServlet.class);</span>
+
+	/**
+	 * 
+	 */
+	public void service(HttpServletRequest req, HttpServletResponse resp) throws ServletException, IOException {
+
+<span class="pc bpc" id="L69" title="3 of 4 branches missed.">		if (req.getParameter(&quot;all&quot;) != null &amp;&amp; req.getParameter(&quot;responseType&quot;) != null) {</span>
+<span class="nc" id="L70">			List&lt;Service&gt; services = store.getServices();</span>
+			// #1. Get a handle of the original read-only-mode (transient?)
+<span class="nc" id="L72">			Boolean origReadOnlyMode = store.getReadOnlyMode();</span>
+			try {
+				// #2. Put the store in TRANSIENT STATE (memory only)
+				// why? To prevent repeating file writes to the file system
+<span class="nc" id="L76">				store.setReadOnlyMode(TRANSIENT_STATE);</span>
+<span class="nc" id="L77">				int serviceResponseType = Integer.parseInt(req.getParameter(&quot;responseType&quot;));</span>
+<span class="nc bnc" id="L78" title="All 2 branches missed.">				for (Iterator&lt;Service&gt; iterator = services.iterator(); iterator.hasNext();) {</span>
+<span class="nc" id="L79">					Service service = iterator.next();</span>
+
+<span class="nc" id="L81">					service.setServiceResponseType(serviceResponseType);</span>
+<span class="nc" id="L82">					store.saveOrUpdateService(service);</span>
+<span class="nc" id="L83">				}</span>
+<span class="nc" id="L84">			} catch (Exception e) {</span>
+<span class="nc" id="L85">				logger.error(&quot;Unable to update service(s&quot;, e);</span>
+<span class="nc" id="L86">			}</span>
+			// #3 Return store back to original setting.
+<span class="nc" id="L88">			store.setReadOnlyMode(origReadOnlyMode);</span>
+<span class="nc" id="L89">			resp.setContentType(&quot;application/json&quot;);</span>
+<span class="nc" id="L90">			PrintWriter out = resp.getWriter();</span>
+<span class="nc" id="L91">			Map&lt;String, String&gt; successMessage = new HashMap&lt;String, String&gt;();</span>
+<span class="nc" id="L92">			successMessage.put(&quot;success&quot;, &quot;updated&quot;);</span>
+<span class="nc" id="L93">			String resultingJSON = Util.getJSON(successMessage);</span>
+<span class="nc" id="L94">			out.println(resultingJSON);</span>
+<span class="nc" id="L95">			out.flush();</span>
+<span class="nc" id="L96">			out.close();</span>
+<span class="nc" id="L97">			return;</span>
+		}
+<span class="fc" id="L99">		Long serviceId = null;</span>
+		try {
+<span class="nc" id="L101">			serviceId = new Long(req.getParameter(&quot;serviceId&quot;));</span>
+<span class="fc" id="L102">		} catch (Exception e) {</span>
+			// Do nothing
+<span class="nc" id="L104">		}</span>
+
+<span class="pc bpc" id="L106" title="3 of 4 branches missed.">		if (req.getParameter(&quot;deleteService&quot;) != null &amp;&amp; serviceId != null) {</span>
+<span class="nc" id="L107">			Service service = store.getServiceById(serviceId);</span>
+<span class="nc" id="L108">			store.deleteService(service);</span>
+<span class="nc" id="L109">			store.deleteFulfilledClientRequestsForService(serviceId);</span>
+
+<span class="nc" id="L111">			Util.saveSuccessMessage(&quot;Service '&quot; + service.getServiceName() + &quot;' was deleted.&quot;, req);</span>
+
+			// Check to see if any plans need an update.
+<span class="nc" id="L114">			String errorMessage = null;</span>
+<span class="nc bnc" id="L115" title="All 2 branches missed.">			if (service.isReferencedInAServicePlan()) {</span>
+<span class="nc" id="L116">				errorMessage = &quot;Warning: the deleted service is referenced in service plans.&quot;;</span>
+			}
+
+<span class="nc bnc" id="L119" title="All 2 branches missed.">			if (errorMessage != null) {</span>
+<span class="nc" id="L120">				Util.saveErrorMessage(errorMessage, req);</span>
+			}
+<span class="nc" id="L122">			resp.sendRedirect(Url.getAbsoluteURL(req, &quot;/home&quot;));</span>
+<span class="nc" id="L123">			return;</span>
+<span class="pc bpc" id="L124" title="3 of 4 branches missed.">		} else if (req.getParameter(&quot;duplicateService&quot;) != null &amp;&amp; serviceId != null) {</span>
+<span class="nc" id="L125">			Service service = store.getServiceById(serviceId);</span>
+<span class="nc" id="L126">			Service duplicateService = store.duplicateService(service);</span>
+<span class="nc" id="L127">			resp.sendRedirect(Url.getAbsoluteURL(req, &quot;/setup?serviceId=&quot; + duplicateService.getId()));</span>
+<span class="nc" id="L128">			return;</span>
+		}
+
+<span class="fc" id="L131">		super.service(req, resp);</span>
+<span class="fc" id="L132">	}</span>
+
+	/**
+	 * 
+	 * 
+	 * @param req
+	 *            basic request
+	 * @param resp
+	 *            basic resp
+	 * @throws ServletException
+	 *             basic
+	 * @throws IOException
+	 *             basic
+	 */
+	public void doGet(HttpServletRequest req, HttpServletResponse resp) throws ServletException, IOException {
+<span class="fc" id="L147">		Long serviceId = null;</span>
+		try {
+<span class="nc" id="L149">			serviceId = new Long(req.getParameter(&quot;serviceId&quot;));</span>
+<span class="fc" id="L150">		} catch (Exception e) {</span>
+			// Do nothing
+<span class="nc" id="L152">		}</span>
+<span class="fc" id="L153">		Service service = null;</span>
+
+<span class="pc bpc" id="L155" title="1 of 2 branches missed.">		if (serviceId != null) {</span>
+<span class="nc" id="L156">			service = store.getServiceById(serviceId);</span>
+		}
+<span class="pc bpc" id="L158" title="1 of 2 branches missed.">		if (service == null) {</span>
+<span class="fc" id="L159">			service = new Service();</span>
+		}
+
+<span class="fc" id="L162">		req.setAttribute(&quot;mockservice&quot;, service);</span>
+
+<span class="fc" id="L164">		req.setAttribute(&quot;requestInspectorList&quot;, PluginStore.getInstance().getRequestInspectorImplClassList());</span>
+<span class="fc" id="L165">		RequestDispatcher dispatch = req.getRequestDispatcher(&quot;/service_setup.jsp&quot;);</span>
+<span class="fc" id="L166">		dispatch.forward(req, resp);</span>
+<span class="fc" id="L167">	}</span>
+
+	/**
+	 * 
+	 * 
+	 * @param req
+	 *            basic request
+	 * @param resp
+	 *            basic resp
+	 * @throws ServletException
+	 *             basic
+	 * @throws IOException
+	 *             basic
+	 */
+	public void doPost(HttpServletRequest req, HttpServletResponse resp) throws ServletException, IOException {
+<span class="fc" id="L182">		String[] realSrvUrl = req.getParameterValues(&quot;realServiceUrl[]&quot;);</span>
+
+<span class="fc" id="L184">		Service service = new Service();</span>
+
+<span class="fc" id="L186">		Long serviceId = null;</span>
+		// ************************************************
+		// HACK A: if renaming an existing Service Name, then
+		// we need to update this Service's Name in a
+		// Service Plan.
+		// ************************************************
+<span class="fc" id="L192">		String oldName = null;</span>
+<span class="fc" id="L193">		String newName = null;</span>
+		try {
+<span class="nc" id="L195">			serviceId = new Long(req.getParameter(&quot;serviceId&quot;));</span>
+<span class="nc" id="L196">			service = store.getServiceById(serviceId);</span>
+<span class="nc" id="L197">			oldName = service.getServiceName();</span>
+<span class="fc" id="L198">		} catch (Exception e) {</span>
+			// Do nothing
+<span class="nc" id="L200">		}</span>
+<span class="pc bpc" id="L201" title="1 of 2 branches missed.">		if (service == null) {</span>
+<span class="nc" id="L202">			service = new Service();</span>
+		}
+		// NEW REAL URL LIST
+		// 1. Overwrite list of predefined URLs
+		// 2. Ensure non-empty trim String for new Url objects.
+<span class="pc bpc" id="L207" title="1 of 2 branches missed.">		if (realSrvUrl != null) {</span>
+<span class="nc" id="L208">			List&lt;Url&gt; newUrlList = new ArrayList&lt;Url&gt;();</span>
+<span class="nc bnc" id="L209" title="All 2 branches missed.">			for (int i = 0; i &lt; realSrvUrl.length; i++) {</span>
+<span class="nc" id="L210">				String url = realSrvUrl[i];</span>
+<span class="nc bnc" id="L211" title="All 2 branches missed.">				if (url.trim().length() &gt; 0) {</span>
+
+<span class="nc" id="L213">					newUrlList.add(new Url(realSrvUrl[i].trim()));</span>
+				}
+
+			}
+			// Before we ADD new URLS, let's start with a clean list.
+			// Why? In case the user removes the URL within the form,
+			// then it will be an 'empty' value.
+<span class="nc" id="L220">			service.clearRealServiceUrls();</span>
+
+			// Now we add.
+<span class="nc bnc" id="L223" title="All 2 branches missed.">			for (Url urlItem : newUrlList) {</span>
+<span class="nc" id="L224">				service.saveOrUpdateRealServiceUrl(urlItem);</span>
+<span class="nc" id="L225">			}</span>
+		}
+
+		// UPDATE HANGTIME - optional
+		try {
+<span class="fc" id="L230">			service.setHangTime(Integer.parseInt(req.getParameter(&quot;hangTime&quot;)));</span>
+
+<span class="nc" id="L232">		} catch (Exception e) {</span>
+			// DO NOTHING
+<span class="fc" id="L234">		}</span>
+
+		// NAME - optional
+<span class="pc bpc" id="L237" title="1 of 2 branches missed.">		if (req.getParameter(&quot;serviceName&quot;) != null) {</span>
+<span class="fc" id="L238">			service.setServiceName(req.getParameter(&quot;serviceName&quot;));</span>
+<span class="fc" id="L239">			newName = service.getServiceName();</span>
+		}
+
+		// TAG - optional
+<span class="pc bpc" id="L243" title="1 of 2 branches missed.">		if (req.getParameter(&quot;tag&quot;) != null) {</span>
+<span class="fc" id="L244">			service.setTag(req.getParameter(&quot;tag&quot;));</span>
+		}
+
+		// REQUEST INSPECTION rules in JSON format. - optional
+<span class="pc bpc" id="L248" title="1 of 2 branches missed.">		if (req.getParameter(&quot;requestInspectorJsonRules&quot;) != null) {</span>
+<span class="fc" id="L249">			service.setRequestInspectorJsonRules(req.getParameter(&quot;requestInspectorJsonRules&quot;).trim());</span>
+		}
+		// REQUEST INSPECTION enable flag - optional
+<span class="pc bpc" id="L252" title="1 of 2 branches missed.">		if (req.getParameter(&quot;requestInspectorJsonRulesEnableFlag&quot;) != null) {</span>
+			try {
+<span class="fc" id="L254">				service.setRequestInspectorJsonRulesEnableFlag(</span>
+<span class="fc" id="L255">						new Boolean(req.getParameter(&quot;requestInspectorJsonRulesEnableFlag&quot;)).booleanValue());</span>
+<span class="nc" id="L256">			} catch (Exception e) {</span>
+<span class="nc" id="L257">				logger.error(&quot;Json Rule Enable flag has an invalid format.&quot;, e);</span>
+<span class="fc" id="L258">			}</span>
+		}
+
+		// REQUEST SCHEMA rules in JSON format. - optional
+<span class="pc bpc" id="L262" title="1 of 2 branches missed.">		if (req.getParameter(&quot;responseSchema&quot;) != null) {</span>
+<span class="fc" id="L263">			service.setResponseSchema(req.getParameter(&quot;responseSchema&quot;).trim());</span>
+		}
+		// RESPONSE SCHEMA enable flag - optional
+<span class="pc bpc" id="L266" title="1 of 2 branches missed.">		if (req.getParameter(&quot;responseSchemaEnableFlag&quot;) != null) {</span>
+			try {
+<span class="fc" id="L268">				service.setResponseSchemaFlag(new Boolean(req.getParameter(&quot;responseSchemaEnableFlag&quot;)).booleanValue());</span>
+<span class="nc" id="L269">			} catch (Exception e) {</span>
+<span class="nc" id="L270">				logger.error(&quot;Json Rule Enable flag has an invalid format.&quot;, e);</span>
+<span class="fc" id="L271">			}</span>
+		}
+		// Last visit
+<span class="pc bpc" id="L274" title="1 of 2 branches missed.">		if (req.getParameter(&quot;lastVisit&quot;) != null) {</span>
+			try {
+<span class="nc" id="L276">				String lastvisit = req.getParameter(&quot;lastVisit&quot;);</span>
+<span class="nc bnc" id="L277" title="All 4 branches missed.">				if (lastvisit.trim().length() &gt; 0 &amp;&amp; !&quot;mm/dd/yyyy&quot;.equals(lastvisit.trim().toLowerCase())) {</span>
+<span class="nc" id="L278">					Date f = formatter.parse(lastvisit);</span>
+<span class="nc" id="L279">					service.setLastVisit(f.getTime());</span>
+<span class="nc" id="L280">				} else {</span>
+<span class="nc" id="L281">					service.setLastVisit(null);</span>
+				}
+<span class="nc" id="L283">			} catch (Exception e) {</span>
+<span class="nc" id="L284">				logger.error(&quot;Last visit has an invalid format. Should be &quot; + DATE_FORMAT, e);</span>
+<span class="nc" id="L285">			}</span>
+
+		}
+<span class="fc" id="L288">		String classNameForRequestInspector = req.getParameter(&quot;requestInspectorName&quot;);</span>
+<span class="pc bpc" id="L289" title="3 of 4 branches missed.">		if (classNameForRequestInspector != null &amp;&amp; classNameForRequestInspector.trim().length() &gt; 0) {</span>
+			/**
+			 * OPTIONAL See if we can create an instance of a request inspector.
+			 * If yes, then set the service to the name.
+			 */
+			try {
+<span class="nc" id="L295">				Class&lt;?&gt; clazz = Class.forName(classNameForRequestInspector);</span>
+<span class="nc bnc" id="L296" title="All 4 branches missed.">				if (!clazz.isInterface() &amp;&amp; IRequestInspector.class.isAssignableFrom(clazz)) {</span>
+<span class="nc" id="L297">					service.setRequestInspectorName(classNameForRequestInspector);</span>
+				} else {
+<span class="nc" id="L299">					service.setRequestInspectorName(&quot;&quot;);</span>
+				}
+
+<span class="nc" id="L302">			} catch (ClassNotFoundException t) {</span>
+<span class="nc" id="L303">				logger.error(&quot;Service setup: unable to find class '&quot; + classNameForRequestInspector + &quot;'&quot;, t);</span>
+<span class="nc" id="L304">			}</span>
+
+		}
+
+		// DESCRIPTION - optional
+<span class="pc bpc" id="L309" title="1 of 2 branches missed.">		if (req.getParameter(&quot;description&quot;) != null) {</span>
+<span class="nc" id="L310">			service.setDescription(req.getParameter(&quot;description&quot;));</span>
+		}
+
+		// MOCK URL - optional
+<span class="pc bpc" id="L314" title="1 of 2 branches missed.">		if (req.getParameter(&quot;url&quot;) != null) {</span>
+<span class="fc" id="L315">			service.setUrl(req.getParameter(&quot;url&quot;));</span>
+		}
+
+<span class="fc" id="L318">		Map&lt;String, String&gt; errorMap = ServiceValidator.validate(service);</span>
+
+<span class="pc bpc" id="L320" title="2 of 4 branches missed.">		if ((errorMap != null) &amp;&amp; (errorMap.size() == 0)) {</span>
+			// no errors, so create service.
+
+<span class="nc" id="L323">			Service updatedService = store.saveOrUpdateService(service);</span>
+<span class="nc" id="L324">			Util.saveSuccessMessage(&quot;Service updated.&quot;, req);</span>
+			// ***************** HACK A ****************
+<span class="nc bnc" id="L326" title="All 6 branches missed.">			if (newName != null &amp;&amp; oldName != null &amp;&amp; !oldName.trim().equals(newName.trim())) {</span>
+				// OK, we had an existing Service Scenario with a name change.
+				// Let's update the appropriate Service Plan.
+<span class="nc" id="L329">				store.updateServicePlansWithNewServiceName(oldName, newName);</span>
+			}
+			// *****************************************
+<span class="nc" id="L332">			String redirectUrl = Url.getAbsoluteURL(req, &quot;/setup?serviceId=&quot; + updatedService.getId()); </span>
+<span class="nc" id="L333">			resp.setContentType(&quot;application/json&quot;);</span>
+<span class="nc" id="L334">			PrintWriter out = resp.getWriter();</span>
+<span class="nc" id="L335">			String resultingJSON = &quot;{ \&quot;result\&quot;: { \&quot;redirect\&quot;: \&quot;&quot; + redirectUrl + &quot;\&quot;}}&quot;;</span>
+<span class="nc" id="L336">			out.println(resultingJSON);</span>
+<span class="nc" id="L337">			out.flush();</span>
+<span class="nc" id="L338">			out.close();</span>
+<span class="nc" id="L339">			return;</span>
+
+		} else {
+<span class="fc" id="L342">			resp.setContentType(&quot;application/json&quot;);</span>
+<span class="fc" id="L343">			PrintWriter out = resp.getWriter();</span>
+<span class="fc" id="L344">			String resultingJSON = Util.getJSON(errorMap);</span>
+<span class="fc" id="L345">			out.println(resultingJSON);</span>
+
+<span class="fc" id="L347">			out.flush();</span>
+<span class="fc" id="L348">			out.close();</span>
+
+		}
+<span class="fc" id="L351">		return;</span>
+		// AJAX thing. Return nothing at this time.
+	}
+}
+</pre><div class="footer"><span class="right">Created with <a href="http://www.jacoco.org/jacoco">JaCoCo</a> 0.8.1.201803210924</span></div></body></html>

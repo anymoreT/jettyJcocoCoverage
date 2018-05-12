@@ -1,0 +1,233 @@
+<?xml version="1.0" encoding="UTF-8"?><!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Strict//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-strict.dtd"><html xmlns="http://www.w3.org/1999/xhtml" lang="zh"><head><meta http-equiv="Content-Type" content="text/html;charset=UTF-8"/><link rel="stylesheet" href="../jacoco-resources/report.css" type="text/css"/><link rel="shortcut icon" href="../jacoco-resources/report.gif" type="image/gif"/><title>Util.java</title><link rel="stylesheet" href="../jacoco-resources/prettify.css" type="text/css"/><script type="text/javascript" src="../jacoco-resources/prettify.js"></script></head><body onload="window['PR_TAB_WIDTH']=4;prettyPrint()"><div class="breadcrumb" id="breadcrumb"><span class="info"><a href="../jacoco-sessions.html" class="el_session">Sessions</a></span><a href="../index.html" class="el_report">JaCoCo Ant Example</a> &gt; <a href="index.source.html" class="el_package">com.mockey.ui</a> &gt; <span class="el_source">Util.java</span></div><h1>Util.java</h1><pre class="source lang-java linenums">/*
+ * This file is part of Mockey, a tool for testing application 
+ * interactions over HTTP, with a focus on testing web services, 
+ * specifically web applications that consume XML, JSON, and HTML.
+ *  
+ * Copyright (C) 2009-2010  Authors:
+ * 
+ * chad.lafontaine (chad.lafontaine AT gmail DOT com)
+ * neil.cronin (neil AT rackle DOT com) 
+ * lorin.kobashigawa (lkb AT kgawa DOT com)
+ * rob.meyer (rob AT bigdis DOT com)
+ * 
+ * This program is free software; you can redistribute it and/or
+ * modify it under the terms of the GNU General Public License
+ * as published by the Free Software Foundation; either version 2
+ * of the License, or (at your option) any later version.
+ * 
+ * This program is distributed in the hope that it will be useful,
+ * but WITHOUT ANY WARRANTY; without even the implied warranty of
+ * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+ * GNU General Public License for more details.
+ * 
+ * You should have received a copy of the GNU General Public License
+ * along with this program; if not, write to the Free Software
+ * Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301, USA.
+ *
+ */
+package com.mockey.ui;
+
+import java.util.ArrayList;
+import java.util.Collections;
+import java.util.Comparator;
+import java.util.Iterator;
+import java.util.List;
+import java.util.Map;
+
+import javax.servlet.http.HttpServletRequest;
+
+import org.json.JSONException;
+import org.json.JSONObject;
+
+import com.mockey.model.ApiDocService;
+import com.mockey.model.Scenario;
+import com.mockey.model.Service;
+import com.mockey.model.ServicePlan;
+
+<span class="nc" id="L47">public class Util {</span>
+
+	public static final String SUCCESS = &quot;successMessages&quot;;
+	public static final String ERROR = &quot;errorMessages&quot;;
+
+	/**
+	 * Saves the LAST message.
+	 * 
+	 * @param message
+	 * @param req
+	 */
+	private static void save(String message, String messageKey, HttpServletRequest req) {
+
+		// HISTORY: This method use to save a List of messages
+		// for the purpose to display to the end user. But since
+		// this solution can be tweak by a head-less client,
+		// the list of informative messages to the user became
+		// perplexing.
+<span class="nc" id="L65">		List&lt;String&gt; msgs = new ArrayList&lt;String&gt;();</span>
+<span class="nc" id="L66">		msgs.add(message);</span>
+<span class="nc" id="L67">		req.getSession().setAttribute(messageKey, msgs);</span>
+<span class="nc" id="L68">	}</span>
+
+	/**
+	 * Saves the last (most recent) error message.
+	 * 
+	 * @param message
+	 * @param req
+	 */
+	public static void saveErrorMessage(String message, HttpServletRequest req) {
+<span class="nc" id="L77">		save(message, ERROR, req);</span>
+<span class="nc" id="L78">	}</span>
+
+	/**
+	 * Saves the last (most recent) success message.
+	 * 
+	 * @param message
+	 * @param req
+	 */
+	public static void saveSuccessMessage(String message, HttpServletRequest req) {
+<span class="nc" id="L87">		save(message, SUCCESS, req);</span>
+
+<span class="nc" id="L89">	}</span>
+
+	@SuppressWarnings(&quot;unchecked&quot;)
+	public static void saveErrorMap(Map errorMap, HttpServletRequest req) {
+<span class="nc bnc" id="L93" title="All 2 branches missed.">		if (errorMap != null) {</span>
+<span class="nc" id="L94">			Iterator&lt;String&gt; iter = errorMap.keySet().iterator();</span>
+<span class="nc bnc" id="L95" title="All 2 branches missed.">			while (iter.hasNext()) {</span>
+<span class="nc" id="L96">				String key = (String) iter.next();</span>
+<span class="nc" id="L97">				String value = (String) errorMap.get(key);</span>
+<span class="nc" id="L98">				save((key + &quot; : &quot; + value), ERROR, req);</span>
+<span class="nc" id="L99">			}</span>
+		}
+
+<span class="nc" id="L102">	}</span>
+
+	/**
+	 * Returns the services list ordered alphabetically.
+	 * 
+	 * @param services
+	 * @return
+	 */
+	public static List&lt;Service&gt; orderAlphabeticallyByServiceName(List&lt;Service&gt; services) {
+
+		// Custom comparator
+<span class="fc" id="L113">		class ServiceNameComparator implements Comparator&lt;Service&gt; {</span>
+
+			public int compare(Service s1, Service s2) {
+<span class="nc" id="L116">				return s1.getServiceName().compareToIgnoreCase(s2.getServiceName());</span>
+
+			}
+
+		}
+		// Sort me.
+<span class="fc" id="L122">		Collections.sort(services, new ServiceNameComparator());</span>
+
+<span class="fc" id="L124">		return services;</span>
+	}
+
+	/**
+	 * Returns the services list ordered alphabetically.
+	 * 
+	 * @param services
+	 * @return
+	 */
+	public static List&lt;ServicePlan&gt; orderAlphabeticallyByServicePlanName(List&lt;ServicePlan&gt; servicePlans) {
+
+		// Custom comparator
+<span class="fc" id="L136">		class ServicePlanNameComparator implements Comparator&lt;ServicePlan&gt; {</span>
+
+			public int compare(ServicePlan s1, ServicePlan s2) {
+<span class="nc" id="L139">				return s1.getName().compareToIgnoreCase(s2.getName());</span>
+
+			}
+
+		}
+		// Sort me.
+<span class="fc" id="L145">		Collections.sort(servicePlans, new ServicePlanNameComparator());</span>
+
+<span class="fc" id="L147">		return servicePlans;</span>
+	}
+
+	/**
+	 * Returns the services list ordered alphabetically.
+	 * 
+	 * @param services
+	 * @return
+	 */
+	public static List&lt;ApiDocService&gt; orderAlphabeticallyByApiName(List&lt;ApiDocService&gt; apiDocServices) {
+
+		// Custom comparator
+<span class="nc" id="L159">		class ApiDocServiceComparator implements Comparator&lt;ApiDocService&gt; {</span>
+
+			public int compare(ApiDocService s1, ApiDocService s2) {
+<span class="nc" id="L162">				return s1.getName().compareToIgnoreCase(s2.getName());</span>
+
+			}
+
+		}
+		// Sort me.
+<span class="nc" id="L168">		Collections.sort(apiDocServices, new ApiDocServiceComparator());</span>
+
+<span class="nc" id="L170">		return apiDocServices;</span>
+	}
+
+	/**
+	 * Returns the services list ordered alphabetically.
+	 * 
+	 * @param services
+	 * @return
+	 */
+	public static List&lt;Scenario&gt; orderAlphabeticallyByScenarioName(List&lt;Scenario&gt; scenarios) {
+
+		// Custom comparator
+<span class="nc" id="L182">		class ScenarioNameComparator implements Comparator&lt;Scenario&gt; {</span>
+
+			public int compare(Scenario s1, Scenario s2) {
+<span class="nc" id="L185">				return s1.getScenarioName().compareToIgnoreCase(s2.getScenarioName());</span>
+			}
+		}
+		// Sort me.
+<span class="nc" id="L189">		Collections.sort(scenarios, new ScenarioNameComparator());</span>
+
+<span class="nc" id="L191">		return scenarios;</span>
+	}
+
+	/**
+	 * 
+	 * @param objectMap
+	 * 
+	 * @return
+	 */
+	public static String getJSON(Map&lt;String, String&gt; objectMap) {
+<span class="nc" id="L201">		JSONObject jsonResult = new JSONObject();</span>
+<span class="nc" id="L202">		JSONObject jsonObject = new JSONObject();</span>
+<span class="nc" id="L203">		Iterator&lt;String&gt; errorIter = objectMap.keySet().iterator();</span>
+<span class="nc" id="L204">		String result = null;</span>
+		try {
+<span class="nc bnc" id="L206" title="All 2 branches missed.">			while (errorIter.hasNext()) {</span>
+<span class="nc" id="L207">				String key = errorIter.next();</span>
+<span class="nc" id="L208">				String value = (String) objectMap.get(key);</span>
+<span class="nc" id="L209">				jsonObject.put(key, value);</span>
+<span class="nc" id="L210">			}</span>
+<span class="nc" id="L211">			jsonResult.put(&quot;result&quot;, jsonObject);</span>
+<span class="nc" id="L212">			result = jsonResult.toString();</span>
+<span class="nc" id="L213">		} catch (JSONException je) {</span>
+<span class="nc" id="L214">			result = &quot;Unable to create JSON format response. &quot; + je.getMessage();</span>
+<span class="nc" id="L215">		}</span>
+
+<span class="nc" id="L217">		return result;</span>
+	}
+
+	public static void logMemoryFootprint() {
+<span class="nc" id="L221">		Runtime rt = Runtime.getRuntime();</span>
+<span class="nc" id="L222">		long totalMem = rt.totalMemory();</span>
+<span class="nc" id="L223">		long maxMem = rt.maxMemory();</span>
+<span class="nc" id="L224">		long freeMem = rt.freeMemory();</span>
+<span class="nc" id="L225">		double megs = 1048576.0;</span>
+
+<span class="nc" id="L227">		System.out.println(&quot;Memory (MB): TOTAL: &quot; + (totalMem / megs) + &quot; | &quot; + &quot;MAX: &quot; + (maxMem / megs) + &quot; | &quot;</span>
+				+ &quot;FREE: &quot; + (freeMem / megs) + &quot; \n\n&quot;);
+
+<span class="nc" id="L230">	}</span>
+
+}
+</pre><div class="footer"><span class="right">Created with <a href="http://www.jacoco.org/jacoco">JaCoCo</a> 0.8.1.201803210924</span></div></body></html>

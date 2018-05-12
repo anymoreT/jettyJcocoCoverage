@@ -1,0 +1,142 @@
+<?xml version="1.0" encoding="UTF-8"?><!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Strict//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-strict.dtd"><html xmlns="http://www.w3.org/1999/xhtml" lang="zh"><head><meta http-equiv="Content-Type" content="text/html;charset=UTF-8"/><link rel="stylesheet" href="../jacoco-resources/report.css" type="text/css"/><link rel="shortcut icon" href="../jacoco-resources/report.gif" type="image/gif"/><title>TwistInfoToggleServlet.java</title><link rel="stylesheet" href="../jacoco-resources/prettify.css" type="text/css"/><script type="text/javascript" src="../jacoco-resources/prettify.js"></script></head><body onload="window['PR_TAB_WIDTH']=4;prettyPrint()"><div class="breadcrumb" id="breadcrumb"><span class="info"><a href="../jacoco-sessions.html" class="el_session">Sessions</a></span><a href="../index.html" class="el_report">JaCoCo Ant Example</a> &gt; <a href="index.source.html" class="el_package">com.mockey.ui</a> &gt; <span class="el_source">TwistInfoToggleServlet.java</span></div><h1>TwistInfoToggleServlet.java</h1><pre class="source lang-java linenums">/*
+ * This file is part of Mockey, a tool for testing application 
+ * interactions over HTTP, with a focus on testing web services, 
+ * specifically web applications that consume XML, JSON, and HTML.
+ *  
+ * Copyright (C) 2009-2010  Authors:
+ * 
+ * chad.lafontaine (chad.lafontaine AT gmail DOT com)
+ * neil.cronin (neil AT rackle DOT com) 
+ * lorin.kobashigawa (lkb AT kgawa DOT com)
+ * rob.meyer (rob AT bigdis DOT com)
+ * 
+ * This program is free software; you can redistribute it and/or
+ * modify it under the terms of the GNU General Public License
+ * as published by the Free Software Foundation; either version 2
+ * of the License, or (at your option) any later version.
+ * 
+ * This program is distributed in the hope that it will be useful,
+ * but WITHOUT ANY WARRANTY; without even the implied warranty of
+ * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+ * GNU General Public License for more details.
+ * 
+ * You should have received a copy of the GNU General Public License
+ * along with this program; if not, write to the Free Software
+ * Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301, USA.
+ *
+ */
+package com.mockey.ui;
+
+import java.io.IOException;
+import java.io.PrintWriter;
+import java.util.List;
+
+import javax.servlet.RequestDispatcher;
+import javax.servlet.ServletException;
+import javax.servlet.http.HttpServlet;
+import javax.servlet.http.HttpServletRequest;
+import javax.servlet.http.HttpServletResponse;
+
+import org.apache.log4j.Logger;
+import org.json.JSONException;
+import org.json.JSONObject;
+
+import com.mockey.model.TwistInfo;
+import com.mockey.storage.IMockeyStorage;
+import com.mockey.storage.StorageRegistry;
+
+<span class="nc" id="L48">public class TwistInfoToggleServlet extends HttpServlet implements TwistInfoConfigurationAPI {</span>
+
+	/**
+	 * 
+	 */
+	private static final long serialVersionUID = 8461665153162178045L;
+<span class="nc" id="L54">	private static IMockeyStorage store = StorageRegistry.MockeyStorage;</span>
+<span class="nc" id="L55">    private static final Logger logger = Logger.getLogger(TwistInfoToggleServlet.class);</span>
+
+	/**
+	 * Handles the following activities for &lt;code&gt;TwistInfo&lt;/code&gt;
+	 * 
+	 */
+	public void service(HttpServletRequest req, HttpServletResponse resp) throws ServletException, IOException {
+
+<span class="nc" id="L63">		String responseType = req.getParameter(&quot;response-type&quot;);</span>
+		// If type is JSON, then respond with JSON
+		// Otherwise, direct to JSP
+
+<span class="nc" id="L67">		Long twistInfoId = null;</span>
+<span class="nc" id="L68">		TwistInfo twistInfo = null;</span>
+<span class="nc" id="L69">		String coachingMessage = null;</span>
+<span class="nc" id="L70">		JSONObject jsonObject = new JSONObject();</span>
+
+		try {
+<span class="nc" id="L73">			twistInfoId = new Long(req.getParameter(PARAMETER_KEY_TWIST_ID));</span>
+<span class="nc" id="L74">			boolean enable = Boolean.parseBoolean(req.getParameter(PARAMETER_KEY_TWIST_ENABLE));</span>
+<span class="nc" id="L75">			twistInfo = store.getTwistInfoById(twistInfoId);</span>
+<span class="nc bnc" id="L76" title="All 2 branches missed.">			if(enable){</span>
+<span class="nc" id="L77">				store.setUniversalTwistInfoId(twistInfo.getId());</span>
+<span class="nc bnc" id="L78" title="All 2 branches missed.">				if (twistInfo != null) {</span>
+<span class="nc" id="L79">					jsonObject.put(PARAMETER_KEY_TWIST_ID, &quot;&quot; + twistInfo.getId());</span>
+<span class="nc" id="L80">					jsonObject.put(PARAMETER_KEY_TWIST_NAME, &quot;&quot; + twistInfo.getName());</span>
+<span class="nc" id="L81">					coachingMessage = &quot;Twist configuration on&quot;;</span>
+				}
+				
+<span class="nc bnc" id="L84" title="All 4 branches missed.">			}else if(store.getUniversalTwistInfoId()!=null &amp;&amp; store.getUniversalTwistInfoId().equals(twistInfoId)){</span>
+				// Disable
+				// The only way to DISABLE _all_ twist configurations, both ENABLE (false) and TWIST-ID value (equal 
+				// to the current universal twist-id have to be passed in. 
+				// Why? To prevent random 'ENABLE=false' arguments past to this service from users 
+				// clicking OFF/disable when things are already disabled. 
+				// 
+<span class="nc" id="L91">				store.setUniversalTwistInfoId(null);</span>
+<span class="nc" id="L92">				coachingMessage = &quot;Twist configuration off&quot;;</span>
+			}
+			
+<span class="nc" id="L95">		} catch (Exception e) {</span>
+<span class="nc" id="L96">			logger.error(&quot;Unable to properly set Twist configuration.&quot;, e);</span>
+<span class="nc" id="L97">		}</span>
+
+<span class="nc bnc" id="L99" title="All 2 branches missed.">		if (PARAMETER_KEY_RESPONSE_TYPE_VALUE_JSON.equalsIgnoreCase(responseType)) {</span>
+			// ***********************
+			// BEGIN - JSON response
+			// ***********************
+<span class="nc" id="L103">			resp.setContentType(&quot;application/json&quot;);</span>
+<span class="nc" id="L104">			PrintWriter out = resp.getWriter();</span>
+			try {
+<span class="nc" id="L106">				JSONObject jsonResponseObject = new JSONObject();</span>
+<span class="nc bnc" id="L107" title="All 2 branches missed.">				if (twistInfo != null) {</span>
+<span class="nc" id="L108">					jsonObject.put(&quot;success&quot;, coachingMessage);</span>
+					
+
+				} else {
+<span class="nc" id="L112">					jsonObject.put(&quot;fail&quot;, &quot;Unable to set twist configuration.&quot;);</span>
+
+				}
+<span class="nc" id="L115">				jsonResponseObject.put(&quot;result&quot;, jsonObject);</span>
+<span class="nc" id="L116">				out.println(jsonResponseObject.toString());</span>
+
+<span class="nc" id="L118">			} catch (JSONException jsonException) {</span>
+<span class="nc" id="L119">				throw new ServletException(jsonException);</span>
+<span class="nc" id="L120">			}</span>
+
+<span class="nc" id="L122">			out.flush();</span>
+<span class="nc" id="L123">			out.close();</span>
+<span class="nc" id="L124">			return;</span>
+			// ***********************
+			// END - JSON response
+			// ***********************
+
+		} else {
+<span class="nc" id="L130">			List&lt;TwistInfo&gt; twistInfoList = store.getTwistInfoList();</span>
+<span class="nc" id="L131">			Util.saveSuccessMessage(&quot;Twist configuration updated&quot;, req);</span>
+<span class="nc" id="L132">			req.setAttribute(&quot;twistInfoList&quot;, twistInfoList);</span>
+<span class="nc" id="L133">			req.setAttribute(&quot;twistInfoIdEnabled&quot;, store.getUniversalTwistInfoId());</span>
+<span class="nc" id="L134">			RequestDispatcher dispatch = req.getRequestDispatcher(&quot;/twistinfo_setup.jsp&quot;);</span>
+<span class="nc" id="L135">			dispatch.forward(req, resp);</span>
+<span class="nc" id="L136">			return;</span>
+		}
+
+	}
+
+}
+</pre><div class="footer"><span class="right">Created with <a href="http://www.jacoco.org/jacoco">JaCoCo</a> 0.8.1.201803210924</span></div></body></html>
